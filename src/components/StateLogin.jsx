@@ -1,6 +1,6 @@
 // Custom hooks
 import { useInput } from "../hooks/useInput.js";
-import Signup from "./Signup.jsx";
+//import Signup from "./Signup.jsx";
 // Components
 import Input from "./Input.jsx";
 
@@ -15,7 +15,7 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
    
     const {
         value: emailValue,
-        setEnteredValue: setEnteredEmail,
+       // setEnteredValue: setEnteredEmail,
         handleInputChange: handleEmailChange,
         handleInputBlur: handleEmailBlur,
         hasError: emailHasInvalid,
@@ -26,12 +26,12 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
 
     const {
         value: passwordValue,
-        setEnteredValue: setEnteredPassword,
+        //setEnteredValue: setEnteredPassword,
         handleInputChange: handlePasswordChange,
         handleInputBlur: handlePasswordBlur,
         hasError: passwordHasInvalid,
     } = useInput("", (value) => {        
-        //hasMinLength(value, 6) ;
+        hasMinLength(value, 6) ;
         isNotEmpty(value);
     });
 
@@ -86,7 +86,7 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
                     value={passwordValue}
                     onBlur={handlePasswordBlur}
                     onChange={handlePasswordChange}
-                    //error={passwordHasInvalid && "Password must be at least 6 characters......"}
+                    error={passwordHasInvalid && "Password must be at least 6 characters......"}
                 />
             </div>
 

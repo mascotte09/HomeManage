@@ -3,8 +3,8 @@ import HeaderHome from "./components/HeaderHome.jsx";
 import Signup from "./components/Signup.jsx";
 // import Login from "./components/Login.jsx";
 import Login from "./components/StateLogin.jsx";
-import { useEffect, useState } from "react";
-import { supabase } from './supabase'
+import { useState } from "react";
+//import { supabase } from './supabase'
 //import ListRooms from './components/Room/ListRooms.jsx'
 //import ListInvoices from './components/Invoice/ListInvoices.jsx'
 //import { Routes, Route } from 'react-router-dom'
@@ -12,7 +12,7 @@ import { supabase } from './supabase'
 function App() {
     const [showSignup, setShowSignup] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null);
+    //const [currentUser, setCurrentUser] = useState(null);
 
     return (
         <>      
@@ -25,7 +25,7 @@ function App() {
                     <Login
                         onSignupClick={() => setShowSignup(true)}
                         onLoginSuccess={(user) => {
-                            setCurrentUser(user);
+                            //setCurrentUser(user);
                             setIsLoggedIn(true);
                         }}
                     />
