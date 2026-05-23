@@ -18,7 +18,7 @@ export default function SelectedProject({
   useEffect(() => {
     setRoomName(room?.room_name || "");
     setRoomRenter(room?.room_renter || "");
-  }, [room.id]);
+  }, [room]);
 
   async function handleUpdate() {
     const { error } = await supabase

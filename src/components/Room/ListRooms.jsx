@@ -15,9 +15,9 @@ export default function ListRooms({user_id}) {
     const [homeID, setHomes] = useState('');
    
     // load homes/rooms for this user
-    useEffect(() => {
-        fetchUserHomes();
-    }, []);
+    // useEffect(() => {
+    //     fetchUserHomes();
+    // }, []);
    
     const fetchUserHomes = useCallback(async () => {
         // Step 1: get homes of this user

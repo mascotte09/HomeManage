@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback  } from "react";
 import { supabase } from "../supabase";
 
 export default function Photos({ room, open, onClose }) {
@@ -8,29 +8,28 @@ export default function Photos({ room, open, onClose }) {
   // NEW: selected photos
   const [selectedPhotos, setSelectedPhotos] = useState([]);
 
-  useEffect(() => {
-    if (open) {
-      fetchPhotos();
-    }
-  }, [open]);
+  
+    const fetchPhotos = useCallback(async () => {
+        const { data, error } = await supabase
+            .from("photos")
+            .select("*")
+            .eq("room_id", room.id)
+            .order("created_at", { ascending: false });
 
-  async function fetchPhotos() {
-    const { data, error } = await supabase
-      .from("photos")
-      .select("*")
-      .eq("room_id", room.id)
-      .order("created_at", { ascending: false });
+        if (error) {
+            console.log(error.message);
+            return;
+        }
 
-    if (error) {
-      console.log(error.message);
-      return;
-    }
-
-    setPhotos(data || []);
-
-    // reset selected photos
-    setSelectedPhotos([]);
-  }
+        setPhotos(data || []);
+        setSelectedPhotos([]);
+    }, [room.id]);
+    
+    useEffect(() => {
+        if (open) {
+            fetchPhotos();
+        }
+    }, [open, fetchPhotos]);
 
   async function handleUploadPhoto(e) {
     const file = e.target.files[0];

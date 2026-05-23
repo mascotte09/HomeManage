@@ -14,11 +14,6 @@ const [roomsState, setRoomsState] = useState({
     // store homes
     const [homeID, setHomes] = useState('');
    
-    // load homes/rooms for this user
-    useEffect(() => {
-        fetchUserHomes();
-    }, []);
-   
     const fetchUserHomes = useCallback(async () => {
         // Step 1: get homes of this user
         const { data: homesData, error: homesError } = await supabase
