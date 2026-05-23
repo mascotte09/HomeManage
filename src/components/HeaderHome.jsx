@@ -1,5 +1,7 @@
+import { useNavigate } from "react-router-dom";
 export default function Header() {
-  return (
+    const navigate = useNavigate();
+    return (
             <header className="bg-gray-800 text-white px-3 py-0 flex justify-between items-center m-0">
    
                 <h1 className="text-2xl font-bold">
@@ -8,12 +10,18 @@ export default function Header() {
    
                 <div className="flex gap-3">
    
-                    <button className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">
-                        Dashboard
+                    <button
+                        onClick={() => navigate("/rooms")}
+                        className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
+                    >
+                        Rooms
                     </button>
    
-                    <button className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded">
-                        Rooms
+                    <button
+                        onClick={() => navigate("/invoices")}
+                        className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded"
+                    >
+                        Invoices
                     </button>
    
                     <button className="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded">

@@ -1,5 +1,6 @@
 import Header from "./components/Header.jsx";
 import HeaderHome from "./components/HeaderHome.jsx";
+import HomePage from "./components/HomePage.jsx";
 import Signup from "./components/Signup.jsx";
 // import Login from "./components/Login.jsx";
 import Login from "./components/StateLogin.jsx";
@@ -12,29 +13,23 @@ import { useState } from "react";
 function App() {
     const [showSignup, setShowSignup] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    //const [currentUser, setCurrentUser] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
 
-    return (
-        <>      
-           
-             {!isLoggedIn ? <Header /> : <HeaderHome />}
-            <main>
-                {showSignup ? (
-                    <Signup />
-                )  : (
+    if (!currentUser) {
+        return (
+        
                     <Login
                         onSignupClick={() => setShowSignup(true)}
                         onLoginSuccess={(user) => {
-                            //setCurrentUser(user);
+                            setCurrentUser(user);
                             setIsLoggedIn(true);
                         }}
                     />
-                )}
-            </main>
-        </>
-    );
-}
-
+                )
+            }
+             return <HomePage user={currentUser} />;
+    }
+   
 export default App;
 
 // import logo from './logo.svg';
