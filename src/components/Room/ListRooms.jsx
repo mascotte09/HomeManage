@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback  } from "react";
 import { supabase } from '../../supabase'
 import RoomsSidebar from "./RoomsSidebar.jsx";
 import NewRoom from "./NewRoom.jsx";
@@ -6,11 +6,11 @@ import NoProjectSelected from "./NoRoomSelected.jsx";
 import SelectedProject from "./SelectedRoom.jsx";
 
 export default function ListRooms({user_id}) {
-const [roomsState, setRoomsState] = useState({
-        selectedHomeId: undefined,
-        rooms: [],
-        invoices: [],
-    });
+    const [roomsState, setRoomsState] = useState({
+            selectedHomeId: undefined,
+            rooms: [],
+            invoices: [],
+        });
     // store homes
     const [homeID, setHomes] = useState('');
    
@@ -19,7 +19,7 @@ const [roomsState, setRoomsState] = useState({
         fetchUserHomes();
     }, []);
    
-    async function fetchUserHomes() {
+    const fetchUserHomes = useCallback(async () => {
         // Step 1: get homes of this user
         const { data: homesData, error: homesError } = await supabase
             .from("homes")
@@ -33,16 +33,14 @@ const [roomsState, setRoomsState] = useState({
 
         // no homes found
         if (!homesData || homesData.length === 0) {
-           
-            setRoomsState((prevState) => {
-                return {
-                    ...prevState,
-                    rooms: [],
-                };
-            });
+            setRoomsState((prevState) => ({
+                ...prevState,
+                rooms: [],
+            }));
 
             return;
         }
+
         // save homes into state
         setHomes(homesData[0].id);
 
@@ -61,13 +59,16 @@ const [roomsState, setRoomsState] = useState({
         }
 
         // store rooms
-        setRoomsState((prevState) => {
-            return {
-                ...prevState,
-                rooms: roomsData || [],
-            };
-        });
-    }
+        setRoomsState((prevState) => ({
+            ...prevState,
+            rooms: roomsData || [],
+        }));
+    }, [user_id]);
+
+    useEffect(() => {
+        fetchUserHomes();
+    }, [fetchUserHomes]);
+
     // * Project handlers
     function handleSelectProject(id) {
         setRoomsState((prevState) => {

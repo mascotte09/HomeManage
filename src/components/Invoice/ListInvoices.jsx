@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from '../../supabase'
 import InvoicesSidebar from "./InvoicesSidebar.jsx";
 import NewInvoice from "./NewInvoice.jsx";
@@ -19,7 +19,7 @@ const [roomsState, setRoomsState] = useState({
         fetchUserHomes();
     }, []);
    
-    async function fetchUserHomes() {
+    const fetchUserHomes = useCallback(async () => {
         // Step 1: get homes of this user
         const { data: homesData, error: homesError } = await supabase
             .from("homes")
@@ -67,7 +67,11 @@ const [roomsState, setRoomsState] = useState({
                 rooms: roomsData || [],
             };
         });
-    }
+    }, [user_id]);
+    useEffect(() => {
+        fetchUserHomes();
+    }, [fetchUserHomes]);
+
     // * Project handlers
     function handleSelectProject(id) {
         setRoomsState((prevState) => {
