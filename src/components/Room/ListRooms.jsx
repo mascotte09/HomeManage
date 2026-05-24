@@ -4,54 +4,25 @@ import RoomsSidebar from "./RoomsSidebar.jsx";
 import NewRoom from "./NewRoom.jsx";
 import NoProjectSelected from "./NoRoomSelected.jsx";
 import SelectedProject from "./SelectedRoom.jsx";
+import { useParams } from "react-router-dom";
 
-export default function ListRooms({user_id}) {
+export default function ListRooms() {
     const [roomsState, setRoomsState] = useState({
             selectedHomeId: undefined,
             rooms: [],
             invoices: [],
         });
     // store homes
-    const [homeID, setHomes] = useState('');
-   
-    // load homes/rooms for this user
-    // useEffect(() => {
-    //     fetchUserHomes();
-    // }, []);
-   
+    //const [homeID, setHomes] = useState('');
+    const { houseId } = useParams();
+
     const fetchUserHomes = useCallback(async () => {
-        // Step 1: get homes of this user
-        const { data: homesData, error: homesError } = await supabase
-            .from("homes")
-            .select("id, name")
-            .eq("userID", user_id);
-
-        if (homesError) {
-            console.log(homesError.message);
-            return;
-        }
-
-        // no homes found
-        if (!homesData || homesData.length === 0) {
-            setRoomsState((prevState) => ({
-                ...prevState,
-                rooms: [],
-            }));
-
-            return;
-        }
-
-        // save homes into state
-        setHomes(homesData[0].id);
-
-        // extract home ids
-        const homeIds = homesData.map((home) => home.id);
-
-        // Step 2: get rooms belonging to those homes
+       
+        // get rooms belonging to house id
         const { data: roomsData, error: roomsError } = await supabase
             .from("rooms")
             .select("*")
-            .in("home_id", homeIds);
+            .eq("home_id", houseId);
 
         if (roomsError) {
             console.log(roomsError.message);
@@ -63,7 +34,7 @@ export default function ListRooms({user_id}) {
             ...prevState,
             rooms: roomsData || [],
         }));
-    }, [user_id]);
+    }, [houseId]);
 
     useEffect(() => {
         fetchUserHomes();
@@ -124,16 +95,16 @@ export default function ListRooms({user_id}) {
 
     let content;
     if (roomsState.selectedHomeId === null) {
-        content = <NewRoom homeID={homeID} onAdd={handleAddProject} onCancel={handleCancelAddProject} />;
+        content = <NewRoom homeID={houseId} onAdd={handleAddProject} onCancel={handleCancelAddProject} />;
     } else if (roomsState.selectedHomeId === undefined) {
         content = <NoProjectSelected onStartAddProject={handleStartAddProject} />;
     } else {
-        const selectedProject = roomsState.rooms.find(
-            (project) => project.id === roomsState.selectedHomeId
+        const selectedRoom = roomsState.rooms.find(
+            (room) => room.id === roomsState.selectedHomeId
         );
         content = (
             <SelectedProject
-                room={selectedProject}
+                room={selectedRoom}
                 onDelete={handleDeleteHome}
                 tasks={roomsState.invoices}
                 onAddTask={handleAddTask}

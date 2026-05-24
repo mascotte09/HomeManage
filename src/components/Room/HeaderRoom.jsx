@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+
 export default function Header() {
     const navigate = useNavigate();
+    const { houseId } = useParams();
     return (
             <header className="bg-gray-800 text-white px-3 py-0 flex justify-between items-center m-0">
    
@@ -11,14 +14,14 @@ export default function Header() {
                 <div className="flex gap-3">
    
                     <button
-                        onClick={() => navigate("/rooms")}
+                        onClick={() =>  navigate(`/rooms/${houseId}`)}
                         className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
                     >
                         Rooms
                     </button>
    
                     <button
-                        onClick={() => navigate("/invoices")}
+                        onClick={() => navigate(`/invoicesInMonth/${houseId}`)}
                         className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded"
                     >
                         Invoices

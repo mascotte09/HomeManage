@@ -1,6 +1,6 @@
 // import Header from "./components/Header.jsx";
 // import HeaderHome from "./components/HeaderHome.jsx";
-import HomePage from "./components/HomePage.jsx";
+import RouterPage from "./components/RouterPage.jsx";
 // import Signup from "./components/Signup.jsx";
 // import Login from "./components/Login.jsx";
 import Login from "./components/StateLogin.jsx";
@@ -28,7 +28,7 @@ function App() {
                     />
                 )
             }
-             return <HomePage user={currentUser} />;
+            return <RouterPage user={currentUser} />;
     }
    
 export default App;
