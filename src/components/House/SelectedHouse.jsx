@@ -50,8 +50,8 @@ export default function SelectedProject({
 
   return (
     <>
-<div className="w-[35rem] mt-10">
-    <header className="pb-4 mb-4 border-b border-stone-300">
+    <div className="ml-0 flex flex-col items-start">
+    <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300">
 
       {/* Buttons */}
       <div className="flex gap-2 mb-6">
@@ -77,35 +77,35 @@ export default function SelectedProject({
         </button>
       </div>
 
-      <div className="space-y-4">
-  <Input
-    label="Tên nhà trọ"
-    type="text"
-    value={name}
-    onChange={(e) => setName(e.target.value)}
-  />
+      <div className="flex flex-col items-start gap-3">
+        <Input
+          label="Tên nhà trọ"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-  <Input
-    label="Địa chỉ"
-    type="text"
-    value={address}
-    onChange={(e) => setAddress(e.target.value)}
-  />
+        <Input
+          label="Địa chỉ"
+          type="text"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
 
-  <Input
-    label="Ngân hàng"
-    type="text"
-    value={bankID}
-    onChange={(e) => setBankID(e.target.value)}
-  />
+        <Input
+          label="Ngân hàng"
+          type="text"
+          value={bankID}
+          onChange={(e) => setBankID(e.target.value)}
+        />
 
-  <Input
-    label="Tài khoản"
-    type="text"
-    value={bankAccount}
-    onChange={(e) => setBankAccount(e.target.value)}
-  />
-</div>
+        <Input
+          label="Tài khoản"
+          type="text"
+          value={bankAccount}
+          onChange={(e) => setBankAccount(e.target.value)}
+        />
+      </div>
 
     </header>
   </div>

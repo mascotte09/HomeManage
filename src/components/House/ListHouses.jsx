@@ -105,7 +105,7 @@ export default function ListHouses({user_id}) {
         <div className="h-screen flex flex-col m-0 p-0">
 
         {/* Main Content */}
-        <main className="flex-1 flex gap-6 mt-0 pt-0">
+        <main className="flex-1 flex gap-2 mt-0 pt-0">
 
             <HousesSidebar
                 onStartAddHouse={handleStartAddHouse}
