@@ -95,39 +95,40 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
                 />
             </div>
 
-            <div className="form-actions">
-                <button
-                    type="button"
-                    className="button button-flat"
-                    onClick={handleReset}
-                >
-                    Reset
-                </button>
-
-                <button
-                    className="button"
-                    type="submit"
-                >
-                    Login
-                </button>
-            </div>
-
             <div
+                className="form-actions"
                 style={{
-                    marginTop: "12px",
                     display: "flex",
-                    gap: "10px",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                 }}
             >
-                <p>Don’t have an account?</p>
-
+                {/* Left */}
                 <button
                     type="button"
                     onClick={onSignupClick}
-                    className="button"
+                    className="button button-flat"
                 >
-                    Sign Up
+                    Sign Up Here
                 </button>
+
+                {/* Right */}
+                <span style={{ display: "flex", gap: "10px" }}>
+                    <button
+                        type="button"
+                        className="button button-flat"
+                        onClick={handleReset}
+                    >
+                        Reset
+                    </button>
+
+                    <button
+                        className="button"
+                        type="submit"
+                    >
+                        Login
+                    </button>
+                </span>
             </div>
         </form>
     );
