@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 
-export default function Header() {
+export default function Header({ onLogout }) {
     const navigate = useNavigate();
     const { houseId } = useParams();
     return (
@@ -35,7 +35,10 @@ export default function Header() {
                         Reports
                     </button>
    
-                    <button className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+                    <button
+                        className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded"
+                        onClick={onLogout}
+                    >
                         Logout
                     </button>
    
