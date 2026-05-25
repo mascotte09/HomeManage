@@ -9,6 +9,7 @@ import HeaderHouse from "./components/House/HeaderHouse";
 import HeaderRoom from "./components/Room/HeaderRoom";
 import ListHouses from "./components/House/ListHouses";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
+import ListExpenses from "./components/Expense/ListExpenses.jsx";
 
 function App() {
     const [showSignup, setShowSignup] = useState(false);
@@ -92,6 +93,16 @@ function App() {
                                     setIsLoggedIn(false);
                                 }}/>
                                 <InvoicesInMonth />
+                            </>
+                        } />
+                    <Route path="/expense/:houseId" 
+                        element={
+                            <>
+                                <HeaderRoom onLogout={() => {
+                                    setCurrentUser(null);
+                                    setIsLoggedIn(false);
+                                }}/>
+                                <ListExpenses />
                             </>
                         } />
                 </Routes>
