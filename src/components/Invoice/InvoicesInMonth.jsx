@@ -174,6 +174,7 @@ export default function InvoicesInMonth() {
     <div className="h-screen flex flex-col m-0 p-0">
       <main className="flex-1 flex gap-6 mt-0 pt-0">
         <InvoicesSidebar
+          houseID={houseId}
           noInvRooms={state.noInvRooms}
           invRooms={state.invRooms}
           onSelectProject={handleSelectRoom}

@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback  } from "react";
 import { supabase } from '../../supabase'
 import HousesSidebar from "./HousesSidebar.jsx";
-import NewHouse from "./NewHouse.jsx";
 import NoHouseSelected from "./NoHouseSelected.jsx";
 import SelectedHouse from "./SelectedHouse.jsx";
 
@@ -65,12 +64,6 @@ export default function ListHouses({user_id}) {
         });
     }
 
-    function handleAddHouse(houseData) {
-        setHousesState((prevState) => {
-            return { ...prevState, selectedHomeId: undefined, houses: [...prevState.houses, houseData] };
-        });
-    }
-
     function handleDeleteHome() {
         setHousesState((prevState) => {
             return {
@@ -84,19 +77,59 @@ export default function ListHouses({user_id}) {
    
 
     let content;
-    if (housesState.selectedHomeId === null) {
-        content = <NewHouse userID={user_id} onAdd={handleAddHouse} onCancel={handleCancelAddHouse} />;
-    } else if (housesState.selectedHomeId === undefined) {
-        content = <NoHouseSelected onStartAddHouse={handleStartAddHouse} />;
-    } else {
-        const selectedHouse = housesState.houses.find(
-            (project) => project.id === housesState.selectedHomeId
+
+    // Create new house
+    if (
+    housesState.selectedHomeId === null
+    ) {
+
+    content = (
+        <SelectedHouse
+            userID={user_id}
+            onDelete={
+                handleCancelAddHouse
+            }
+            refreshHouses={
+                fetchUserHomes
+            }
+            />
         );
+        }
+
+        // Nothing selected
+        else if (
+            housesState.selectedHomeId ===
+            undefined
+        ) {
+
+        content = (
+            <NoHouseSelected
+            onStartAddHouse={
+                handleStartAddHouse
+            }
+            />
+        );
+        }
+
+        // Selected house
+        else {
+
+        const selectedHouse =
+            housesState.houses.find(
+            (project) =>
+                project.id ===
+                housesState.selectedHomeId
+            );
+
         content = (
             <SelectedHouse
-                house={selectedHouse}
-                onDelete={handleDeleteHome}
-                refreshHouses={fetchUserHomes}
+            house={selectedHouse}
+            onDelete={
+                handleDeleteHome
+            }
+            refreshHouses={
+                fetchUserHomes
+            }
             />
         );
     }

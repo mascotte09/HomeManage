@@ -1,115 +1,186 @@
-import { useEffect, useState, useCallback  } from "react";
-import { supabase } from '../../supabase'
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "../../supabase";
+
 import RoomsSidebar from "./RoomsSidebar.jsx";
-import NewRoom from "./NewRoom.jsx";
 import NoProjectSelected from "./NoRoomSelected.jsx";
-import SelectedProject from "./SelectedRoom.jsx";
+import SelectedRoom from "./SelectedRoom.jsx";
+
 import { useParams } from "react-router-dom";
 
 export default function ListRooms() {
-    const [roomsState, setRoomsState] = useState({
-            selectedHomeId: undefined,
+
+    const [roomsState, setRoomsState] =
+        useState({
+            selectedRoomId: undefined,
             rooms: [],
             invoices: [],
         });
-    // store homes
-    //const [homeID, setHomes] = useState('');
+
     const { houseId } = useParams();
 
-    const fetchUserHomes = useCallback(async () => {
-       
-        // get rooms belonging to house id
-        const { data: roomsData, error: roomsError } = await supabase
-            .from("rooms")
-            .select("*")
-            .eq("home_id", houseId);
+    // Fetch rooms
+    const fetchRooms = useCallback(
+        async () => {
 
-        if (roomsError) {
-            console.log(roomsError.message);
-            return;
-        }
+            const {
+                data: roomsData,
+                error: roomsError,
+            } = await supabase
+                .from("rooms")
+                .select("*")
+                .eq("home_id", houseId);
 
-        // store rooms
-        setRoomsState((prevState) => ({
-            ...prevState,
-            rooms: roomsData || [],
-        }));
-    }, [houseId]);
+            if (roomsError) {
+                console.log(
+                    roomsError.message
+                );
+                return;
+            }
+
+            setRoomsState((prev) => ({
+                ...prev,
+                rooms: roomsData || [],
+            }));
+        },
+        [houseId]
+    );
 
     useEffect(() => {
-        fetchUserHomes();
-    }, [fetchUserHomes]);
+        fetchRooms();
+    }, [fetchRooms]);
 
-    // * Project handlers
+    // Select room
     function handleSelectProject(id) {
-        setRoomsState((prevState) => {
-            return { ...prevState, selectedHomeId: id };
-        });
+
+        setRoomsState((prev) => ({
+            ...prev,
+            selectedRoomId: id,
+        }));
     }
 
+    // Start add
     function handleStartAddProject() {
-        setRoomsState((prevState) => {
-            return { ...prevState, selectedHomeId: null };
-        });
+
+        setRoomsState((prev) => ({
+            ...prev,
+            selectedRoomId: null,
+        }));
     }
 
+    // Cancel add
     function handleCancelAddProject() {
-        setRoomsState((prevState) => {
-            return { ...prevState, selectedHomeId: undefined };
-        });
+
+        setRoomsState((prev) => ({
+            ...prev,
+            selectedRoomId: undefined,
+        }));
     }
 
-    function handleAddProject(houseData) {
-        setRoomsState((prevState) => {
-            return { ...prevState, selectedHomeId: undefined, rooms: [...prevState.rooms, houseData] };
-        });
+    // Delete room
+    function handleDeleteRoom() {
+
+        setRoomsState((prev) => ({
+            ...prev,
+            selectedRoomId: undefined,
+            rooms: prev.rooms.filter(
+                (room) =>
+                    room.id !==
+                    prev.selectedRoomId
+            ),
+        }));
     }
 
-    function handleDeleteHome() {
-        setRoomsState((prevState) => {
-            return {
-                ...prevState,
-                selectedHomeId: undefined,
-                rooms: prevState.rooms.filter((home) => home.id !== prevState.selectedHomeId),
-            };
-        });
-    }
-
-    // * Task handlers
+    // Tasks
     function handleAddTask(text) {
-        const newTask = { text: text, projectId: roomsState.selectedHomeId, id: Math.random() };
 
-        setRoomsState((prevState) => {
-            return { ...prevState, invoices: [newTask, ...prevState.invoices] };
-        });
+        const newTask = {
+            text: text,
+            projectId:
+                roomsState.selectedRoomId,
+            id: Math.random(),
+        };
+
+        setRoomsState((prev) => ({
+            ...prev,
+            invoices: [
+                newTask,
+                ...prev.invoices,
+            ],
+        }));
     }
 
     function handleDeleteTask(id) {
-        setRoomsState((prevState) => {
-            return {
-                ...prevState,
-                invoices: prevState.invoices.filter((invoices) => invoices.id !== id),
-            };
-        });
+
+        setRoomsState((prev) => ({
+            ...prev,
+            invoices:
+                prev.invoices.filter(
+                    (invoice) =>
+                        invoice.id !== id
+                ),
+        }));
     }
 
     let content;
-    if (roomsState.selectedHomeId === null) {
-        content = <NewRoom homeID={houseId} onAdd={handleAddProject} onCancel={handleCancelAddProject} />;
-    } else if (roomsState.selectedHomeId === undefined) {
-        content = <NoProjectSelected onStartAddProject={handleStartAddProject} />;
-    } else {
-        const selectedRoom = roomsState.rooms.find(
-            (room) => room.id === roomsState.selectedHomeId
-        );
+
+    // CREATE ROOM
+    if (
+        roomsState.selectedRoomId ===
+        null
+    ) {
+
         content = (
-            <SelectedProject
+            <SelectedRoom
+                homeID={houseId}
+                onDelete={
+                    handleCancelAddProject
+                }
+                refreshRooms={fetchRooms}
+            />
+        );
+    }
+
+    // NOTHING SELECTED
+    else if (
+        roomsState.selectedRoomId ===
+        undefined
+    ) {
+
+        content = (
+            <NoProjectSelected
+                onStartAddProject={
+                    handleStartAddProject
+                }
+            />
+        );
+    }
+
+    // SELECTED ROOM
+    else {
+
+        const selectedRoom =
+            roomsState.rooms.find(
+                (room) =>
+                    room.id ===
+                    roomsState.selectedRoomId
+            );
+
+        content = (
+            <SelectedRoom
+                homeID={houseId}
                 room={selectedRoom}
-                onDelete={handleDeleteHome}
-                tasks={roomsState.invoices}
-                onAddTask={handleAddTask}
-                onDeleteTask={handleDeleteTask}
-                refreshRooms={fetchUserHomes}
+                onDelete={
+                    handleDeleteRoom
+                }
+                onAddTask={
+                    handleAddTask
+                }
+                onDeleteTask={
+                    handleDeleteTask
+                }
+                refreshRooms={
+                    fetchRooms
+                }
             />
         );
     }
@@ -117,19 +188,26 @@ export default function ListRooms() {
     return (
         <div className="h-screen flex flex-col m-0 p-0">
 
-        {/* Main Content */}
-        <main className="flex-1 flex gap-6 mt-0 pt-0">
+            <main className="flex-1 flex gap-2 mt-0 pt-0">
 
-            <RoomsSidebar
-                onStartAddProject={handleStartAddProject}
-                homes={roomsState.rooms}
-                onSelectHome={handleSelectProject}
-                selectedHomeId={roomsState.selectedHomeId}
-            />
+                <RoomsSidebar
+                    onStartAddProject={
+                        handleStartAddProject
+                    }
+                    homes={
+                        roomsState.rooms
+                    }
+                    onSelectHome={
+                        handleSelectProject
+                    }
+                    selectedHomeId={
+                        roomsState.selectedRoomId
+                    }
+                />
 
-            {content}
+                {content}
 
-        </main>
-    </div>
-    )
+            </main>
+        </div>
+    );
 }
