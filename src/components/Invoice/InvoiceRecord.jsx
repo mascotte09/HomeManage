@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { supabase } from "../../supabase";
+import Input from "../InputVal.jsx";
 
 export default function InvoiceRecord({
   room,
@@ -10,33 +11,73 @@ export default function InvoiceRecord({
   onAdd,
 }) {
   const isExistingInvoice = !!invoice;
-
+  
   const summaryRef = useRef(null);
 
-  const [isEditing, setIsEditing] = useState(false);
+  //const [isEditing, setIsEditing] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] =
     useState(false);
 
   const [home, setHome] = useState(null);
 
+  const isWaterPerPerson =
+      home?.is_water_per_person;
+  const waterPrice =
+    Number(home?.water_price) || 0;
+
+  const elecPrice =
+      Number(home?.electricity_price) || 0;
+  const numPerson =
+      Number(home?.numPerson) || 0;
   const [formData, setFormData] = useState({
-    current_electricity_number: "",
-    new_electricity_number: "",
-    current_water_number: "",
-    new_water_number: "",
-    wifi_amount: "",
-    surcharge: "",
-    amount_already_pay: "",
-    note: "",
-  });
+    invoice_create_date:
+      new Date()
+        .toISOString()
+        .substring(0, 10),
+
+      rental_amount: "",
+
+      current_electricity_number: "",
+      new_electricity_number: "",
+
+      current_water_number: "",
+      new_water_number: "",
+
+      wifi_amount: "",
+      surcharge: "",
+
+      amount_already_pay: "",
+
+      note: "",
+    });
   // =========================
   // LOAD INVOICE
   // =========================
   useEffect(() => {
-    if (!invoice) return;
+    if (!invoice) {
+      setFormData((prev) => ({
+        ...prev,
+
+        current_electricity_number:
+          room?.current_electricity_number || "",
+
+        current_water_number:
+          room?.current_water_number || "",
+      }));
+
+      return;
+    }
 
     setFormData({
+      invoice_create_date:
+        invoice.invoice_create_date
+          ? invoice.invoice_create_date.substring(0, 10)
+          : "",
+
+      rental_amount:
+        invoice.rental_amount || "",
+
       current_electricity_number:
         invoice.current_electricity_number || "",
 
@@ -49,16 +90,19 @@ export default function InvoiceRecord({
       new_water_number:
         invoice.new_water_number || "",
 
-      wifi_amount: invoice.wifi_amount || "",
+      wifi_amount:
+        invoice.wifi_amount || "",
 
-      surcharge: invoice.surcharge || "",
+      surcharge:
+        invoice.surcharge || "",
 
       amount_already_pay:
         invoice.amount_already_pay || "",
 
-      note: invoice.note || "",
+      note:
+        invoice.note || "",
     });
-  }, [invoice]);
+  }, [invoice, room]);
 
   useEffect(() => {
    async function fetchHome() {
@@ -112,16 +156,18 @@ export default function InvoiceRecord({
       (Number(formData.new_water_number) || 0) -
       (Number(formData.current_water_number) || 0);
 
-    const electAmount = electUsed * 3500;
+    const electAmount = electUsed * elecPrice;
 
-    const waterAmount = waterUsed * 15000;
+    const waterAmount = isWaterPerPerson
+        ? numPerson * waterPrice
+        : waterUsed * waterPrice;
 
     const total =
+     (Number(formData.rental_amount) || 0) +
       electAmount +
       waterAmount +
       (Number(formData.wifi_amount) || 0) +
-      (Number(formData.surcharge) || 0) -
-      (Number(formData.amount_already_pay) || 0);
+      (Number(formData.surcharge) || 0);
     
     return {
       electAmount,
@@ -219,6 +265,10 @@ const qrUrl = hasBankInfo
   // CREATE
   // =========================
   async function handleCreate() {
+    if ((Number(formData.current_electricity_number) > Number(formData.new_electricity_number)) ||
+      (Number(formData.current_water_number) > Number(formData.new_water_number))) {
+      return
+    }
     const payload = {
       room_id: room.id,
 
@@ -235,8 +285,11 @@ const qrUrl = hasBankInfo
 
       new_water_number:
         Number(formData.new_water_number) || null,
+      rental_amount:
+        Number(formData.rental_amount) || null,
 
-      invoice_create_date: new Date().toISOString(),
+      invoice_create_date:
+        formData.invoice_create_date || null,
 
       amount_already_pay:
         Number(formData.amount_already_pay) || null,
@@ -275,7 +328,13 @@ const qrUrl = hasBankInfo
   // UPDATE
   // =========================
   async function handleUpdate() {
+    if ((Number(formData.current_electricity_number) > Number(formData.new_electricity_number)) ||
+      (Number(formData.current_water_number) > Number(formData.new_water_number))) {
+      return
+    }
     const payload = {
+      rental_amount:
+        Number(formData.rental_amount) || null,
       current_electricity_number:
         Number(formData.current_electricity_number) ||
         null,
@@ -323,10 +382,87 @@ const qrUrl = hasBankInfo
 
     await captureAndShare();
 
-    setIsEditing(false);
+    //setIsEditing(false);
 
     onAdd?.();
   }
+  const [hasPreviousInvoice, setHasPreviousInvoice] = useState(false);
+
+  useEffect(() => {
+
+  async function checkPreviousInvoice() {
+
+    if (!room?.id) {
+
+      setHasPreviousInvoice(false);
+
+      return;
+    }
+
+    let query = supabase
+      .from("invoices")
+      .select(`
+        id,
+        rental_amount,
+        new_electricity_number,
+        new_water_number
+      `)
+      .eq("room_id", room.id)
+      .order(
+        "invoice_create_date",
+        { ascending: false }
+      );
+
+    // exclude current invoice
+    if (invoice?.id) {
+
+      query = query.neq(
+        "id",
+        invoice.id
+      );
+    }
+
+    const { data, error } =
+      await query.limit(1);
+
+    if (error) {
+
+      console.log(error.message);
+
+      return;
+    }
+
+    const latestInvoice =
+      data?.[0];
+
+    const hasInvoice =
+      !!latestInvoice;
+
+    setHasPreviousInvoice(
+      hasInvoice
+    );
+
+    // CREATE NEW INVOICE
+    if (
+      hasInvoice &&
+      !invoice
+    ) {
+
+      setFormData((prev) => ({
+        ...prev,
+
+        rental_amount: 
+          Number(latestInvoice.rental_amount) || null,
+        current_electricity_number:
+          latestInvoice.new_electricity_number || "",
+        current_water_number:
+          latestInvoice.new_water_number || "",
+      }));
+    }
+  }
+  checkPreviousInvoice();
+
+}, [room, invoice]);
 
   // =========================
   // DELETE
@@ -348,21 +484,8 @@ const qrUrl = hasBankInfo
     onAdd?.();
   }
 
-  const disabled =
-    isExistingInvoice && !isEditing;
-
-  const inputClass =
-    "w-full border rounded p-2 bg-white text-black";
-
-  const Field = ({ label, children }) => (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold text-black">
-        {label}
-      </label>
-
-      {children}
-    </div>
-  );
+  
+  
 
   return (
     <div className="w-full p-6">
@@ -370,29 +493,20 @@ const qrUrl = hasBankInfo
       {/* HEADER */}
       <div className="flex justify-between mb-6">
         <h2 className="text-2xl font-bold text-black">
-          Room {room?.room_number}
+          Room {room?.room_name}
         </h2>
 
         <div className="flex gap-2">
-
-          {isExistingInvoice && !isEditing && (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Update
-            </button>
-          )}
-
-          {isExistingInvoice && isEditing && (
+          
+        
+          {isExistingInvoice && (
             <button
               onClick={handleUpdate}
               className="bg-green-600 text-white px-4 py-2 rounded"
             >
-              Save Update
+                Update
             </button>
           )}
-
           {isExistingInvoice && (
             <button
               onClick={() =>
@@ -407,98 +521,190 @@ const qrUrl = hasBankInfo
       </div>
 
       {/* FORM */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex flex-col gap-3 mt-4">
 
-        <Field label="Current Electricity">
-          <input
-            name="current_electricity_number"
-            value={formData.current_electricity_number}
-            onChange={handleChange}
-            disabled={disabled}
-            className={inputClass}
-          />
-        </Field>
+        <Input
+          label="Invoice Date"
+          type="date"
+          value={formData.invoice_create_date}          
+          onChange={handleChange}
+          name="invoice_create_date"
+        />
 
-        <Field label="New Electricity">
-          <input
-            name="new_electricity_number"
-            value={formData.new_electricity_number}
-            onChange={handleChange}
-            disabled={disabled}
-            className={inputClass}
-          />
-        </Field>
+        <Input
+          label="Rental Amount"
+          type="text"
+          value={Number(
+            formData.rental_amount || 0
+          ).toLocaleString("vi-VN")}
+          
+          name="rental_amount"
+          onChange={(e) => {
 
-        <Field label="Current Water">
-          <input
-            name="current_water_number"
-            value={formData.current_water_number}
-            onChange={handleChange}
-            disabled={disabled}
-            className={inputClass}
-          />
-        </Field>
+            const raw =
+              e.target.value.replace(/\./g, "");
 
-        <Field label="New Water">
-          <input
-            name="new_water_number"
-            value={formData.new_water_number}
-            onChange={handleChange}
-            disabled={disabled}
-            className={inputClass}
-          />
-        </Field>
+            const number =
+              Number(
+                raw.replace(/\D/g, "")
+              );
 
-        <Field label="Wifi Amount">
-          <input
-            name="wifi_amount"
-            value={formData.wifi_amount}
-            onChange={handleChange}
-            disabled={disabled}
-            className={inputClass}
-          />
-        </Field>
+            setFormData((prev) => ({
+              ...prev,
+              rental_amount: number,
+            }));
+          }}
+        />
 
-        <Field label="Surcharge">
-          <input
-            name="surcharge"
-            value={formData.surcharge}
-            onChange={handleChange}
-            disabled={disabled}
-            className={inputClass}
-          />
-        </Field>
+        {/* ELECTRIC */}
+        <div
+          className={
+            hasPreviousInvoice
+              ? "grid grid-cols-1 gap-3"
+              : "grid grid-cols-2 gap-3"
+          }
+        >
 
-        <Field label="Already Paid">
-          <input
-            name="amount_already_pay"
-            value={formData.amount_already_pay}
-            onChange={handleChange}
-            disabled={disabled}
-            className={inputClass}
-          />
-        </Field>
-
-        <div className="col-span-2">
-          <Field label="Note">
-            <textarea
-              name="note"
-              value={formData.note}
+          {!hasPreviousInvoice && (
+          <>
+            <Input
+              label="Số Điện Cũ"
+              type="number"
+              name="current_electricity_number"
+              value={
+                formData.current_electricity_number
+              }
               onChange={handleChange}
-              disabled={disabled}
-              className={`${inputClass} h-24`}
+              
             />
-          </Field>
+
+            <Input
+              label="Số Nước Cũ"
+              type="number"
+              name="current_water_number"
+              value={
+                formData.current_water_number
+              }
+              onChange={handleChange}
+              
+            />
+          </>
+        )}
+       
+
+        </div>
+
+        {/* WATER */}
+        <div
+          className={
+            isWaterPerPerson
+              ? "grid grid-cols-1 gap-3"
+              : "grid grid-cols-2 gap-3"
+          }
+        >
+
+          <Input
+            label="Số Điện Mới"
+            type="number"
+            name="new_electricity_number"
+            value={
+              formData.new_electricity_number
+            }
+            onChange={handleChange}
+            
+            placeholder={
+              hasPreviousInvoice
+                ? `Current: ${
+                    formData.current_electricity_number || 0
+                  }`
+                : ""
+            }
+            error={
+              Number(formData.current_electricity_number) >
+              Number(formData.new_electricity_number)
+                ? "Số điện mới phải lớn hơn hoặc bằng số điện cũ."
+                : ""
+            }            
+          />
+        
+          {!isWaterPerPerson && (
+            <Input
+              label="Số Nước Mới"
+              type="number"
+              name="new_water_number"
+              value={
+                formData.new_water_number
+              }
+              onChange={handleChange}
+              
+              placeholder={
+                hasPreviousInvoice
+                  ? `Current: ${
+                      formData.current_water_number || 0
+                    }`
+                  : ""
+              }
+              error={
+                Number(formData.current_water_number) >
+                Number(formData.new_water_number)
+                  ? "Số nước mới phải lớn hơn hoặc bằng số nước cũ."
+                  : ""
+              }
+            />
+          )}
+          
+        </div>
+
+        <Input
+          label="Wifi Amount"
+          type="text"
+          value={Number(
+            formData.wifi_amount || 0
+          ).toLocaleString("vi-VN")}
+          
+          name="wifi_amount"
+          onChange={(e) => {
+
+            const raw =
+              e.target.value.replace(/\./g, "");
+
+            const number =
+              Number(
+                raw.replace(/\D/g, "")
+              );
+
+            setFormData((prev) => ({
+              ...prev,
+              wifi_amount: number,
+            }));
+          }}
+        />
+
+
+        <div className="flex flex-col gap-1">
+
+          <label className="text-xs font-semibold text-black">
+            Note
+          </label>
+
+          <textarea
+            name="note"
+            value={formData.note}
+            onChange={handleChange}
+            
+            className="w-full border rounded p-2 bg-white text-black h-24"
+          />
+
         </div>
 
       </div>
 
       {/* SUMMARY */}
       {/* SUMMARY */}
-<div
-  ref={summaryRef}
-  className="mt-6 bg-white border rounded-xl p-6 text-black"
->
+  <div
+    ref={summaryRef}
+    className="mt-6 bg-white border rounded-xl p-6 text-black"
+  >
 
   <div className="text-center mb-5">
     <h2 className="text-2xl font-bold">
@@ -506,24 +712,80 @@ const qrUrl = hasBankInfo
     </h2>
 
     <div className="text-sm text-gray-500 mt-1">
-      Room {room?.room_number}
+      Phòng: {room?.room_name}
     </div>
   </div>
 
   <div className="space-y-2 border-b pb-4">
-
     <div className="flex justify-between">
-      <span>Electric</span>
-      <span>{electAmount.toLocaleString()} đ</span>
+      <span>1. Tiền Phòng</span>
+
+      <span>
+        {Number(
+          formData.rental_amount || 0
+        ).toLocaleString()} đ
+      </span>
+    </div>
+    <div className="flex justify-between">
+      <div className="flex flex-col">      
+        <span>2. Tiền Điện</span>
+        <div className="flex gap-4 text-sm text-gray-500">
+          <span>
+            Số cũ:{" "}
+            {formData.current_electricity_number || 0}
+          </span>
+          <span>
+            Số mới:{" "}
+            {formData.new_electricity_number || 0}
+          </span>
+        </div>
+
+        <span className="text-sm text-gray-500">
+          {Number(formData.new_electricity_number) - Number(formData.current_electricity_number)} × {elecPrice.toLocaleString()} đ
+        </span>
+
+      </div>
+
+      <span>
+        {electAmount.toLocaleString()} đ
+      </span>
     </div>
 
     <div className="flex justify-between">
-      <span>Water</span>
-      <span>{waterAmount.toLocaleString()} đ</span>
+      <div className="flex flex-col">      
+        <span>3. Tiền Điện</span>
+        <div className="flex gap-4 text-sm text-gray-500">
+          <span>
+            Số cũ:{" "}
+            {formData.current_water_number || 0}
+          </span>
+          <span>
+            Số mới:{" "}
+            {formData.new_water_number || 0}
+          </span>
+        </div>
+
+        <span className="text-sm text-gray-500">
+          {Number(formData.new_water_number) - Number(formData.current_water_number)} × {waterPrice.toLocaleString()} đ
+        </span>
+      </div>
+
+      <span>
+        {waterAmount.toLocaleString()} đ
+      </span>
     </div>
+    
 
     <div className="flex justify-between">
-      <span>Wifi</span>
+      <div className="flex flex-col">
+        <span>4. Tiền Dịch Vụ</span>
+        <div className="flex gap-4 text-sm text-gray-500">
+          <span>
+            Wifi, rác...
+          </span>          
+        </div>
+      </div>
+      
       <span>
         {Number(
           formData.wifi_amount || 0
@@ -531,25 +793,7 @@ const qrUrl = hasBankInfo
       </span>
     </div>
 
-    <div className="flex justify-between">
-      <span>Surcharge</span>
-      <span>
-        {Number(
-          formData.surcharge || 0
-        ).toLocaleString()} đ
-      </span>
-    </div>
-
-    <div className="flex justify-between">
-      <span>Already Paid</span>
-      <span>
-        -
-        {Number(
-          formData.amount_already_pay || 0
-        ).toLocaleString()} đ
-      </span>
-    </div>
-
+    
   </div>
 
   <div className="flex justify-between mt-5 text-xl font-bold">
