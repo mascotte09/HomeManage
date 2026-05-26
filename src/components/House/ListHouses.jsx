@@ -72,9 +72,7 @@ export default function ListHouses({user_id}) {
                 houses: prevState.houses.filter((home) => home.id !== prevState.selectedHomeId),
             };
         });
-    }
-
-   
+    }   
 
     let content;
 

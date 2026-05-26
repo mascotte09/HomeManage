@@ -90,37 +90,6 @@ export default function ListRooms() {
         }));
     }
 
-    // Tasks
-    function handleAddTask(text) {
-
-        const newTask = {
-            text: text,
-            projectId:
-                roomsState.selectedRoomId,
-            id: Math.random(),
-        };
-
-        setRoomsState((prev) => ({
-            ...prev,
-            invoices: [
-                newTask,
-                ...prev.invoices,
-            ],
-        }));
-    }
-
-    function handleDeleteTask(id) {
-
-        setRoomsState((prev) => ({
-            ...prev,
-            invoices:
-                prev.invoices.filter(
-                    (invoice) =>
-                        invoice.id !== id
-                ),
-        }));
-    }
-
     let content;
 
     // CREATE ROOM
@@ -171,12 +140,6 @@ export default function ListRooms() {
                 room={selectedRoom}
                 onDelete={
                     handleDeleteRoom
-                }
-                onAddTask={
-                    handleAddTask
-                }
-                onDeleteTask={
-                    handleDeleteTask
                 }
                 refreshRooms={
                     fetchRooms

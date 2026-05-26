@@ -95,6 +95,7 @@ function App() {
                                 <InvoicesInMonth />
                             </>
                         } />
+
                     <Route path="/expense/:houseId" 
                         element={
                             <>

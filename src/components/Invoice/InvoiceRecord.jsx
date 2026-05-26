@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { supabase } from "../../supabase";
 
-export default function NewInvoice({
+export default function InvoiceRecord({
   room,
-  home,
+  homeID,
   invoice,  
   onCancel,
   onAdd,
@@ -17,6 +17,8 @@ export default function NewInvoice({
 
   const [showDeleteModal, setShowDeleteModal] =
     useState(false);
+
+  const [home, setHome] = useState(null);
 
   const [formData, setFormData] = useState({
     current_electricity_number: "",
@@ -57,6 +59,34 @@ export default function NewInvoice({
       note: invoice.note || "",
     });
   }, [invoice]);
+
+  useEffect(() => {
+   async function fetchHome() {
+      console.debug("Home ID:" + homeID);
+      if (!homeID) {
+        return;
+      }
+
+      const { data, error } =
+        await supabase
+          .from("homes")
+          .select("*")
+          .eq("id", homeID)
+          .single();
+
+      if (error) {
+
+        console.log(error.message);
+
+        return;
+      }
+
+      setHome(data);
+    }
+
+    fetchHome();
+
+  }, [homeID]);
 
   // =========================
   // HANDLE INPUT

@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../supabase.js";
 import InvoicesSidebar from "./InvoicesSidebar.jsx";
-import NewInvoice from "./NewInvoice.jsx";
+import InvoiceRecord from "./InvoiceRecord.jsx";
 import NoInvoiceSelected from "./NoInvoiceSelected.jsx";
-//import SelectedInvoice from "./SelectedInvoice.jsx";
 import { useParams } from "react-router-dom";
 
 export default function InvoicesInMonth() {
@@ -118,7 +117,7 @@ export default function InvoicesInMonth() {
       setMode("view");
     }
 
-    // ✅ NO invoice => show NewInvoice
+    // ✅ NO invoice => show InvoiceRecord
     else {
       setSelectedInvoice(null);
       setMode("create");
@@ -138,7 +137,7 @@ export default function InvoicesInMonth() {
   // CREATE INVOICE
   else if (mode === "create") {
     content = (
-      <NewInvoice
+      <InvoiceRecord
         room={selectedRoom}
         home={state.home}
         invoice={null}
@@ -154,7 +153,7 @@ export default function InvoicesInMonth() {
   // VIEW INVOICE
   else if (mode === "view") {
     content = (
-      <NewInvoice
+      <InvoiceRecord
         room={selectedRoom}
         home={state.home}
         invoice={selectedInvoice}
@@ -177,7 +176,7 @@ export default function InvoicesInMonth() {
           houseID={houseId}
           noInvRooms={state.noInvRooms}
           invRooms={state.invRooms}
-          onSelectProject={handleSelectRoom}
+          onSelectInvoice={handleSelectRoom}
         />
 
         {content}

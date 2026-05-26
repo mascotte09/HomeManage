@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import Photos from "../Photos.jsx";
+import InvoiceRecord from "../Invoice/InvoiceRecord.jsx";
 
 export default function SelectedRoom({
   homeID,
@@ -58,6 +59,12 @@ export default function SelectedRoom({
   const [invoices, setInvoices] =
     useState([]);
 
+  const [selectedInvoice, setSelectedInvoice] =
+    useState(null);
+
+  const [showInvoiceRecord, setShowInvoiceRecord] =
+    useState(false);
+    
   // Load selected room
   useEffect(() => {
 
@@ -138,6 +145,72 @@ export default function SelectedRoom({
     fetchInvoices();
 
   }, [room]);
+
+   // Add / Refresh invoice
+  function onEditInvoice(invoice) {
+    setSelectedInvoice(invoice);
+    setShowInvoiceRecord(true);
+  }
+  function onAddInvoice() {
+    setSelectedInvoice(null);
+    setShowInvoiceRecord(true);
+  }
+  // Delete invoice
+  async function onDeleteInvoice(
+    invoiceID
+  ) {
+
+    const confirmDelete =
+      window.confirm(
+        "Delete this invoice?"
+      );
+
+    if (!confirmDelete) return;
+
+    const { error } =
+      await supabase
+        .from("invoices")
+        .delete()
+        .eq("id", invoiceID);
+
+    if (error) {
+
+      console.log(error.message);
+
+      alert(
+        "Failed to delete invoice"
+      );
+
+      return;
+    }
+
+    // Refresh invoices
+    await refreshInvoices();
+  }
+
+  async function refreshInvoices() {
+
+    if (!room?.id) return;
+
+    const { data, error } =
+      await supabase
+        .from("invoices")
+        .select("*")
+        .eq("room_id", room.id)
+        .order(
+          "invoice_create_date",
+          { ascending: false }
+        );
+
+    if (error) {
+
+      console.log(error.message);
+
+      return;
+    }
+
+    setInvoices(data || []);
+  }
 
   // Save / Update
   async function handleSave() {
@@ -403,14 +476,17 @@ export default function SelectedRoom({
         {/* Invoices */}
         {!isNew && (
           <Invoices
+            homeID={homeID}
+            room={room}
             invoices={invoices}
-            onAdd={onAddTask}
-            onDelete={onDeleteTask}
+            onAdd={onAddInvoice}
+            onEdit={onEditInvoice}
+            onDelete={onDeleteInvoice}
           />
         )}
 
-      </div>
 
+      </div>
       {/* Photos Modal */}
       {!isNew && (
         <Photos
@@ -420,6 +496,35 @@ export default function SelectedRoom({
             setShowPhotos(false)
           }
         />
+      )}
+      {showInvoiceRecord && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex justify-center items-center">
+
+          <div className="bg-white w-full max-w-4xl rounded-xl overflow-auto max-h-[95vh]">
+
+            <InvoiceRecord
+              room={room}
+              homeID={homeID}
+              invoice={selectedInvoice}
+              onCancel={() => {
+
+                setShowInvoiceRecord(false);
+
+                setSelectedInvoice(null);
+              }}
+              onAdd={async () => {
+
+                await refreshInvoices();
+
+                setShowInvoiceRecord(false);
+
+                setSelectedInvoice(null);
+              }}
+            />
+
+          </div>
+
+        </div>
       )}
     </>
   );

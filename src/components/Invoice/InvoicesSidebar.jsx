@@ -4,7 +4,7 @@ export default function InvoicesSidebar({
   houseID,
   noInvRooms,
   invRooms,
-  onSelectProject,
+  onSelectInvoice,
   selectedRoomId,
 }) {
 
@@ -64,7 +64,7 @@ export default function InvoicesSidebar({
                 <button
                   className={cssClasses}
                   onClick={() =>
-                    onSelectProject(room.id)
+                    onSelectInvoice(room.id)
                   }
                 >
 
@@ -148,7 +148,7 @@ export default function InvoicesSidebar({
                 <button
                   className={cssClasses}
                   onClick={() =>
-                    onSelectProject(room.id)
+                    onSelectInvoice(room.id)
                   }
                 >
 
