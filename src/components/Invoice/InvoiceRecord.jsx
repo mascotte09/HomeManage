@@ -620,7 +620,7 @@ const qrUrl = hasBankInfo
                 : ""
             }
             error={
-              Number(formData.new_electricity_number) != "" &&
+              Number(formData.new_electricity_number) !== "" &&
               Number(formData.current_electricity_number) >
               Number(formData.new_electricity_number)
                 ? "Số điện mới phải lớn hơn hoặc bằng số điện cũ."
@@ -646,7 +646,7 @@ const qrUrl = hasBankInfo
                   : ""
               }
               error={
-                Number(formData.new_water_number) != "" &&
+                Number(formData.new_water_number) !== "" &&
                 Number(formData.current_water_number) >
                 Number(formData.new_water_number)
                   ? "Số nước mới phải lớn hơn hoặc bằng số nước cũ."
