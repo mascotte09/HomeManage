@@ -311,11 +311,11 @@ async function confirmDeleteInvoice() {
         <header className="flex flex-col w-full pb-4 mb-4 border-b border-stone-300">
 
           {/* Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2  mb-4">
 
             {/* Cancel / Delete */}
             <button
-              className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded-md"
+              className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
               onClick={onDelete}
             >
               {isNew ? "Cancel" : "Delete"}
@@ -324,7 +324,7 @@ async function confirmDeleteInvoice() {
             {/* Save / Update */}
             <button
               onClick={handleSave}
-              className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded-md"
+              className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md"
             >
               {isNew ? "Save" : "Update"}
             </button>
@@ -335,7 +335,7 @@ async function confirmDeleteInvoice() {
                 onClick={() =>
                   setShowPhotos(true)
                 }
-                className="bg-stone-700 hover:bg-stone-800 text-white text-xs px-2 py-1 rounded-md"
+                className="bg-stone-700 hover:bg-stone-800 text-white text-sm px-3 py-1 rounded-md"
               >
                 Photos
               </button>
@@ -344,7 +344,7 @@ async function confirmDeleteInvoice() {
           </div>
 
           {/* Form */}
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col items-start gap-2 w-full">
 
             <Input
               label="Tên phòng"
@@ -542,15 +542,15 @@ async function confirmDeleteInvoice() {
         </div>
       )}
       <DeleteInvoiceModal
-  open={showDeleteInvoiceModal}
-  onClose={() => {
+        open={showDeleteInvoiceModal}
+        onClose={() => {
 
-    setShowDeleteInvoiceModal(false);
+          setShowDeleteInvoiceModal(false);
 
-    setSelectedDeleteInvoiceID(null);
-  }}
-  onConfirm={confirmDeleteInvoice}
-/>
+          setSelectedDeleteInvoiceID(null);
+        }}
+        onConfirm={confirmDeleteInvoice}
+      />
     </>
   );
 }

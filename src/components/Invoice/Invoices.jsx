@@ -95,7 +95,7 @@ export default function Invoices({
 
         <button
           onClick={onAdd}
-          className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded-md"
+          className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded-md"
         >
           Add Invoice
         </button>

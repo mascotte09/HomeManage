@@ -154,7 +154,7 @@ export default function SelectedProject({
         <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300 w-full">
 
           {/* Buttons */}
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-2 mb-4">
 
             {/* Cancel / Delete */}
             <button

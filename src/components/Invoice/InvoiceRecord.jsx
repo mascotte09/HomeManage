@@ -253,11 +253,11 @@ const qrUrl = hasBankInfo
       link.click();
     }
 
-    // OPEN ZALO
-    window.open(
-      "https://zalo.me/",
-      "_blank"
-    );
+    // // OPEN ZALO
+    // window.open(
+    //   "https://zalo.me/",
+    //   "_blank"
+    // );
   });
 }
 
@@ -265,10 +265,11 @@ const qrUrl = hasBankInfo
   // CREATE
   // =========================
   async function handleCreate() {
-    if ((Number(formData.current_electricity_number) > Number(formData.new_electricity_number)) ||
+    if ((Number(formData.rental_amount) === 0) ||
+      (Number(formData.current_electricity_number) > Number(formData.new_electricity_number)) ||
       (Number(formData.current_water_number) > Number(formData.new_water_number))) {
         setValidationMessage(
-          "Số điện mới phải lớn hơn hoặc bằng số điện cũ."
+          "Nhập lại dữ liệu."
         );
 
         setShowValidationModal(true);
@@ -651,7 +652,7 @@ const qrUrl = hasBankInfo
         <div className="bg-white p-6 rounded w-[400px]">
 
           <h2 className="text-black font-bold text-lg mb-3">
-            Validation Error
+            Thông báo
           </h2>
 
           <p className="text-gray-600 mb-6">
