@@ -10,7 +10,7 @@ import HeaderRoom from "./components/Room/HeaderRoom";
 import ListHouses from "./components/House/ListHouses";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
-
+import MonthlyStatistic from "./components/House/MonthlyStatistic.jsx";
 function App() {
     const [showSignup, setShowSignup] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -104,6 +104,16 @@ function App() {
                                     setIsLoggedIn(false);
                                 }}/>
                                 <ListExpenses />
+                            </>
+                        } />
+                    <Route path="/statistic/:houseId" 
+                        element={
+                            <>
+                                <HeaderRoom onLogout={() => {
+                                    setCurrentUser(null);
+                                    setIsLoggedIn(false);
+                                }}/>
+                                <MonthlyStatistic />
                             </>
                         } />
                 </Routes>

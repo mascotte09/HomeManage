@@ -34,7 +34,9 @@ export default function Header({ onLogout }) {
                         Chi Phí
                     </button>
    
-                    <button className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-black">
+                    <button 
+                        onClick={() => navigate(`/statistic/${houseId}`)}
+                        className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-black">
                         Reports
                     </button>
    

@@ -252,12 +252,6 @@ const qrUrl = hasBankInfo
 
       link.click();
     }
-
-    // // OPEN ZALO
-    // window.open(
-    //   "https://zalo.me/",
-    //   "_blank"
-    // );
   });
 }
 
