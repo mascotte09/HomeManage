@@ -43,7 +43,7 @@ export default function InvoicesSidebar({
           {noInvRooms.map((room) => {
 
             let cssClasses =
-              "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
+              "w-full text-left py-2 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
 
             if (
               room.id === selectedRoomId
@@ -95,7 +95,7 @@ export default function InvoicesSidebar({
           {invRooms.map((room) => {
 
             let cssClasses =
-              "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
+              "w-full text-left py-2 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
 
             if (
               room.id === selectedRoomId
