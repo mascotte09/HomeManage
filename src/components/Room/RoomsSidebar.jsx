@@ -10,7 +10,7 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
                 {/* Houses link */}
                 <Link
                     to="/houses"
-                    className="block mb-5 text-blue-400 hover:text-yellow-300 text-base font-bold"
+                    className="block mb-5 text-blue-400 hover:text-yellow-300 text-sm font-bold"
                 >
                     ← Chọn Nhà
                 </Link>

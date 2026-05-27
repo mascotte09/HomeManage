@@ -24,7 +24,7 @@ export default function InvoicesSidebar({
       <div>
         <Link
             to={`/rooms/${houseID}`}
-            className="block mb-5 text-blue-400 hover:text-yellow-300 text-base font-bold"
+            className="block mb-5 text-blue-400 hover:text-yellow-300 text-sm font-bold"
         >
             ← Chọn Phòng
         </Link>
