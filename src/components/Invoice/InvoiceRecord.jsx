@@ -620,7 +620,7 @@ const qrUrl = hasBankInfo
                 : ""
             }
             error={
-              Number(formData.new_electricity_number) !== "" &&
+              formData.new_electricity_number !== "" &&
               Number(formData.current_electricity_number) >
               Number(formData.new_electricity_number)
                 ? "Số điện mới phải lớn hơn hoặc bằng số điện cũ."
@@ -646,7 +646,7 @@ const qrUrl = hasBankInfo
                   : ""
               }
               error={
-                Number(formData.new_water_number) !== "" &&
+                formData.new_water_number !== "" &&
                 Number(formData.current_water_number) >
                 Number(formData.new_water_number)
                   ? "Số nước mới phải lớn hơn hoặc bằng số nước cũ."
@@ -681,24 +681,6 @@ const qrUrl = hasBankInfo
             }));
           }}
         />
-
-
-        <div className="flex flex-col gap-1">
-
-          <label className="text-xs font-semibold text-black">
-            Note
-          </label>
-
-          <textarea
-            name="note"
-            value={formData.note}
-            onChange={handleChange}
-            
-            className="w-full border rounded p-2 bg-white text-black h-24"
-          />
-
-        </div>
-
       </div>
 
       {/* SUMMARY */}
@@ -710,11 +692,20 @@ const qrUrl = hasBankInfo
 
   <div className="text-center mb-5">
     <h2 className="text-2xl font-bold">
-      HÓA ĐƠN THANH TOÁN
+      HÓA ĐƠN
     </h2>
 
     <div className="text-sm text-gray-500 mt-1">
-      Phòng: {room?.room_name}
+      Tháng{" "} {String(
+        new Date(
+          formData.invoice_create_date
+        ).getMonth() + 1
+      ).padStart(2, "0")}
+      /
+      {new Date(
+        formData.invoice_create_date
+      ).getFullYear()}
+      {" "}• Phòng: {room?.room_name}
     </div>
   </div>
 
@@ -799,7 +790,7 @@ const qrUrl = hasBankInfo
   </div>
 
   <div className="flex justify-between mt-5 text-xl font-bold">
-    <span>Total</span>
+    <span>Tổng</span>
 
     <span className="text-red-600">
       {total.toLocaleString()} đ
@@ -808,12 +799,7 @@ const qrUrl = hasBankInfo
 
   {/* QR */}
   {qrUrl && (
-    <div className="mt-8 flex flex-col items-center">
-
-      <div className="font-semibold mb-2">
-        Scan QR To Pay
-      </div>
-
+    <div className="mt-8 flex flex-col items-center">      
       <img
         src={qrUrl}
         alt="vietqr"
@@ -829,26 +815,11 @@ const qrUrl = hasBankInfo
         <div>
           {home?.bank_account}
         </div>
-
-      </div>
-
-    </div>
-  )}
-
-  {formData.note && (
-    <div className="mt-6 border-t pt-4">
-      <div className="font-semibold mb-1">
-        Note
-      </div>
-
-      <div className="text-gray-700">
-        {formData.note}
       </div>
     </div>
-  )}
+  )} 
 
-</div>
-
+    </div>
       {/* BUTTONS */}
       <div className="flex gap-4 mt-6">
 
