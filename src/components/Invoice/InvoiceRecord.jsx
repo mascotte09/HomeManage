@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
+import InvoiceSummary from "./InvoiceSummary";
 
 export default function InvoiceRecord({
   room,
@@ -10,15 +11,14 @@ export default function InvoiceRecord({
   onCancel,
   onAdd,
 }) {
-  const isExistingInvoice = !!invoice;
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
+
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   
   const summaryRef = useRef(null);
 
   //const [isEditing, setIsEditing] = useState(false);
-
-  const [showDeleteModal, setShowDeleteModal] =
-    useState(false);
-
   const [home, setHome] = useState(null);
 
   const isWaterPerPerson =
@@ -267,7 +267,12 @@ const qrUrl = hasBankInfo
   async function handleCreate() {
     if ((Number(formData.current_electricity_number) > Number(formData.new_electricity_number)) ||
       (Number(formData.current_water_number) > Number(formData.new_water_number))) {
-      return
+        setValidationMessage(
+          "Số điện mới phải lớn hơn hoặc bằng số điện cũ."
+        );
+
+        setShowValidationModal(true);
+        return
     }
     const payload = {
       room_id: room.id,
@@ -319,73 +324,9 @@ const qrUrl = hasBankInfo
       alert("Create failed");
       return;
     }
-    await captureAndShare();
-
-    onAdd?.();
+    setShowSummaryModal(true);
   }
 
-  // =========================
-  // UPDATE
-  // =========================
-  async function handleUpdate() {
-    if ((Number(formData.current_electricity_number) > Number(formData.new_electricity_number)) ||
-      (Number(formData.current_water_number) > Number(formData.new_water_number))) {
-      return
-    }
-    const payload = {
-      rental_amount:
-        Number(formData.rental_amount) || null,
-      current_electricity_number:
-        Number(formData.current_electricity_number) ||
-        null,
-
-      new_electricity_number:
-        Number(formData.new_electricity_number) ||
-        null,
-
-      current_water_number:
-        Number(formData.current_water_number) || null,
-
-      new_water_number:
-        Number(formData.new_water_number) || null,
-
-      amount_already_pay:
-        Number(formData.amount_already_pay) || null,
-
-      note: formData.note || null,
-
-      surcharge:
-        Number(formData.surcharge) || null,
-
-      wifi_amount:
-        Number(formData.wifi_amount) || null,
-
-      elect_amount: electAmount,
-
-      water_amount: waterAmount,
-
-      total_amount: total,
-
-      debit_amount: total,
-    };
-
-    const { error } = await supabase
-      .from("invoices")
-      .update(payload)
-      .eq("id", invoice.id);
-
-    if (error) {
-      alert("Update failed");
-      return;
-    }
-
-
-    await captureAndShare();
-
-    //setIsEditing(false);
-
-    onAdd?.();
-  }
   const [hasPreviousInvoice, setHasPreviousInvoice] = useState(false);
 
   useEffect(() => {
@@ -464,29 +405,7 @@ const qrUrl = hasBankInfo
 
 }, [room, invoice]);
 
-  // =========================
-  // DELETE
-  // =========================
-  async function handleDelete() {
-    const { error } = await supabase
-      .from("invoices")
-      .delete()
-      .eq("id", invoice.id);
-
-    if (error) {
-      alert("Delete failed");
-      return;
-    }
-
-
-    setShowDeleteModal(false);
-
-    onAdd?.();
-  }
-
   
-  
-
   return (
     <div className="w-full p-6">
 
@@ -496,28 +415,7 @@ const qrUrl = hasBankInfo
           Room {room?.room_name}
         </h2>
 
-        <div className="flex gap-2">
-          
         
-          {isExistingInvoice && (
-            <button
-              onClick={handleUpdate}
-              className="bg-green-600 text-white px-4 py-2 rounded"
-            >
-                Update
-            </button>
-          )}
-          {isExistingInvoice && (
-            <button
-              onClick={() =>
-                setShowDeleteModal(true)
-              }
-              className="bg-red-600 text-white px-4 py-2 rounded"
-            >
-              Delete
-            </button>
-          )}
-        </div>
       </div>
 
       {/* FORM */}
@@ -683,200 +581,99 @@ const qrUrl = hasBankInfo
         />
       </div>
 
-      {/* SUMMARY */}
-      {/* SUMMARY */}
-  <div
-    ref={summaryRef}
-    className="mt-6 bg-white border rounded-xl p-6 text-black"
-  >
+      {showSummaryModal && (
+        
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
 
-  <div className="text-center mb-5">
-    <h2 className="text-2xl font-bold">
-      HÓA ĐƠN
-    </h2>
+          
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4">
+            <div className="flex justify-end gap-3 mt-6">
 
-    <div className="text-sm text-gray-500 mt-1">
-      Tháng{" "} {String(
-        new Date(
-          formData.invoice_create_date
-        ).getMonth() + 1
-      ).padStart(2, "0")}
-      /
-      {new Date(
-        formData.invoice_create_date
-      ).getFullYear()}
-      {" "}• Phòng: {room?.room_name}
-    </div>
-  </div>
+              <button
+                onClick={() =>
+                  setShowSummaryModal(false)
+                }
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                Đóng
+              </button>
 
-  <div className="space-y-2 border-b pb-4">
-    <div className="flex justify-between">
-      <span>1. Tiền Phòng</span>
+              <button
+                onClick={async () => {
+                  await captureAndShare();
 
-      <span>
-        {Number(
-          formData.rental_amount || 0
-        ).toLocaleString()} đ
-      </span>
-    </div>
-    <div className="flex justify-between">
-      <div className="flex flex-col">      
-        <span>2. Tiền Điện</span>
-        <div className="flex gap-4 text-sm text-gray-500">
-          <span>
-            Số cũ:{" "}
-            {formData.current_electricity_number || 0}
-          </span>
-          <span>
-            Số mới:{" "}
-            {formData.new_electricity_number || 0}
-          </span>
+                  setShowSummaryModal(false);
+
+                  onAdd?.();
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded"
+              >
+                Gửi Hóa Đơn
+              </button>
+
+            </div>
+            <InvoiceSummary
+              summaryRef={summaryRef}
+              formData={formData}
+              room={room}
+              electAmount={electAmount}
+              waterAmount={waterAmount}
+              total={total}
+              elecPrice={elecPrice}
+              waterPrice={waterPrice}
+              qrUrl={qrUrl}
+              home={home}
+            />
+          </div>
         </div>
-
-        <span className="text-sm text-gray-500">
-          {Number(formData.new_electricity_number) - Number(formData.current_electricity_number)} × {elecPrice.toLocaleString()} đ
-        </span>
-
-      </div>
-
-      <span>
-        {electAmount.toLocaleString()} đ
-      </span>
-    </div>
-
-    <div className="flex justify-between">
-      <div className="flex flex-col">      
-        <span>3. Tiền Điện</span>
-        <div className="flex gap-4 text-sm text-gray-500">
-          <span>
-            Số cũ:{" "}
-            {formData.current_water_number || 0}
-          </span>
-          <span>
-            Số mới:{" "}
-            {formData.new_water_number || 0}
-          </span>
-        </div>
-
-        <span className="text-sm text-gray-500">
-          {Number(formData.new_water_number) - Number(formData.current_water_number)} × {waterPrice.toLocaleString()} đ
-        </span>
-      </div>
-
-      <span>
-        {waterAmount.toLocaleString()} đ
-      </span>
-    </div>
-    
-
-    <div className="flex justify-between">
-      <div className="flex flex-col">
-        <span>4. Tiền Dịch Vụ</span>
-        <div className="flex gap-4 text-sm text-gray-500">
-          <span>
-            Wifi, rác...
-          </span>          
-        </div>
-      </div>
-      
-      <span>
-        {Number(
-          formData.wifi_amount || 0
-        ).toLocaleString()} đ
-      </span>
-    </div>
-
-    
-  </div>
-
-  <div className="flex justify-between mt-5 text-xl font-bold">
-    <span>Tổng</span>
-
-    <span className="text-red-600">
-      {total.toLocaleString()} đ
-    </span>
-  </div>
-
-  {/* QR */}
-  {qrUrl && (
-    <div className="mt-8 flex flex-col items-center">      
-      <img
-        src={qrUrl}
-        alt="vietqr"
-        className="w-56 h-56 border rounded-lg"
-      />
-
-      <div className="mt-4 text-center">
-
-        <div className="font-semibold">
-          {home?.bank_id}
-        </div>
-
-        <div>
-          {home?.bank_account}
-        </div>
-      </div>
-    </div>
-  )} 
-
-    </div>
+      )}
       {/* BUTTONS */}
       <div className="flex gap-4 mt-6">
-
-        {!isExistingInvoice && (
-          <button
-            onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Create
-          </button>
-        )}
-
+        <button
+          onClick={handleCreate}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Tính Tiền
+        </button>
         <button
           onClick={onCancel}
           className="bg-gray-300 px-4 py-2 rounded"
         >
           Close
         </button>
-
       </div>
 
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+     
+      {/* Validation MODAL */}
+      {showValidationModal && (
+      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
 
-          <div className="bg-white p-6 rounded w-[400px]">
+        <div className="bg-white p-6 rounded w-[400px]">
 
-            <h2 className="text-black font-bold text-lg mb-3">
-              Delete Invoice
-            </h2>
+          <h2 className="text-black font-bold text-lg mb-3">
+            Validation Error
+          </h2>
 
-            <p className="text-gray-600 mb-6">
-              Are you sure?
-            </p>
+          <p className="text-gray-600 mb-6">
+            {validationMessage}
+          </p>
 
-            <div className="flex justify-end gap-2">
+          <div className="flex justify-end">
 
-              <button
-                onClick={() =>
-                  setShowDeleteModal(false)
-                }
-                className="bg-gray-300 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
+            <button
+              onClick={() =>
+                setShowValidationModal(false)
+              }
+              className="bg-red-600 text-white px-4 py-2 rounded"
+            >
+              OK
+            </button>
 
-              <button
-                onClick={handleDelete}
-                className="bg-red-600 text-white px-4 py-2 rounded"
-              >
-                Delete
-              </button>
-
-            </div>
           </div>
+
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

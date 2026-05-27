@@ -4,6 +4,7 @@ import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import Photos from "../Photos.jsx";
 import InvoiceRecord from "../Invoice/InvoiceRecord.jsx";
+import DeleteInvoiceModal from "../Invoice/DeleteInvoiceModal.jsx";
 
 export default function SelectedRoom({
   homeID,
@@ -13,7 +14,15 @@ export default function SelectedRoom({
   onDeleteTask,
   refreshRooms,
 }) {
+  const [
+    showDeleteInvoiceModal,
+    setShowDeleteInvoiceModal,
+  ] = useState(false);
 
+  const [
+    selectedDeleteInvoiceID,
+    setSelectedDeleteInvoiceID,
+  ] = useState(null);
   // Check create mode
   const isNew = !room;
 
@@ -160,34 +169,41 @@ export default function SelectedRoom({
     invoiceID
   ) {
 
-    const confirmDelete =
-      window.confirm(
-        "Delete this invoice?"
-      );
+    setSelectedDeleteInvoiceID(invoiceID);
 
-    if (!confirmDelete) return;
+  setShowDeleteInvoiceModal(true);
+  }
+async function confirmDeleteInvoice() {
 
-    const { error } =
-      await supabase
-        .from("invoices")
-        .delete()
-        .eq("id", invoiceID);
-
-    if (error) {
-
-      console.log(error.message);
-
-      alert(
-        "Failed to delete invoice"
-      );
-
-      return;
-    }
-
-    // Refresh invoices
-    await refreshInvoices();
+  if (!selectedDeleteInvoiceID) {
+    return;
   }
 
+  const { error } = await supabase
+    .from("invoices")
+    .delete()
+    .eq(
+      "id",
+      selectedDeleteInvoiceID
+    );
+
+  if (error) {
+
+    console.log(error.message);
+
+    alert(
+      "Failed to delete invoice"
+    );
+
+    return;
+  }
+
+  setShowDeleteInvoiceModal(false);
+
+  setSelectedDeleteInvoiceID(null);
+
+  await refreshInvoices();
+}
   async function refreshInvoices() {
 
     if (!room?.id) return;
@@ -525,6 +541,16 @@ export default function SelectedRoom({
 
         </div>
       )}
+      <DeleteInvoiceModal
+  open={showDeleteInvoiceModal}
+  onClose={() => {
+
+    setShowDeleteInvoiceModal(false);
+
+    setSelectedDeleteInvoiceID(null);
+  }}
+  onConfirm={confirmDeleteInvoice}
+/>
     </>
   );
 }
