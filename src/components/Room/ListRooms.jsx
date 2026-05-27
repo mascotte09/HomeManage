@@ -151,7 +151,7 @@ export default function ListRooms() {
     return (
         <div className="h-screen flex flex-col m-0 p-0">
 
-            <main className="flex-1 flex gap-2 mt-0 pt-0">
+            <main className="flex flex-1 w-full gap-2">
 
                 <RoomsSidebar
                     onStartAddProject={

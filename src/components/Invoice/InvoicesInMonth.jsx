@@ -139,7 +139,7 @@ export default function InvoicesInMonth() {
     content = (
       <InvoiceRecord
         room={selectedRoom}
-        home={state.home}
+        homeID={houseId}
         invoice={null}
         onCancel={() => setMode("empty")}
         onAdd={() => {
@@ -155,7 +155,7 @@ export default function InvoicesInMonth() {
     content = (
       <InvoiceRecord
         room={selectedRoom}
-        home={state.home}
+        homeID={houseId}
         invoice={selectedInvoice}
         onCancel={() => setMode("empty")}
         onAdd={() => {
@@ -171,7 +171,7 @@ export default function InvoicesInMonth() {
   // =========================
   return (
     <div className="h-screen flex flex-col m-0 p-0">
-      <main className="flex-1 flex gap-6 mt-0 pt-0">
+      <main className="flex flex-1 w-full gap-0">
         <InvoicesSidebar
           houseID={houseId}
           noInvRooms={state.noInvRooms}

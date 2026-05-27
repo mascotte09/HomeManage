@@ -14,7 +14,7 @@ const Input = forwardRef(function Input({ textArea, label, error, ...props }, re
                 <input ref={ref} className={classes} {...props} />
                 
             )}
-            {error && (<div className="control-error min-h-[20px]">                
+            {error && (<div className="min-h-[20px]">                
                 <p className="text-sm text-red-500">
                     {error}
                 </p>                

@@ -149,9 +149,9 @@ export default function SelectedProject({
 
   return (
     <>
-      <div className="ml-0 flex flex-col items-start">
+      <div className="ml-0 flex flex-col items-start w-full pr-2">
 
-        <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300">
+        <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300 w-full">
 
           {/* Buttons */}
           <div className="flex gap-2 mb-6">

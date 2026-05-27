@@ -12,7 +12,7 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
                     to="/houses"
                     className="block mb-5 text-blue-400 hover:text-yellow-300 text-base font-bold"
                 >
-                    ← Danh Sách Nhà
+                    ← Chọn Nhà
                 </Link>
 
                 

@@ -26,7 +26,7 @@ export default function InvoicesSidebar({
             to={`/rooms/${houseID}`}
             className="block mb-5 text-blue-400 hover:text-yellow-300 text-base font-bold"
         >
-            ← Danh Sách Phòng
+            ← Chọn Phòng
         </Link>
         <h2 className="mb-5 text-lg font-bold uppercase text-stone-200">
           Hóa Đơn{" "}

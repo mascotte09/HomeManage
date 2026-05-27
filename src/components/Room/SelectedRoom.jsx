@@ -291,12 +291,11 @@ export default function SelectedRoom({
 
   return (
     <>
-      <div className="ml-0 flex flex-col items-start">
-
-        <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300">
+      <div className="w-full flex flex-col pr-2 pl-0">
+        <header className="flex flex-col w-full pb-4 mb-4 border-b border-stone-300">
 
           {/* Buttons */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2">
 
             {/* Cancel / Delete */}
             <button
@@ -329,7 +328,7 @@ export default function SelectedRoom({
           </div>
 
           {/* Form */}
-          <div className="flex flex-col items-start gap-1 w-full">
+          <div className="flex flex-col gap-2 w-full">
 
             <Input
               label="Tên phòng"
