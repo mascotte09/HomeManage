@@ -7,9 +7,9 @@ export default function Header({ onLogout }) {
     return (
             <header className="bg-gray-800 text-white px-3 py-0 flex justify-between items-center m-0">
    
-                <h1 className="text-2xl font-bold tracking-tight">
+                {/* <h1 className="text-2xl font-bold tracking-tight">
                     QT
-                </h1>
+                </h1> */}
    
                 <div className="flex gap-2"> 
                     
