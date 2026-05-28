@@ -28,7 +28,7 @@ export default function InvoicesSidebar({
         >
             ← Chọn Phòng
         </Link>
-        <h2 className="mb-5 text-lg font-bold uppercase text-stone-200">
+        <h2 className="mb-5 text-xs font-bold uppercase text-stone-200">
           Hóa Đơn{" "}
           {String(new Date().getMonth() + 1).padStart(2, "0")}
           /
@@ -70,17 +70,17 @@ export default function InvoicesSidebar({
 
                   {/* Room */}
                   <div className="font-medium">
-                    {room.room_name}
+                    Phòng: {room.room_name}
                   </div>
 
-                  {/* Renter */}
+                  {/* datePay */}
                   <div className="text-xs text-stone-400">
-                    {room.room_renter}
+                    Ngày thu: {room.date_pay}
                   </div>
 
                   {/* Status */}
                   <div className="text-xs text-red-400">
-                    Not yet created
+                    Chưa tạo Hóa Đơn
                   </div>
 
                 </button>
@@ -154,17 +154,14 @@ export default function InvoicesSidebar({
 
                   {/* Room */}
                   <div className="font-medium">
-                    {room.room_name}
+                    Phòng: {room.room_name}
                   </div>
 
-                  {/* Renter */}
-                  <div className="text-xs text-stone-400">
-                    {room.room_renter}
-                  </div>
+              
 
                   {/* Invoice date */}
                   <div className="text-xs text-green-400">
-                    Created:{" "}
+                    Ngày tạo:{" "}
                     {formatDate(
                       invoiceThisMonth?.invoice_create_date
                     )}

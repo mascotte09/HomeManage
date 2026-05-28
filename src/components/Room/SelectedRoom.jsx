@@ -155,6 +155,27 @@ export default function SelectedRoom({
 
   }, [room]);
 
+  function resetForm() {
+    setRoomName("");
+
+    setRoomRenter("");
+
+    setDepositAmount(0);
+
+    setTelephone("");
+
+    setNumPerson(1);
+
+    setDatePay(1);
+
+    setCurrentElectricityNumber(0);
+
+    setCurrentWaterNumber(0);
+
+    setRentDueDate("");
+
+    setStatus(false);
+  }
    // Add / Refresh invoice
   function onEditInvoice(invoice) {
     setSelectedInvoice(invoice);
@@ -299,55 +320,80 @@ async function confirmDeleteInvoice() {
     // Refresh list
     await refreshRooms();
 
-    // Close create form
     if (isNew) {
-      onDelete();
+      resetForm();
+
+      return;
     }
   }
+  async function handleDeleteRoom() {
+    if (!room?.id) return;
 
+    const confirmDelete =
+      window.confirm("Xóa phòng này?");
+
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from("rooms")
+      .delete()
+      .eq("id", room.id);
+
+    if (error) {
+
+      console.log(error.message);
+
+      alert("Failed to delete room");
+
+      return;
+    }
+
+    await refreshRooms();
+
+    onDelete?.();
+  }
   return (
     <>
       <div className="w-full flex flex-col pr-2 pl-0">
         <header className="flex flex-col w-full pb-4 mb-4 border-b border-stone-300">
 
           {/* Buttons */}
-          <div className="flex gap-2  mb-4">
+          <div className="flex gap-2 mb-4">            
 
-            {/* Cancel / Delete */}
-            <button
-              className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
-              onClick={onDelete}
-            >
-              {isNew ? "Cancel" : "Delete"}
-            </button>
-
-            {/* Save / Update */}
+            {/* LƯU */}
             <button
               onClick={handleSave}
               className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md"
             >
-              {isNew ? "Save" : "Update"}
+              Lưu
             </button>
+
+            {/* XÓA */}
+            {!isNew && (
+              <button
+                onClick={handleDeleteRoom}
+                className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
+              >
+                Xóa
+              </button>
+            )}
 
             {/* Photos */}
             {!isNew && (
               <button
-                onClick={() =>
-                  setShowPhotos(true)
-                }
+                onClick={() => setShowPhotos(true)}
                 className="bg-stone-700 hover:bg-stone-800 text-white text-sm px-3 py-1 rounded-md"
               >
                 Photos
               </button>
             )}
-
           </div>
 
           {/* Form */}
           <div className="flex flex-col items-start gap-2 w-full">
 
             <Input
-              label="Tên phòng"
+              label="Số phòng"
               type="text"
               value={roomName}
               onChange={(e) =>

@@ -14,7 +14,7 @@ export default function HousesSidebar({
             {/* Top */}
             <div>
 
-                <h2 className="mb-5 text-lg font-bold uppercase text-stone-200">
+                <h2 className="mb-5 text-xs font-bold uppercase text-stone-200">
                     Nhà trọ
                 </h2>
 

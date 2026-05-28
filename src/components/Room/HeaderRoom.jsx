@@ -11,25 +11,24 @@ export default function Header({ onLogout }) {
                     QT
                 </h1>
    
-                <div className="flex gap-2">
-   
-                    <button
-                        onClick={() =>  navigate(`/rooms/${houseId}`)}
-                        className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded"
-                    >
-                        Rooms
-                    </button>
-   
+                <div className="flex gap-2"> 
+                    
                     <button
                         onClick={() => navigate(`/invoicesInMonth/${houseId}`)}
                         className="bg-green-500 hover:bg-green-600 px-3 py-1 rounded"
                     >
-                        Invoices
+                        Hóa Đơn
                     </button>
    
                     <button
+                        //onClick={() =>  navigate(`/rooms/${houseId}`)}
+                        className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded"
+                    >
+                        Thu Tiền
+                    </button>
+                    <button
                         onClick={() => navigate(`/expense/${houseId}`)}
-                        className="bg-green-500 hover:bg-green-600 px-3 py-1 rounded"
+                        className="bg-red-500 hover:bg-green-600 px-3 py-1 rounded"
                     >
                         Chi Phí
                     </button>
@@ -37,7 +36,7 @@ export default function Header({ onLogout }) {
                     <button 
                         onClick={() => navigate(`/statistic/${houseId}`)}
                         className="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded text-black">
-                        Reports
+                        Báo Cáo
                     </button>
    
                     

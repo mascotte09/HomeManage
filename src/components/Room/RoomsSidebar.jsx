@@ -24,13 +24,13 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
 
                 <ul className="space-y-1">
 
-                    {homes.map((project) => {
+                    {homes.map((home) => {
 
                         let cssClasses =
                             "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
 
                         if (
-                            project.id ===
+                            home.id ===
                             selectedHomeId
                         ) {
 
@@ -44,17 +44,16 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
                         }
 
                         return (
-                            <li key={project.id}>
-
+                            <li key={home.id}>
                                 <button
                                     className={cssClasses}
                                     onClick={() =>
                                         onSelectHome(
-                                            project.id
+                                            home.id
                                         )
                                     }
                                 >
-                                    {project.room_name}
+                                    Phòng: {home.room_name}
                                 </button>
 
                             </li>

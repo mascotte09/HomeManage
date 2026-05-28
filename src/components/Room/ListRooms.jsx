@@ -25,10 +25,13 @@ export default function ListRooms() {
             const {
                 data: roomsData,
                 error: roomsError,
-            } = await supabase
+                } = await supabase
                 .from("rooms")
                 .select("*")
-                .eq("home_id", houseId);
+                .eq("home_id", houseId)
+                .order("room_name", {
+                    ascending: true,
+                });
 
             if (roomsError) {
                 console.log(
@@ -67,28 +70,103 @@ export default function ListRooms() {
         }));
     }
 
-    // Cancel add
-    function handleCancelAddProject() {
-
-        setRoomsState((prev) => ({
-            ...prev,
-            selectedRoomId: undefined,
-        }));
-    }
-
     // Delete room
-    function handleDeleteRoom() {
+    async function handleDeleteRoom() {
 
+        const roomId =
+            roomsState.selectedRoomId;
+
+        if (!roomId) return;
+
+        // GET PHOTOS
+        const {
+            data: photos,
+            error: photosFetchError,
+        } = await supabase
+            .from("photos")
+            .select("*")
+            .eq("room_id", roomId);
+
+        if (photosFetchError) {
+
+            console.log(
+            photosFetchError.message
+            );
+
+            return;
+        }
+
+        // DELETE FILES IN STORAGE
+        for (const photo of photos || []) {
+
+            if (!photo.image_url) continue;
+
+            // EXTRACT FILE PATH
+            const path =
+            photo.image_url.split(
+                "/storage/v1/object/public/roomphotos/"
+            )[1];
+
+            if (!path) continue;
+
+            const {
+            error: storageError,
+            } = await supabase.storage
+            .from("roomphotos")
+            .remove([path]);
+
+            if (storageError) {
+
+            console.log(
+                storageError.message
+            );
+            }
+        }
+
+        // DELETE PHOTO RECORDS
+        const {
+            error: photosDeleteError,
+        } = await supabase
+            .from("photos")
+            .delete()
+            .eq("room_id", roomId);
+
+        if (photosDeleteError) {
+
+            console.log(
+            photosDeleteError.message
+            );
+
+            return;
+        }
+
+        // DELETE ROOM
+        const { error } = await supabase
+            .from("rooms")
+            .delete()
+            .eq("id", roomId);
+
+        if (error) {
+
+            console.log(error.message);
+
+            alert("Failed to delete room");
+
+            return;
+        }
+
+        // UPDATE STATE
         setRoomsState((prev) => ({
             ...prev,
+
             selectedRoomId: undefined,
+
             rooms: prev.rooms.filter(
-                (room) =>
-                    room.id !==
-                    prev.selectedRoomId
+            (room) =>
+                room.id !== roomId
             ),
         }));
-    }
+        }
 
     let content;
 
@@ -102,7 +180,7 @@ export default function ListRooms() {
             <SelectedRoom
                 homeID={houseId}
                 onDelete={
-                    handleCancelAddProject
+                    handleDeleteRoom
                 }
                 refreshRooms={fetchRooms}
             />

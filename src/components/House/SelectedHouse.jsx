@@ -162,8 +162,8 @@ export default function SelectedProject({
               onClick={onDelete}
             >
               {isNew
-                ? "Cancel"
-                : "Delete"}
+                ? "Thoát"
+                : "Xóa"}
             </button>
 
             {/* Save / Update */}
@@ -171,9 +171,7 @@ export default function SelectedProject({
               onClick={handleSave}
               className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md"
             >
-              {isNew
-                ? "Save"
-                : "Update"}
+              {"Lưu"}
             </button>
 
             {/* Rooms */}

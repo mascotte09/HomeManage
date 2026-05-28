@@ -402,22 +402,20 @@ const qrUrl = hasBankInfo
 
   
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-3">
 
       {/* HEADER */}
-      <div className="flex justify-between mb-6">
-        <h2 className="text-2xl font-bold text-black">
-          Room {room?.room_name}
-        </h2>
-
-        
+      <div className="flex justify-between mb-3">
+        <h2 className="text-xl font-bold text-black">
+          Phòng số: {room?.room_name}
+        </h2>        
       </div>
 
       {/* FORM */}
-      <div className="flex flex-col gap-3 mt-4">
+      <div className="flex flex-col gap-2">
 
         <Input
-          label="Invoice Date"
+          label="Ngày tạo Hóa Đơn"
           type="date"
           value={formData.invoice_create_date}          
           onChange={handleChange}
@@ -425,7 +423,7 @@ const qrUrl = hasBankInfo
         />
 
         <Input
-          label="Rental Amount"
+          label="Tiền thuê"
           type="text"
           value={Number(
             formData.rental_amount || 0
@@ -585,9 +583,11 @@ const qrUrl = hasBankInfo
             <div className="flex justify-end gap-3 mt-6">
 
               <button
-                onClick={() =>
-                  setShowSummaryModal(false)
-                }
+                onClick={() => {
+                  setShowSummaryModal(false);
+                  // close page too
+                  onAdd?.();
+                }}
                 className="bg-gray-300 px-4 py-2 rounded"
               >
                 Đóng
