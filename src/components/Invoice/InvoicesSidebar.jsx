@@ -19,7 +19,7 @@ export default function InvoicesSidebar({
 
   return (
 
-    <aside className="w-1/3 px-4 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col">
+    <aside className="w-1/3 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col">
 
       <div>
         <Link
@@ -28,14 +28,14 @@ export default function InvoicesSidebar({
         >
             ← Chọn Phòng
         </Link>
-        <h2 className="mb-5 text-xs font-bold uppercase text-stone-200">
+        <h2 className="mb-5 text-xs px-2 py-1 font-bold uppercase text-stone-200">
           Hóa Đơn{" "}
           {String(new Date().getMonth() + 1).padStart(2, "0")}
           /
           {new Date().getFullYear()}
         </h2>
 
-        <ul className="space-y-1">
+        <ul className="space-y-1 w-full">
 
           {/* ========================= */}
           {/* ROOMS WITHOUT INVOICE */}
@@ -43,8 +43,7 @@ export default function InvoicesSidebar({
           {noInvRooms.map((room) => {
 
             let cssClasses =
-              "w-full text-left py-2 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
-
+              "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
             if (
               room.id === selectedRoomId
             ) {
@@ -59,11 +58,11 @@ export default function InvoicesSidebar({
             }
 
             return (
-              <li key={room.id}>
+              <li key={room.id} className="w-full">
 
                 <button
-                  className={cssClasses}
-                  onClick={() =>
+                  className={`${cssClasses} w-full`}
+                    onClick={() =>
                     onSelectInvoice(room.id)
                   }
                 >
@@ -95,7 +94,7 @@ export default function InvoicesSidebar({
           {invRooms.map((room) => {
 
             let cssClasses =
-              "w-full text-left py-2 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
+              "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
 
             if (
               room.id === selectedRoomId
@@ -146,8 +145,8 @@ export default function InvoicesSidebar({
               <li key={room.id}>                
 
                 <button
-                  className={cssClasses}
-                  onClick={() =>
+                  className={`${cssClasses} w-full`}
+                    onClick={() =>
                     onSelectInvoice(room.id)
                   }
                 >
@@ -155,9 +154,7 @@ export default function InvoicesSidebar({
                   {/* Room */}
                   <div className="font-medium">
                     Phòng: {room.room_name}
-                  </div>
-
-              
+                  </div>            
 
                   {/* Invoice date */}
                   <div className="text-xs text-green-400">

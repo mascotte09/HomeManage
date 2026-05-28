@@ -5,12 +5,7 @@ export default function Header({ onLogout }) {
     const navigate = useNavigate();
     const { houseId } = useParams();
     return (
-            <header className="bg-gray-800 text-white px-3 py-0 flex justify-between items-center m-0">
-   
-                {/* <h1 className="text-2xl font-bold tracking-tight">
-                    QT
-                </h1> */}
-   
+            <header className="bg-gray-800 text-white px-3 py-1 flex justify-between items-center m-0">   
                 <div className="flex gap-2"> 
                     
                     <button

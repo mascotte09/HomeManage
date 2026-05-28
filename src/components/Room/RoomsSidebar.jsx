@@ -2,7 +2,7 @@ import Button from "../Button.jsx";
 import { Link } from "react-router-dom";
 export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, selectedHomeId, onLogout }) {
     return (
-        <aside className="w-1/3 px-4 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col justify-between">
+        <aside className="w-1/3 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col justify-between">
 
             {/* Top */}
             <div>
@@ -22,7 +22,7 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
                     </Button>
                 </div>
 
-                <ul className="space-y-1">
+                <ul className="space-y-1 w-full">
 
                     {homes.map((home) => {
 
@@ -44,9 +44,9 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
                         }
 
                         return (
-                            <li key={home.id}>
+                            <li key={home.id} className="w-full">
                                 <button
-                                    className={cssClasses}
+                                    className={`${cssClasses} w-full`}
                                     onClick={() =>
                                         onSelectHome(
                                             home.id
