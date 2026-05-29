@@ -74,7 +74,12 @@ export default function Invoices({
         .toLocaleString("vi-VN") + " đ"
     );
   }
-
+    function formatMoneyNoVND(value) {
+        return (
+        Number(value || 0)
+            .toLocaleString("vi-VN") 
+        );
+    }
   return (
     <section className="w-full">
 
@@ -97,7 +102,7 @@ export default function Invoices({
           onClick={onAdd}
           className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded-md"
         >
-          Add Invoice
+          Tạo mới
         </button>
 
       </div>
@@ -121,37 +126,21 @@ export default function Invoices({
             >
 
               {/* LEFT */}
-              <div className="flex flex-col text-sm">
-
-                {/* ROOM */}
-                <div className="font-semibold text-stone-700">
-                  {room?.room_name ||
-                    invoice.room_name}
-                </div>
-
+              <div className="flex flex-col text-sm">              
                 {/* DATE */}
-                <div className="text-xs text-stone-500">
+                <div className="text-sm text-stone-700">
                   Ngày tạo:{" "}
                   {formatDate(
                     invoice.invoice_create_date
                   )}
                 </div>
-
-                {/* NOTE */}
-                {invoice.note && (
-                  <div className="text-xs text-stone-500 italic">
-                    {invoice.note}
-                  </div>
-                )}
-
               </div>
 
               {/* RIGHT */}
               <div className="flex items-center gap-4">
-
                 {/* AMOUNT */}
                 <div className="text-sm font-bold text-green-600">
-                  {formatMoney(
+                  {formatMoneyNoVND(
                     invoice.total_amount
                   )}
                 </div>
@@ -163,7 +152,7 @@ export default function Invoices({
                     onEdit(invoice)
                   }
                 >
-                  Edit
+                  Xem
                 </button>
 
                 {/* DELETE */}
