@@ -71,15 +71,10 @@ export default function Invoices({
 
     return (
       Number(value || 0)
-        .toLocaleString("vi-VN") + " đ"
+        .toLocaleString("vi-VN") 
     );
   }
-    function formatMoneyNoVND(value) {
-        return (
-        Number(value || 0)
-            .toLocaleString("vi-VN") 
-        );
-    }
+    
   return (
     <section className="w-full">
 
@@ -140,7 +135,7 @@ export default function Invoices({
               <div className="flex items-center gap-4">
                 {/* AMOUNT */}
                 <div className="text-sm font-bold text-green-600">
-                  {formatMoneyNoVND(
+                  {formatMoney(
                     invoice.total_amount
                   )}
                 </div>
