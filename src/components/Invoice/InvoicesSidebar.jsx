@@ -19,7 +19,7 @@ export default function InvoicesSidebar({
 
   return (
 
-    <aside className="w-1/3 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col">
+    <aside className="w-22 flex-shrink-0 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col">
 
       <div>
         <Link

@@ -311,12 +311,39 @@ const qrUrl = hasBankInfo
       debit_amount: total,
     };
 
-    const { error } = await supabase
-      .from("invoices")
-      .insert([payload]);
+    let error = null;
+
+    // UPDATE
+    if (invoice?.id) {
+
+      const result = await supabase
+        .from("invoices")
+        .update(payload)
+        .eq("id", invoice.id);
+
+      error = result.error;
+    }
+
+    // CREATE
+    else {
+
+      const result = await supabase
+        .from("invoices")
+        .insert([payload]);
+
+      error = result.error;
+    }
 
     if (error) {
-      alert("Create failed");
+
+      console.log(error.message);
+
+      alert(
+        invoice?.id
+          ? "Update failed"
+          : "Create failed"
+      );
+
       return;
     }
     setShowSummaryModal(true);
@@ -505,7 +532,7 @@ const qrUrl = hasBankInfo
             
             placeholder={
               hasPreviousInvoice
-                ? `Current: ${
+                ? `Số cũ: ${
                     formData.current_electricity_number || 0
                   }`
                 : ""
@@ -531,7 +558,7 @@ const qrUrl = hasBankInfo
               
               placeholder={
                 hasPreviousInvoice
-                  ? `Current: ${
+                  ? `Số cũ: ${
                       formData.current_water_number || 0
                     }`
                   : ""

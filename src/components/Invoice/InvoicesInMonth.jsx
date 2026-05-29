@@ -73,7 +73,22 @@ export default function InvoicesInMonth() {
         noInvRooms.push(room);
       }
     });
+    // SORT
+    invRooms.sort((a, b) =>
+      a.room_name.localeCompare(
+        b.room_name,
+        undefined,
+        { numeric: true }
+      )
+    );
 
+    noInvRooms.sort((a, b) =>
+      a.room_name.localeCompare(
+        b.room_name,
+        undefined,
+        { numeric: true }
+      )
+    );
     setState({
       home: homeData,
       rooms: roomsData || [],

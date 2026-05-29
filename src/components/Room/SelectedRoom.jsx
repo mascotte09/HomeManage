@@ -393,7 +393,7 @@ async function confirmDeleteInvoice() {
           <div className="flex flex-col items-start gap-2 w-full">
 
             <Input
-              label="Số phòng"
+              label="Phòng số"
               type="text"
               value={roomName}
               onChange={(e) =>

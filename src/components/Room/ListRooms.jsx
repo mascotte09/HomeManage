@@ -29,9 +29,7 @@ export default function ListRooms() {
                 .from("rooms")
                 .select("*")
                 .eq("home_id", houseId)
-                .order("room_name", {
-                    ascending: true,
-                });
+                
 
             if (roomsError) {
                 console.log(
@@ -39,10 +37,22 @@ export default function ListRooms() {
                 );
                 return;
             }
-
+            // SORT NUMERIC
+            const sortedRooms =
+            (roomsData || []).sort(
+                (a, b) =>
+                a.room_name.localeCompare(
+                    b.room_name,
+                    undefined,
+                    {
+                    numeric: true,
+                    sensitivity: "base",
+                    }
+                )
+            );
             setRoomsState((prev) => ({
                 ...prev,
-                rooms: roomsData || [],
+                rooms: sortedRooms || [],
             }));
         },
         [houseId]
