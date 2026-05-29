@@ -2,7 +2,7 @@ import Button from "../Button.jsx";
 import { Link } from "react-router-dom";
 export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, selectedHomeId, onLogout }) {
     return (
-        <aside className="w-22 flex-shrink-0 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col justify-between">
+        <aside className="w-21 flex-shrink-0 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col justify-between">
 
             {/* Top */}
             <div>
