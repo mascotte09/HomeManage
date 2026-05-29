@@ -52,7 +52,6 @@ export default function Invoices({
   // FORMAT DATE
   // =========================
   function formatDate(dateString) {
-
     if (!dateString) {
       return "";
     }
@@ -68,7 +67,6 @@ export default function Invoices({
   // FORMAT MONEY
   // =========================
   function formatMoney(value) {
-
     return (
       Number(value || 0)
         .toLocaleString("vi-VN") 
