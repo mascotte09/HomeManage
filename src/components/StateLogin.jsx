@@ -52,6 +52,10 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
 
         // Login success
         const user = data[0];
+        localStorage.setItem(
+            "currentUser",
+            JSON.stringify(user)
+        );
 
         console.log("Login success:", user.id);
 

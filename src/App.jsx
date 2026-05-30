@@ -1,6 +1,7 @@
 import Signup from "./components/Signup.jsx";
 import Login from "./components/StateLogin.jsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabase";
 import ListRooms from './components/Room/ListRooms.jsx'
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -11,15 +12,34 @@ import ListHouses from "./components/House/ListHouses";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import MonthlyStatistic from "./components/House/MonthlyStatistic.jsx";
+
+
+
 function App() {
     const [showSignup, setShowSignup] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null);
 
-    console.debug(showSignup, isLoggedIn);
-    
+    const [currentUser, setCurrentUser] =
+        useState(undefined);
+
+    useEffect(() => {
+        const savedUser =
+            localStorage.getItem("currentUser");
+
+        if (savedUser) {
+            setCurrentUser(
+                JSON.parse(savedUser)
+            );
+        } else {
+            setCurrentUser(null);
+        }
+    }, []);
+
     function handleSignupSuccess() {
         setShowSignup(false);
+    }
+
+    if (currentUser === undefined) {
+        return <div>Loading...</div>;
     }
 
     // User not logged in
@@ -40,7 +60,6 @@ function App() {
                 onSignupClick={() => setShowSignup(true)}
                 onLoginSuccess={(user) => {
                     setCurrentUser(user);
-                    setIsLoggedIn(true);
                 }}
             />
         );
@@ -48,79 +67,92 @@ function App() {
 
     // User logged in    
     return (
-            <BrowserRouter>
-                <Routes>
-                    <Route
-                        path="/"
-                        element={
-                            <>
-                                <HeaderHouse onLogout={() => {
-                                    setCurrentUser(null);
-                                    setIsLoggedIn(false);
-                                }}/>
-                                <ListHouses user_id={currentUser.id} />
-                            </>
-                        }
-                    />
-                    <Route
-                        path="/houses"
-                        element={
-                            <>
-                                <HeaderHouse onLogout={() => {
-                                    setCurrentUser(null);
-                                    setIsLoggedIn(false);
-                                }}/>
-                                <ListHouses user_id={currentUser.id} />
-                            </>
-                        }
-                    />
-                    <Route path="/rooms/:houseId" 
-                        element={
-                            <>
-                                <HeaderRoom onLogout={() => {
-                                    setCurrentUser(null);
-                                    setIsLoggedIn(false);
-                                }}/>
-                                <ListRooms />
-                            </>
-                        } />
-    
-                    <Route path="/invoicesInMonth/:houseId" 
-                        element={
-                            <>
-                                <HeaderRoom onLogout={() => {
-                                    setCurrentUser(null);
-                                    setIsLoggedIn(false);
-                                }}/>
-                                <InvoicesInMonth />
-                            </>
-                        } />
+        <BrowserRouter>
+            <Routes>
+                <Route
+                    path="/"
+                    element={
+                        <>
+                            <HeaderHouse
+                                onLogout={() => {
+                                    localStorage.removeItem(
+                                        "currentUser"
+                                    );
 
-                    <Route path="/expense/:houseId" 
-                        element={
-                            <>
-                                <HeaderRoom onLogout={() => {
                                     setCurrentUser(null);
-                                    setIsLoggedIn(false);
-                                }}/>
-                                <ListExpenses />
-                            </>
-                        } />
-                    <Route path="/statistic/:houseId" 
-                        element={
-                            <>
-                                <HeaderRoom onLogout={() => {
+                                }}
+                            />
+                            <ListHouses user_id={currentUser.id} />
+                        </>
+                    }
+                />
+                <Route
+                    path="/houses"
+                    element={
+                        <>
+                            <HeaderHouse
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
                                     setCurrentUser(null);
-                                    setIsLoggedIn(false);
-                                }}/>
-                                <MonthlyStatistic />
-                            </>
-                        } />
-                </Routes>
-    
-            </BrowserRouter>
-        );
+                                }}
+                            />
+                            <ListHouses user_id={currentUser.id} />
+                        </>
+                    }
+                />
+                <Route path="/rooms/:houseId"
+                    element={
+                        <>
+                            <HeaderRoom
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    setCurrentUser(null);
+                                }}
+                            />
+                            <ListRooms />
+                        </>
+                    } />
+
+                <Route path="/invoicesInMonth/:houseId"
+                    element={
+                        <>
+                            <HeaderRoom
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    setCurrentUser(null);
+                                }}
+                            />
+                            <InvoicesInMonth />
+                        </>
+                    } />
+
+                <Route path="/expense/:houseId"
+                    element={
+                        <>
+                            <HeaderRoom
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    setCurrentUser(null);
+                                }}
+                            />
+                            <ListExpenses />
+                        </>
+                    } />
+                <Route path="/statistic/:houseId"
+                    element={
+                        <>
+                            <HeaderRoom
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    setCurrentUser(null);
+                                }}
+                            />
+                            <MonthlyStatistic />
+                        </>
+                    } />
+            </Routes>
+
+        </BrowserRouter>
+    );
 }
-
-   
 export default App;
