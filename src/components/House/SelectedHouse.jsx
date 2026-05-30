@@ -3,7 +3,7 @@ import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import { useNavigate } from "react-router-dom";
 
-export default function SelectedProject({
+export default function SelectedHouse({
   userID,
   house,
   onDelete,

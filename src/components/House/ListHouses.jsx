@@ -1,17 +1,17 @@
-import { useEffect, useState, useCallback  } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from '../../supabase'
 import HousesSidebar from "./HousesSidebar.jsx";
 import NoHouseSelected from "./NoHouseSelected.jsx";
 import SelectedHouse from "./SelectedHouse.jsx";
 
-export default function ListHouses({user_id}) {
+export default function ListHouses({ user_id }) {
     const [housesState, setHousesState] = useState({
-            selectedHomeId: undefined,
-            houses: [],
-        });
+        selectedHomeId: undefined,
+        houses: [],
+    });
     // store homes
     //const [userID, setHomes] = useState('');
-   
+
     const fetchUserHomes = useCallback(async () => {
         // Step 1: get homes of this user
         const { data: homesData, error: homesError } = await supabase
@@ -64,70 +64,93 @@ export default function ListHouses({user_id}) {
         });
     }
 
-    function handleDeleteHome() {
-        setHousesState((prevState) => {
-            return {
-                ...prevState,
-                selectedHomeId: undefined,
-                houses: prevState.houses.filter((home) => home.id !== prevState.selectedHomeId),
-            };
-        });
-    }   
+    async function handleDeleteHome() {
+        const homeId = housesState.selectedHomeId;
+
+        if (!homeId) return;
+
+        const confirmDelete = window.confirm(
+            "Bạn có chắc muốn xóa nhà này?"
+        );
+
+        if (!confirmDelete) return;
+
+        // DELETE IN DATABASE
+        const { error } = await supabase
+            .from("homes")
+            .delete()
+            .eq("id", homeId);
+
+        if (error) {
+            console.log(error.message);
+            alert("Failed to delete home");
+            return;
+        }
+
+        // UPDATE STATE
+        setHousesState((prevState) => ({
+            ...prevState,
+            selectedHomeId: undefined,
+            houses: prevState.houses.filter(
+                (home) => home.id !== homeId
+            ),
+        }));
+    }
 
     let content;
 
     // Create new house
     if (
-    housesState.selectedHomeId === null
+        housesState.selectedHomeId === null
     ) {
 
-    content = (
-        <SelectedHouse
-            userID={user_id}
-            onDelete={
-                handleCancelAddHouse
-            }
-            refreshHouses={
-                fetchUserHomes
-            }
+        content = (
+            <SelectedHouse
+                userID={user_id}
+                onDelete={
+                    handleCancelAddHouse
+                }
+                refreshHouses={
+                    fetchUserHomes
+                }
             />
         );
-        }
+    }
 
-        // Nothing selected
-        else if (
-            housesState.selectedHomeId ===
-            undefined
-        ) {
+    // Nothing selected
+    else if (
+        housesState.selectedHomeId ===
+        undefined
+    ) {
 
         content = (
             <NoHouseSelected
-            onStartAddHouse={
-                handleStartAddHouse
-            }
+                onStartAddHouse={
+                    handleStartAddHouse
+                }
             />
         );
-        }
+    }
 
-        // Selected house
-        else {
+    // Selected house
+    else {
 
         const selectedHouse =
             housesState.houses.find(
-            (project) =>
-                project.id ===
-                housesState.selectedHomeId
+                (project) =>
+                    project.id ===
+                    housesState.selectedHomeId
             );
 
         content = (
             <SelectedHouse
-            house={selectedHouse}
-            onDelete={
-                handleDeleteHome
-            }
-            refreshHouses={
-                fetchUserHomes
-            }
+                house={selectedHouse}
+                onDelete={
+                    handleDeleteHome
+                }
+                refreshHouses={
+                    fetchUserHomes
+                }
             />
         );
     }
@@ -135,19 +158,19 @@ export default function ListHouses({user_id}) {
     return (
         <div className="h-screen flex flex-col m-0 p-0">
 
-        {/* Main Content */}
-        <main className="flex-1 flex gap-2 mt-0 pt-0">
+            {/* Main Content */}
+            <main className="flex-1 flex gap-2 mt-0 pt-0">
 
-            <HousesSidebar
-                onStartAddHouse={handleStartAddHouse}
-                homes={housesState.houses}
-                onSelectHome={handleSelectHouse}
-                selectedHomeId={housesState.selectedHomeId}
-            />
+                <HousesSidebar
+                    onStartAddHouse={handleStartAddHouse}
+                    homes={housesState.houses}
+                    onSelectHome={handleSelectHouse}
+                    selectedHomeId={housesState.selectedHomeId}
+                />
 
-            {content}
+                {content}
 
-        </main>
-    </div>
+            </main>
+        </div>
     )
 }

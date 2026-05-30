@@ -23,10 +23,10 @@ export default function InvoicesSidebar({
 
       <div>
         <Link
-            to={`/rooms/${houseID}`}
-            className="block mb-5 text-blue-400 hover:text-yellow-300 text-sm font-bold"
+          to={`/rooms/${houseID}`}
+          className="block mb-5 text-blue-400 hover:text-yellow-300 text-sm font-bold"
         >
-            ← Chọn Phòng
+          ← Chọn Phòng
         </Link>
         <h2 className="mb-5 text-xs px-2 py-1 font-bold uppercase text-stone-200">
           Hóa Đơn{" "}
@@ -62,7 +62,7 @@ export default function InvoicesSidebar({
 
                 <button
                   className={`${cssClasses} w-full`}
-                    onClick={() =>
+                  onClick={() =>
                     onSelectInvoice(room.id)
                   }
                 >
@@ -134,19 +134,19 @@ export default function InvoicesSidebar({
 
                   return (
                     d.getMonth() + 1 ===
-                      currentMonth &&
+                    currentMonth &&
                     d.getFullYear() ===
-                      currentYear
+                    currentYear
                   );
                 }
               );
 
             return (
-              <li key={room.id}>                
+              <li key={room.id}>
 
                 <button
                   className={`${cssClasses} w-full`}
-                    onClick={() =>
+                  onClick={() =>
                     onSelectInvoice(room.id)
                   }
                 >
@@ -154,11 +154,11 @@ export default function InvoicesSidebar({
                   {/* Room */}
                   <div className="font-medium">
                     Phòng: {room.room_name}
-                  </div>            
+                  </div>
 
                   {/* Invoice date */}
                   <div className="text-xs text-green-400">
-                    Ngày tạo:{" "}
+                    Đã tạo:{" "}
                     {formatDate(
                       invoiceThisMonth?.invoice_create_date
                     )}
