@@ -5,23 +5,32 @@ export default function ExpensesSidebar({
     expenses,
     onSelectExpense,
     selectedExpenseId,
+    selectedMonth,
+    onMonthChange,
 }) {
     return (
-        <aside className="w-1/3 px-4 py-16 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl">
-            <h2 className="mb-8 font-bold uppercase md:text-xl text-stone-200">
+        <aside className="w-21 flex-shrink-0 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col">
+            <h2 className="mb-3 text-xs font-bold uppercase text-stone-200">
                 Chi phí
             </h2>
-
-            <div>
+            <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) =>
+                    onMonthChange(e.target.value)
+                }
+                className="w-full text-xs mb-3 px-2 py-1 rounded text-black"
+            />
+            <div className="mb-3">
                 <Button onClick={onStartAddExpense}>
                     Tạo mới
                 </Button>
             </div>
 
-            <ul className="mt-8 -mx-4">
+            <ul className="space-y-1">
                 {expenses.map((expense) => {
                     let cssClasses =
-                        "block w-full text-left py-2 px-3 my-1 rounded-md hover:text-stone-200 hover:bg-stone-800";
+                        "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
 
                     if (
                         expense.id === selectedExpenseId
@@ -42,7 +51,7 @@ export default function ExpensesSidebar({
                                     )
                                 }
                             >
-                                {expense.type_code} -{" "}
+                                {expense.expenses_type?.type_name} -{" "}
                                 {expense.expense?.toLocaleString()} đ
                             </button>
                         </li>

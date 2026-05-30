@@ -12,6 +12,14 @@ import ExpenseItem from "./ExpenseItem.jsx";
 import { useParams } from "react-router-dom";
 
 export default function ListExpenses() {
+    const now = new Date();
+
+    const [selectedMonth, setSelectedMonth] = useState(
+        `${now.getFullYear()}-${String(
+            now.getMonth() + 1
+        ).padStart(2, "0")}`
+    );
+
     const { houseId } = useParams();
     const [expensesState, setExpensesState] =
         useState({
@@ -21,13 +29,38 @@ export default function ListExpenses() {
 
     // Fetch expenses
     const fetchExpenses = useCallback(async () => {
+        const startDate =
+            `${selectedMonth}-01`;
+
+        const endDate = new Date(
+            startDate
+        );
+
+        endDate.setMonth(
+            endDate.getMonth() + 1
+        );
+
         const {
             data: expensesData,
             error: expensesError,
         } = await supabase
             .from("expenses")
-            .select("*")
+            .select(`*,
+                expenses_type (
+                    type_name
+                )
+            `)
             .eq("home_id", houseId)
+            .gte(
+                "expense_date",
+                startDate
+            )
+            .lt(
+                "expense_date",
+                endDate
+                    .toISOString()
+                    .split("T")[0]
+            )
             .order("expense_date", {
                 ascending: false,
             });
@@ -53,11 +86,32 @@ export default function ListExpenses() {
             ...prevState,
             expenses: expensesData || [],
         }));
-    }, [houseId]);
+    }, [houseId, selectedMonth]);
 
     useEffect(() => {
         fetchExpenses();
     }, [fetchExpenses]);
+
+    const filteredExpenses =
+        expensesState.expenses.filter(
+            (expense) => {
+                if (!expense.expense_date)
+                    return false;
+
+                const d = new Date(
+                    expense.expense_date
+                );
+
+                const expenseMonth = `${d.getFullYear()}-${String(
+                    d.getMonth() + 1
+                ).padStart(2, "0")}`;
+
+                return (
+                    expenseMonth ===
+                    selectedMonth
+                );
+            }
+        );
 
     // Select expense
     function handleSelectExpense(id) {
@@ -172,13 +226,19 @@ export default function ListExpenses() {
                         handleStartAddExpense
                     }
                     expenses={
-                        expensesState.expenses
+                        filteredExpenses
                     }
                     onSelectExpense={
                         handleSelectExpense
                     }
                     selectedExpenseId={
                         expensesState.selectedExpenseId
+                    }
+                    selectedMonth={
+                        selectedMonth
+                    }
+                    onMonthChange={
+                        setSelectedMonth
                     }
                 />
 
