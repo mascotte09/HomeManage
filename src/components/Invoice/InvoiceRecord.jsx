@@ -7,7 +7,7 @@ import InvoiceSummary from "./InvoiceSummary";
 export default function InvoiceRecord({
   room,
   homeID,
-  invoice,  
+  invoice,
   onCancel,
   onAdd,
 }) {
@@ -15,42 +15,42 @@ export default function InvoiceRecord({
   const [validationMessage, setValidationMessage] = useState("");
 
   const [showSummaryModal, setShowSummaryModal] = useState(false);
-  
+
   const summaryRef = useRef(null);
 
   //const [isEditing, setIsEditing] = useState(false);
   const [home, setHome] = useState(null);
 
   const isWaterPerPerson =
-      home?.is_water_per_person;
+    home?.is_water_per_person;
   const waterPrice =
     Number(home?.water_price) || 0;
 
   const elecPrice =
-      Number(home?.electricity_price) || 0;
+    Number(home?.electricity_price) || 0;
   const numPerson =
-      Number(home?.numPerson) || 0;
+    Number(room?.num_person) || 0;
   const [formData, setFormData] = useState({
     invoice_create_date:
       new Date()
         .toISOString()
         .substring(0, 10),
 
-      rental_amount: "",
+    rental_amount: "",
 
-      current_electricity_number: "",
-      new_electricity_number: "",
+    current_electricity_number: "",
+    new_electricity_number: "",
 
-      current_water_number: "",
-      new_water_number: "",
+    current_water_number: "",
+    new_water_number: "",
 
-      wifi_amount: "",
-      surcharge: "",
+    wifi_amount: "",
+    surcharge: "",
 
-      amount_already_pay: "",
+    amount_already_pay: "",
 
-      note: "",
-    });
+    note: "",
+  });
   // =========================
   // LOAD INVOICE
   // =========================
@@ -105,7 +105,7 @@ export default function InvoiceRecord({
   }, [invoice, room]);
 
   useEffect(() => {
-   async function fetchHome() {
+    async function fetchHome() {
       console.debug("Home ID:" + homeID);
       if (!homeID) {
         return;
@@ -159,16 +159,16 @@ export default function InvoiceRecord({
     const electAmount = electUsed * elecPrice;
 
     const waterAmount = isWaterPerPerson
-        ? numPerson * waterPrice
-        : waterUsed * waterPrice;
+      ? numPerson * waterPrice
+      : waterUsed * waterPrice;
 
     const total =
-     (Number(formData.rental_amount) || 0) +
+      (Number(formData.rental_amount) || 0) +
       electAmount +
       waterAmount +
       (Number(formData.wifi_amount) || 0) +
       (Number(formData.surcharge) || 0);
-    
+
     return {
       electAmount,
       waterAmount,
@@ -179,112 +179,122 @@ export default function InvoiceRecord({
   const { electAmount, waterAmount, total } =
     calculateTotal();
 
-// =========================
-// QR URL
-// =========================
-//const [qrLoaded, setQrLoaded] = useState(false);
-const qrAmount = total || 0;
+  // =========================
+  // QR URL
+  // =========================
+  //const [qrLoaded, setQrLoaded] = useState(false);
+  const qrAmount = total || 0;
 
-const qrContent = encodeURIComponent(
-  `${room?.room_renter || ""} Room ${room?.room_number || ""}`
-);
+  const qrContent = encodeURIComponent(
+    `${room?.room_renter || ""} Room ${room?.room_number || ""}`
+  );
 
-const hasBankInfo =
-  home?.bank_id && home?.bank_account;
+  const hasBankInfo =
+    home?.bank_id && home?.bank_account;
 
-const qrUrl = hasBankInfo
-  ? `https://img.vietqr.io/image/${home.bank_id}-${home.bank_account}-compact2.png?amount=${qrAmount}&addInfo=${qrContent}`
-  : null;  
-  
+  const qrUrl = hasBankInfo
+    ? `https://img.vietqr.io/image/${home.bank_id}-${home.bank_account}-compact2.png?amount=${qrAmount}&addInfo=${qrContent}`
+    : null;
+
   async function captureAndShare() {
-  if (!summaryRef.current) return;
+    if (!summaryRef.current) return;
 
-  // wait QR image render
-  await new Promise((resolve) =>
-    setTimeout(resolve, 500)
-  );
+    // wait QR image render
+    await new Promise((resolve) =>
+      setTimeout(resolve, 500)
+    );
 
-  const canvas = await html2canvas(
-    summaryRef.current,
-    {
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: "#ffffff",
-      scale: 2,
-    }
-  );
-
-  canvas.toBlob(async (blob) => {
-    if (!blob) return;
-
-    const file = new File(
-      [blob],
-      `invoice-room-${room.room_number}.png`,
+    const canvas = await html2canvas(
+      summaryRef.current,
       {
-        type: "image/png",
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        scale: 2,
       }
     );
 
-    // MOBILE SHARE
-    if (
-      navigator.canShare?.({
-        files: [file],
-      })
-    ) {
-      try {
-        await navigator.share({
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      const file = new File(
+        [blob],
+        `invoice-room-${room.room_number}.png`,
+        {
+          type: "image/png",
+        }
+      );
+
+      // MOBILE SHARE
+      if (
+        navigator.canShare?.({
           files: [file],
-          title: "Invoice",
-          text: `Invoice Room ${room.room_number}`,
-        });
-      } catch (e) {
-        console.log(e);
+        })
+      ) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Invoice",
+            text: `Invoice Room ${room.room_number}`,
+          });
+        } catch (e) {
+          console.log(e);
+        }
+      } else {
+        // DOWNLOAD FALLBACK
+        const link =
+          document.createElement("a");
+
+        link.href =
+          URL.createObjectURL(blob);
+
+        link.download = `invoice-room-${room.room_number}.png`;
+
+        link.click();
       }
-    } else {
-      // DOWNLOAD FALLBACK
-      const link =
-        document.createElement("a");
-
-      link.href =
-        URL.createObjectURL(blob);
-
-      link.download = `invoice-room-${room.room_number}.png`;
-
-      link.click();
-    }
-  });
-}
+    });
+  }
 
   // =========================
   // CREATE
   // =========================
   async function handleCreate() {
-    if ((Number(formData.rental_amount) === 0) ||
-      (Number(formData.current_electricity_number) > Number(formData.new_electricity_number)) ||
-      (Number(formData.current_water_number) > Number(formData.new_water_number))) {
-        setValidationMessage(
-          "Nhập lại dữ liệu."
-        );
+    const invalidElectricity =
+      Number(formData.current_electricity_number) >
+      Number(formData.new_electricity_number);
 
-        setShowValidationModal(true);
-        return
+    const invalidWater =
+      !isWaterPerPerson &&
+      Number(formData.current_water_number) >
+      Number(formData.new_water_number);
+
+    const invalidRental =
+      Number(formData.rental_amount) === 0;
+
+    if (
+      invalidRental ||
+      invalidElectricity ||
+      invalidWater
+    ) {
+      setValidationMessage("Nhập lại dữ liệu.");
+      setShowValidationModal(true);
+      return;
     }
     const payload = {
       room_id: room.id,
 
       current_electricity_number:
-        Number(formData.current_electricity_number) ||
-        null,
+        Number(formData.current_electricity_number) || null,
 
       new_electricity_number:
-        Number(formData.new_electricity_number) ||
-        null,
+        Number(formData.new_electricity_number) || null,
 
       current_water_number:
         Number(formData.current_water_number) || null,
 
       new_water_number:
         Number(formData.new_water_number) || null,
+
       rental_amount:
         Number(formData.rental_amount) || null,
 
@@ -292,7 +302,7 @@ const qrUrl = hasBankInfo
         formData.invoice_create_date || null,
 
       amount_already_pay:
-        Number(formData.amount_already_pay) || null,
+        Number(formData.amount_already_pay) || 0,
 
       note: formData.note || null,
 
@@ -308,34 +318,40 @@ const qrUrl = hasBankInfo
 
       total_amount: total,
 
-      debit_amount: total,
+      debit_amount:
+        total -
+        (Number(formData.amount_already_pay) || 0),
     };
 
     let error = null;
+    let savedInvoice = null;
 
     // UPDATE
     if (invoice?.id) {
-
       const result = await supabase
         .from("invoices")
         .update(payload)
-        .eq("id", invoice.id);
+        .eq("id", invoice.id)
+        .select()
+        .single();
 
       error = result.error;
+      savedInvoice = result.data;
     }
 
     // CREATE
     else {
-
       const result = await supabase
         .from("invoices")
-        .insert([payload]);
+        .insert([payload])
+        .select()
+        .single();
 
       error = result.error;
+      savedInvoice = result.data;
     }
 
     if (error) {
-
       console.log(error.message);
 
       alert(
@@ -346,6 +362,52 @@ const qrUrl = hasBankInfo
 
       return;
     }
+
+    // Tìm hóa đơn mới nhất của phòng
+    const {
+      data: newestInvoice,
+      error: newestError,
+    } = await supabase
+      .from("invoices")
+      .select(`
+      id,
+      new_electricity_number,
+      new_water_number
+    `)
+      .eq("room_id", room.id)
+      .order(
+        "invoice_create_date",
+        { ascending: false }
+      )
+      .order(
+        "created_at",
+        { ascending: false }
+      )
+      .limit(1)
+      .single();
+
+    if (newestError) {
+      console.log(newestError.message);
+    } else {
+      // Chỉ cập nhật chỉ số phòng nếu
+      // hóa đơn vừa lưu là hóa đơn mới nhất
+      if (
+        newestInvoice &&
+        newestInvoice.id === savedInvoice.id
+      ) {
+        await supabase
+          .from("rooms")
+          .update({
+            current_electricity_number:
+              newestInvoice.new_electricity_number,
+
+            current_water_number:
+              newestInvoice.new_water_number,
+          })
+          .eq("id", room.id);
+      }
+    }
+
     setShowSummaryModal(true);
   }
 
@@ -353,81 +415,87 @@ const qrUrl = hasBankInfo
 
   useEffect(() => {
 
-  async function checkPreviousInvoice() {
+    async function checkPreviousInvoice() {
 
-    if (!room?.id) {
+      if (!room?.id) {
 
-      setHasPreviousInvoice(false);
+        setHasPreviousInvoice(false);
 
-      return;
-    }
+        return;
+      }
 
-    let query = supabase
-      .from("invoices")
-      .select(`
+      let query = supabase
+        .from("invoices")
+        .select(`
         id,
         rental_amount,
-        new_electricity_number,
-        new_water_number
-      `)
-      .eq("room_id", room.id)
-      .order(
-        "invoice_create_date",
-        { ascending: false }
+        wifi_amount`)
+        .eq("room_id", room.id)
+        .order(
+          "invoice_create_date",
+          { ascending: false }
+        );
+
+      // exclude current invoice
+      if (invoice?.id) {
+
+        query = query.neq(
+          "id",
+          invoice.id
+        );
+      }
+
+      const { data, error } =
+        await query.limit(1);
+
+      if (error) {
+
+        console.log(error.message);
+
+        return;
+      }
+
+      const latestInvoice =
+        data?.[0];
+
+      const hasInvoice =
+        !!latestInvoice;
+
+      setHasPreviousInvoice(
+        hasInvoice
       );
 
-    // exclude current invoice
-    if (invoice?.id) {
+      // CREATE NEW INVOICE
+      if (
+        hasInvoice &&
+        !invoice
+      ) {
 
-      query = query.neq(
-        "id",
-        invoice.id
-      );
+        setFormData((prev) => ({
+          ...prev,
+
+          rental_amount:
+            Number(latestInvoice.rental_amount) || null,
+          wifi_amount:
+            latestInvoice.wifi_amount || "",
+        }));
+      }
     }
+    checkPreviousInvoice();
 
-    const { data, error } =
-      await query.limit(1);
+  }, [room, invoice]);
 
-    if (error) {
+  const electricityError =
+    formData.new_electricity_number !== "" &&
+      Number(formData.current_electricity_number) >
+      Number(formData.new_electricity_number)
+      ? "Số điện mới phải lớn hơn hoặc bằng số điện cũ."
+      : "";
 
-      console.log(error.message);
+  const electricityPlaceholder = hasPreviousInvoice
+    ? `Số cũ: ${formData.current_electricity_number || 0}`
+    : "";
 
-      return;
-    }
-
-    const latestInvoice =
-      data?.[0];
-
-    const hasInvoice =
-      !!latestInvoice;
-
-    setHasPreviousInvoice(
-      hasInvoice
-    );
-
-    // CREATE NEW INVOICE
-    if (
-      hasInvoice &&
-      !invoice
-    ) {
-
-      setFormData((prev) => ({
-        ...prev,
-
-        rental_amount: 
-          Number(latestInvoice.rental_amount) || null,
-        current_electricity_number:
-          latestInvoice.new_electricity_number || "",
-        current_water_number:
-          latestInvoice.new_water_number || "",
-      }));
-    }
-  }
-  checkPreviousInvoice();
-
-}, [room, invoice]);
-
-  
   return (
     <div className="w-full p-3">
 
@@ -435,7 +503,7 @@ const qrUrl = hasBankInfo
       <div className="flex justify-between mb-3">
         <h2 className="text-xl font-bold text-black">
           Phòng số: {room?.room_name}
-        </h2>        
+        </h2>
       </div>
 
       {/* FORM */}
@@ -444,7 +512,7 @@ const qrUrl = hasBankInfo
         <Input
           label="Ngày tạo Hóa Đơn"
           type="date"
-          value={formData.invoice_create_date}          
+          value={formData.invoice_create_date}
           onChange={handleChange}
           name="invoice_create_date"
         />
@@ -455,7 +523,7 @@ const qrUrl = hasBankInfo
           value={Number(
             formData.rental_amount || 0
           ).toLocaleString("vi-VN")}
-          
+
           name="rental_amount"
           onChange={(e) => {
 
@@ -482,34 +550,25 @@ const qrUrl = hasBankInfo
               : "grid grid-cols-2 gap-3"
           }
         >
-
           {!hasPreviousInvoice && (
-          <>
             <Input
               label="Số Điện Cũ"
               type="number"
               name="current_electricity_number"
-              value={
-                formData.current_electricity_number
-              }
+              value={formData.current_electricity_number}
               onChange={handleChange}
-              
             />
+          )}
 
-            <Input
-              label="Số Nước Cũ"
-              type="number"
-              name="current_water_number"
-              value={
-                formData.current_water_number
-              }
-              onChange={handleChange}
-              
-            />
-          </>
-        )}
-       
-
+          <Input
+            label="Số Điện Mới"
+            type="number"
+            name="new_electricity_number"
+            value={formData.new_electricity_number}
+            onChange={handleChange}
+            placeholder={electricityPlaceholder}
+            error={electricityError}
+          />
         </div>
 
         {/* WATER */}
@@ -521,58 +580,43 @@ const qrUrl = hasBankInfo
           }
         >
 
-          <Input
-            label="Số Điện Mới"
-            type="number"
-            name="new_electricity_number"
-            value={
-              formData.new_electricity_number
-            }
-            onChange={handleChange}
-            
-            placeholder={
-              hasPreviousInvoice
-                ? `Số cũ: ${
-                    formData.current_electricity_number || 0
-                  }`
-                : ""
-            }
-            error={
-              formData.new_electricity_number !== "" &&
-              Number(formData.current_electricity_number) >
-              Number(formData.new_electricity_number)
-                ? "Số điện mới phải lớn hơn hoặc bằng số điện cũ."
-                : ""
-            }            
-          />
-        
           {!isWaterPerPerson && (
-            <Input
-              label="Số Nước Mới"
-              type="number"
-              name="new_water_number"
-              value={
-                formData.new_water_number
-              }
-              onChange={handleChange}
-              
-              placeholder={
-                hasPreviousInvoice
-                  ? `Số cũ: ${
-                      formData.current_water_number || 0
+            <>
+              <Input
+                label="Số Nước Cũ"
+                type="number"
+                name="current_water_number"
+                value={
+                  formData.current_water_number
+                }
+                onChange={handleChange}
+
+              />
+              <Input
+                label="Số Nước Mới"
+                type="number"
+                name="new_water_number"
+                value={
+                  formData.new_water_number
+                }
+                onChange={handleChange}
+
+                placeholder={
+                  hasPreviousInvoice
+                    ? `Số cũ: ${formData.current_water_number || 0
                     }`
-                  : ""
-              }
-              error={
-                formData.new_water_number !== "" &&
-                Number(formData.current_water_number) >
-                Number(formData.new_water_number)
-                  ? "Số nước mới phải lớn hơn hoặc bằng số nước cũ."
-                  : ""
-              }
-            />
+                    : ""
+                }
+                error={
+                  formData.new_water_number !== "" &&
+                    Number(formData.current_water_number) >
+                    Number(formData.new_water_number)
+                    ? "Số nước mới phải lớn hơn hoặc bằng số nước cũ."
+                    : ""
+                }
+              />
+            </>
           )}
-          
         </div>
 
         <Input
@@ -581,7 +625,7 @@ const qrUrl = hasBankInfo
           value={Number(
             formData.wifi_amount || 0
           ).toLocaleString("vi-VN")}
-          
+
           name="wifi_amount"
           onChange={(e) => {
 
@@ -602,10 +646,10 @@ const qrUrl = hasBankInfo
       </div>
 
       {showSummaryModal && (
-        
+
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
 
-          
+
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4">
             <div className="flex justify-end gap-3 mt-6">
 
@@ -665,37 +709,37 @@ const qrUrl = hasBankInfo
         </button>
       </div>
 
-     
+
       {/* Validation MODAL */}
       {showValidationModal && (
-      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
 
-        <div className="bg-white p-6 rounded w-[400px]">
+          <div className="bg-white p-6 rounded w-[400px]">
 
-          <h2 className="text-black font-bold text-lg mb-3">
-            Thông báo
-          </h2>
+            <h2 className="text-black font-bold text-lg mb-3">
+              Thông báo
+            </h2>
 
-          <p className="text-gray-600 mb-6">
-            {validationMessage}
-          </p>
+            <p className="text-gray-600 mb-6">
+              {validationMessage}
+            </p>
 
-          <div className="flex justify-end">
+            <div className="flex justify-end">
 
-            <button
-              onClick={() =>
-                setShowValidationModal(false)
-              }
-              className="bg-red-600 text-white px-4 py-2 rounded"
-            >
-              OK
-            </button>
+              <button
+                onClick={() =>
+                  setShowValidationModal(false)
+                }
+                className="bg-red-600 text-white px-4 py-2 rounded"
+              >
+                OK
+              </button>
+
+            </div>
 
           </div>
-
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 }
