@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import Tesseract from "tesseract.js";
 import {
@@ -10,205 +9,165 @@ export default function ElectricMeterOCR({
     onDetected,
 }) {
     const imageRef = useRef(null);
-    const imageWrapperRef = useRef(null);
-
-    const startRef = useRef(null);
-    const [drawMode, setDrawMode] = useState(false);
-
-    const [imageUrl, setImageUrl] = useState("");
+    const viewportRef = useRef(null);
     const fileInputRef = useRef(null);
-    const selectionRef = useRef(null);
-    const selectionBoxRef = useRef(null);
+
+    const transformStateRef = useRef({
+        scale: 1,
+        positionX: 0,
+        positionY: 0,
+    });
+
     const [showModal, setShowModal] =
         useState(false);
 
     const [selectedImage, setSelectedImage] =
         useState(null);
 
+    const [imageUrl, setImageUrl] =
+        useState("");
+
     const [ocrLoading, setOcrLoading] =
         useState(false);
 
-    const [selection, setSelection] =
-        useState(null);
-
-
     const [ocrResult, setOcrResult] =
         useState("");
-    // const draggingRef = useRef(false);
-    // const startPointRef = useRef(null);
 
-    function getImagePoint(e) {
-        const img = imageRef.current;
+    const FRAME_WIDTH = 220;
+    const FRAME_HEIGHT = 80;
 
-        if (!img) return null;
+    function handleSelectImage(e) {
+        const file = e.target.files?.[0];
 
-        const rect =
-            img.getBoundingClientRect();
+        if (!file) return;
 
-        return {
-            x:
-                ((e.clientX - rect.left) *
-                    img.naturalWidth) /
-                rect.width,
+        setSelectedImage(file);
 
-            y:
-                ((e.clientY - rect.top) *
-                    img.naturalHeight) /
-                rect.height,
-        };
+        const url =
+            URL.createObjectURL(file);
+
+        setImageUrl(url);
+
+        setOcrResult("");
+
+        setShowModal(true);
     }
-    function handlePointerDown(e) {
-        if (!drawMode) return;
 
-        e.stopPropagation();
-
-        const point =
-            getImagePoint(e);
-
-        startRef.current = point;
-
-        const box =
-            selectionBoxRef.current;
-
-        box.style.display = "block";
-    }
-    function handlePointerMove(e) {
-        if (
-            !drawMode ||
-            !startRef.current
-        )
-            return;
-
-        const point =
-            getImagePoint(e);
-
-        const start =
-            startRef.current;
-
-        const rect = {
-            x: Math.min(
-                start.x,
-                point.x
-            ),
-            y: Math.min(
-                start.y,
-                point.y
-            ),
-            width: Math.abs(
-                point.x - start.x
-            ),
-            height: Math.abs(
-                point.y - start.y
-            ),
-        };
-
-        selectionRef.current = rect;
-
-        const img =
-            imageRef.current;
-
-        const box =
-            selectionBoxRef.current;
-
-        box.style.left =
-            `${(rect.x /
-                img.naturalWidth) *
-            img.width}px`;
-
-        box.style.top =
-            `${(rect.y /
-                img.naturalHeight) *
-            img.height}px`;
-
-        box.style.width =
-            `${(rect.width /
-                img.naturalWidth) *
-            img.width}px`;
-
-        box.style.height =
-            `${(rect.height /
-                img.naturalHeight) *
-            img.height}px`;
-    }
-    function handlePointerUp() {
-        if (selectionRef.current) {
-            setSelection({
-                ...selectionRef.current,
-            });
-        }
-
-        startRef.current = null;
-    }
     async function handleReadOCR() {
-        if (!selectedImage || !selection) {
-            alert("Hãy khoanh vùng số điện");
-            return;
-        }
-
         try {
-            setOcrLoading(true);
+            if (!selectedImage) {
+                alert("Chưa chọn ảnh");
+                return;
+            }
 
             const img =
                 imageRef.current;
 
-            if (!img) {
-                alert("Không tìm thấy ảnh");
+            const viewport =
+                viewportRef.current;
+
+            if (!img || !viewport) {
+                alert(
+                    "Không tìm thấy ảnh"
+                );
                 return;
             }
+
+            setOcrLoading(true);
+
+            const {
+                scale,
+                positionX,
+                positionY,
+            } = transformStateRef.current;
+
+            const frameLeft =
+                viewport.clientWidth /
+                    2 -
+                FRAME_WIDTH / 2;
+
+            const frameTop =
+                viewport.clientHeight /
+                    2 -
+                FRAME_HEIGHT / 2;
+
+            const sx =
+                (frameLeft -
+                    positionX) /
+                scale;
+
+            const sy =
+                (frameTop -
+                    positionY) /
+                scale;
+
+            const sw =
+                FRAME_WIDTH / scale;
+
+            const sh =
+                FRAME_HEIGHT / scale;
+
+            const ratioX =
+                img.naturalWidth /
+                img.width;
+
+            const ratioY =
+                img.naturalHeight /
+                img.height;
+
+            const cropX =
+                sx * ratioX;
+
+            const cropY =
+                sy * ratioY;
+
+            const cropW =
+                sw * ratioX;
+
+            const cropH =
+                sh * ratioY;
 
             const canvas =
                 document.createElement(
                     "canvas"
                 );
 
+            canvas.width =
+                Math.round(cropW);
+
+            canvas.height =
+                Math.round(cropH);
+
             const ctx =
                 canvas.getContext("2d");
 
-            const sx = Math.round(
-                selection.x
-            );
-
-            const sy = Math.round(
-                selection.y
-            );
-
-            const sw = Math.round(
-                selection.width
-            );
-
-            const sh = Math.round(
-                selection.height
-            );
-
-            canvas.width = sw;
-            canvas.height = sh;
-
             ctx.drawImage(
                 img,
-                sx,
-                sy,
-                sw,
-                sh,
+                cropX,
+                cropY,
+                cropW,
+                cropH,
                 0,
                 0,
-                sw,
-                sh
+                cropW,
+                cropH
             );
 
             const {
                 data: { text },
-            } = await Tesseract.recognize(
-                canvas,
-                "eng",
-                {
-                    tessedit_char_whitelist:
-                        "0123456789",
-                    tessedit_pageseg_mode: "8",
-                }
-            );
+            } =
+                await Tesseract.recognize(
+                    canvas,
+                    "eng",
+                    {
+                        tessedit_char_whitelist:
+                            "0123456789",
+                    }
+                );
 
             const numbers =
-                text.match(/\d+/g) || [];
+                text.match(/\d+/g) ||
+                [];
 
             if (
                 numbers.length === 0
@@ -222,7 +181,8 @@ export default function ElectricMeterOCR({
             const meterNumber =
                 numbers.sort(
                     (a, b) =>
-                        b.length - a.length
+                        b.length -
+                        a.length
                 )[0];
 
             setOcrResult(
@@ -232,27 +192,14 @@ export default function ElectricMeterOCR({
             console.error(err);
 
             alert(
-                "Lỗi OCR: " +
-                err.message
+                "OCR Error: " +
+                    err.message
             );
         } finally {
             setOcrLoading(false);
         }
     }
-    function handleSelectImage(e) {
-        const file = e.target.files?.[0];
-        // console.log("SELECT FILE", file);
-        if (!file) return;
 
-        setSelectedImage(file);
-
-        setImageUrl(URL.createObjectURL(file));
-
-        setSelection(null);
-        setOcrResult("");
-
-        setShowModal(true);
-    }
     function handleUseResult() {
         if (!ocrResult) return;
 
@@ -260,31 +207,35 @@ export default function ElectricMeterOCR({
 
         closeModal();
     }
+
     function closeModal() {
         if (imageUrl) {
-            URL.revokeObjectURL(imageUrl);
+            URL.revokeObjectURL(
+                imageUrl
+            );
         }
 
         setShowModal(false);
-
-        setSelection(null);
-        setOcrResult("");
-
         setSelectedImage(null);
         setImageUrl("");
+        setOcrResult("");
 
         if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+            fileInputRef.current.value =
+                "";
         }
     }
+
     return (
         <>
             <input
+                hidden
                 type="file"
                 accept="image/*"
-                hidden
                 ref={fileInputRef}
-                onChange={handleSelectImage}
+                onChange={
+                    handleSelectImage
+                }
             />
 
             <button
@@ -292,39 +243,63 @@ export default function ElectricMeterOCR({
                 onClick={() =>
                     fileInputRef.current?.click()
                 }
-                className="mt-2 bg-green-600 text-white px-3 py-2 rounded"
+                className="
+                    mt-2
+                    bg-green-600
+                    text-white
+                    px-3
+                    py-2
+                    rounded
+                "
             >
                 Đọc đồng hồ điện
             </button>
 
             {showModal && (
-                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-
-                    <div className="bg-white w-[90vw] h-[90vh] p-4 rounded-lg flex flex-col">
-
-                        <div className="flex justify-end gap-2 mb-3">
+                <div
+                    className="
+                        fixed
+                        inset-0
+                        z-50
+                        bg-black/70
+                        flex
+                        items-center
+                        justify-center
+                    "
+                >
+                    <div
+                        className="
+                            bg-white
+                            w-[95vw]
+                            h-[95vh]
+                            rounded-lg
+                            p-4
+                            flex
+                            flex-col
+                        "
+                    >
+                        <div
+                            className="
+                                flex
+                                justify-end
+                                gap-2
+                                mb-3
+                            "
+                        >
                             <button
-                                onClick={() =>
-                                    setDrawMode(
-                                        (prev) => !prev
-                                    )
+                                onClick={
+                                    handleReadOCR
+                                }
+                                disabled={
+                                    ocrLoading
                                 }
                                 className="
-                                    bg-purple-600
+                                    bg-green-600
                                     text-white
                                     px-3
                                     py-2
                                     rounded
                                 "
-                            >
-                                {drawMode
-                                    ? "Đang chọn vùng"
-                                    : "Bật chọn vùng"}
-                            </button>
-                            <button
-                                onClick={handleReadOCR}
-                                disabled={ocrLoading}
-                                className="bg-green-600 text-white px-3 py-2 rounded"
                             >
                                 {ocrLoading
                                     ? "Đang đọc..."
@@ -332,116 +307,168 @@ export default function ElectricMeterOCR({
                             </button>
 
                             <button
-                                onClick={handleUseResult}
-                                disabled={!ocrResult}
-                                className="bg-blue-600 text-white px-3 py-2 rounded disabled:opacity-50"
+                                onClick={
+                                    handleUseResult
+                                }
+                                disabled={
+                                    !ocrResult
+                                }
+                                className="
+                                    bg-blue-600
+                                    text-white
+                                    px-3
+                                    py-2
+                                    rounded
+                                    disabled:opacity-50
+                                "
                             >
                                 Chấp nhận
                             </button>
+
                             <button
-                                onClick={closeModal}
-                                className="bg-gray-500 text-white px-3 py-2 rounded"
+                                onClick={
+                                    closeModal
+                                }
+                                className="
+                                    bg-gray-500
+                                    text-white
+                                    px-3
+                                    py-2
+                                    rounded
+                                "
                             >
                                 Đóng
                             </button>
                         </div>
 
-                        <TransformWrapper
-                            minScale={1}
-                            maxScale={8}
-                            wheel={{
-                                smoothStep: 0.1,
-                            }}
-                            pinch={{
-                                step: 5,
-                            }}
-                            panning={{
-                                disabled: drawMode,
-                            }}
-                            doubleClick={{
-                                disabled: true,
-                            }}
+                        <div
+                            ref={
+                                viewportRef
+                            }
+                            className="
+                                relative
+                                flex-1
+                                overflow-hidden
+                            "
                         >
-                            <TransformComponent
-                                wrapperClass="w-full h-full"
+                            <TransformWrapper
+                                minScale={
+                                    1
+                                }
+                                maxScale={
+                                    10
+                                }
+                                onTransformed={(
+                                    instance
+                                ) => {
+                                    const {
+                                        scale,
+                                        positionX,
+                                        positionY,
+                                    } =
+                                        instance.state;
+
+                                    transformStateRef.current =
+                                        {
+                                            scale,
+                                            positionX,
+                                            positionY,
+                                        };
+                                }}
                             >
-                                <div
-                                    ref={imageWrapperRef}
-                                    className="relative inline-block"
-                                    onPointerDown={
-                                        drawMode
-                                            ? handlePointerDown
-                                            : undefined
-                                    }
-                                    onPointerMove={
-                                        drawMode
-                                            ? handlePointerMove
-                                            : undefined
-                                    }
-                                    onPointerUp={
-                                        drawMode
-                                            ? handlePointerUp
-                                            : undefined
-                                    }
+                                <TransformComponent
+                                    wrapperClass="w-full h-full"
                                 >
                                     <img
-                                        ref={imageRef}
-                                        id="meter-image"
-                                        src={imageUrl}
+                                        ref={
+                                            imageRef
+                                        }
+                                        src={
+                                            imageUrl
+                                        }
                                         alt=""
-                                        draggable={false}
+                                        draggable={
+                                            false
+                                        }
                                         className="
-        block
-        select-none
-        max-w-full
-        h-auto
-    "
+                                            block
+                                            max-w-full
+                                            h-auto
+                                            select-none
+                                        "
                                     />
+                                </TransformComponent>
+                            </TransformWrapper>
 
-                                    <div
-                                        ref={selectionBoxRef}
-                                        className="
-            absolute
-            hidden
-            border-2
-            border-red-500
-            bg-red-500/20
-            pointer-events-none
-        "
-                                    />
-                                </div>
-                            </TransformComponent>
-                        </TransformWrapper>
-                        <div className="mt-3 p-3 border rounded bg-green-50">
-                            <label className="block font-semibold mb-2">
-                                Kết quả OCR (có thể sửa)
+                            <div
+                                className="
+                                    absolute
+                                    border-2
+                                    border-red-500
+                                    bg-red-500/10
+                                    pointer-events-none
+                                    z-50
+                                "
+                                style={{
+                                    width: FRAME_WIDTH,
+                                    height: FRAME_HEIGHT,
+                                    left: "50%",
+                                    top: "50%",
+                                    transform:
+                                        "translate(-50%, -50%)",
+                                }}
+                            />
+                        </div>
+
+                        <div
+                            className="
+                                mt-3
+                                p-3
+                                border
+                                rounded
+                                bg-green-50
+                            "
+                        >
+                            <label
+                                className="
+                                    block
+                                    font-semibold
+                                    mb-2
+                                "
+                            >
+                                Kết quả OCR
                             </label>
 
                             <input
                                 type="text"
-                                inputMode="numeric"
-                                value={ocrResult}
-                                onChange={(e) =>
+                                value={
+                                    ocrResult
+                                }
+                                onChange={(
+                                    e
+                                ) =>
                                     setOcrResult(
-                                        e.target.value.replace(/\D/g, "")
+                                        e.target.value.replace(
+                                            /\D/g,
+                                            ""
+                                        )
                                     )
                                 }
-                                className="w-full border rounded
-                                        px-3
-                                        py-2
-                                        text-3xl
-                                        font-bold
-                                        text-green-700
-                                    "
+                                className="
+                                    w-full
+                                    border
+                                    rounded
+                                    px-3
+                                    py-2
+                                    text-3xl
+                                    font-bold
+                                    text-green-700
+                                "
                             />
                         </div>
-
                     </div>
-
                 </div>
-
             )}
-
         </>
     );
 }
