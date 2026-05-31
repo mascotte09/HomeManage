@@ -94,6 +94,48 @@ export default function ElectricMeterOCR({
 
         closeModal();
     }
+    function getTouchPosition(e) {
+        const rect =
+            imageContainerRef.current.getBoundingClientRect();
+
+        const touch = e.touches?.[0] || e.changedTouches?.[0];
+
+        return {
+            x: touch.clientX - rect.left,
+            y: touch.clientY - rect.top,
+        };
+    }
+    function handleTouchStart(e) {
+        const { x, y } = getTouchPosition(e);
+
+        setStartPoint({ x, y });
+
+        setSelection({
+            x,
+            y,
+            width: 0,
+            height: 0,
+        });
+
+        setIsDragging(true);
+    }
+    function handleTouchMove(e) {
+        if (!isDragging || !startPoint) return;
+
+        e.preventDefault();
+
+        const { x, y } = getTouchPosition(e);
+
+        setSelection({
+            x: Math.min(startPoint.x, x),
+            y: Math.min(startPoint.y, y),
+            width: Math.abs(x - startPoint.x),
+            height: Math.abs(y - startPoint.y),
+        });
+    }
+    function handleTouchEnd() {
+        setIsDragging(false);
+    }
     async function handleReadOCR() {
         if (!selectedImage || !selection) {
             alert("Hãy khoanh vùng số điện");
@@ -255,10 +297,15 @@ export default function ElectricMeterOCR({
 
                         <div
                             ref={imageContainerRef}
-                            className="flex-1 overflow-auto relative border"
+                            className="flex-1 overflow-auto relative border touch-none"
+
                             onMouseDown={handleMouseDown}
                             onMouseMove={handleMouseMove}
                             onMouseUp={handleMouseUp}
+
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
                         >
                             <img
                                 id="meter-image"
