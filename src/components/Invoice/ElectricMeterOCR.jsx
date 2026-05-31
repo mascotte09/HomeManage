@@ -2,14 +2,15 @@
 import { useRef, useState } from "react";
 import Tesseract from "tesseract.js";
 
+
 export default function ElectricMeterOCR({
     onDetected,
 }) {
     const [imageUrl, setImageUrl] = useState("");
     const fileInputRef = useRef(null);
-
     const imageContainerRef = useRef(null);
-
+    const selectionRef = useRef(null);
+    const selectionBoxRef = useRef(null);
     const [showModal, setShowModal] =
         useState(false);
 
@@ -22,13 +23,11 @@ export default function ElectricMeterOCR({
     const [selection, setSelection] =
         useState(null);
 
-    const [startPoint, setStartPoint] =
-        useState(null);
-
-    const [isDragging, setIsDragging] =
-        useState(false);
+   
     const [ocrResult, setOcrResult] =
         useState("");
+    const draggingRef = useRef(false);
+    const startPointRef = useRef(null);
     function handleSelectImage(e) {
         const file = e.target.files?.[0];
         // console.log("SELECT FILE", file);
@@ -43,45 +42,23 @@ export default function ElectricMeterOCR({
 
         setShowModal(true);
     }
+    
+    function getPointerPosition(e) {
+        const container = imageContainerRef.current;
 
-    function handleMouseDown(e) {
-        const rect =
-            imageContainerRef.current.getBoundingClientRect();
+        const rect = container.getBoundingClientRect();
 
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        return {
+            x:
+                e.clientX -
+                rect.left +
+                container.scrollLeft,
 
-        setStartPoint({ x, y });
-
-        setSelection({
-            x,
-            y,
-            width: 0,
-            height: 0,
-        });
-
-        setIsDragging(true);
-    }
-
-    function handleMouseMove(e) {
-        if (!isDragging || !startPoint) return;
-
-        const rect =
-            imageContainerRef.current.getBoundingClientRect();
-
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        setSelection({
-            x: Math.min(startPoint.x, x),
-            y: Math.min(startPoint.y, y),
-            width: Math.abs(x - startPoint.x),
-            height: Math.abs(y - startPoint.y),
-        });
-    }
-
-    function handleMouseUp() {
-        setIsDragging(false);
+            y:
+                e.clientY -
+                rect.top +
+                container.scrollTop,
+        };
     }
     function handleResetSelection() {
         setSelection(null);
@@ -94,47 +71,69 @@ export default function ElectricMeterOCR({
 
         closeModal();
     }
-    function getTouchPosition(e) {
-        const rect =
-            imageContainerRef.current.getBoundingClientRect();
+    function updateSelection(x, y) {
+        const start = startPointRef.current;
+        if (!start) return;
 
-        const touch = e.touches?.[0] || e.changedTouches?.[0];
-
-        return {
-            x: touch.clientX - rect.left,
-            y: touch.clientY - rect.top,
+        const box = {
+            x: Math.min(start.x, x),
+            y: Math.min(start.y, y),
+            width: Math.abs(x - start.x),
+            height: Math.abs(y - start.y),
         };
+
+        selectionRef.current = box;
+
+        if (selectionBoxRef.current) {
+            selectionBoxRef.current.style.left =
+                `${box.x}px`;
+
+            selectionBoxRef.current.style.top =
+                `${box.y}px`;
+
+            selectionBoxRef.current.style.width =
+                `${box.width}px`;
+
+            selectionBoxRef.current.style.height =
+                `${box.height}px`;
+        }
     }
-    function handleTouchStart(e) {
-        const { x, y } = getTouchPosition(e);
+    function handlePointerDown(e) {
+        const { x, y } =
+            getPointerPosition(e);
 
-        setStartPoint({ x, y });
+        startPointRef.current = { x, y };
+        draggingRef.current = true;
 
-        setSelection({
-            x,
-            y,
-            width: 0,
-            height: 0,
-        });
+        if (selectionBoxRef.current) {
+            selectionBoxRef.current.style.display =
+                "block";
 
-        setIsDragging(true);
+            selectionBoxRef.current.style.left =
+                `${x}px`;
+
+            selectionBoxRef.current.style.top =
+                `${y}px`;
+
+            selectionBoxRef.current.style.width =
+                "0px";
+
+            selectionBoxRef.current.style.height =
+                "0px";
+        }
     }
-    function handleTouchMove(e) {
-        if (!isDragging || !startPoint) return;
+    function handlePointerMove(e) {
+        if (!draggingRef.current) return;
 
-        e.preventDefault();
+        const { x, y } =
+            getPointerPosition(e);
 
-        const { x, y } = getTouchPosition(e);
-
-        setSelection({
-            x: Math.min(startPoint.x, x),
-            y: Math.min(startPoint.y, y),
-            width: Math.abs(x - startPoint.x),
-            height: Math.abs(y - startPoint.y),
-        });
+        updateSelection(x, y);
     }
-    function handleTouchEnd() {
-        setIsDragging(false);
+    function handlePointerUp() {
+        draggingRef.current = false;
+
+        setSelection(selectionRef.current);
     }
     async function handleReadOCR() {
         if (!selectedImage || !selection) {
@@ -156,11 +155,14 @@ export default function ElectricMeterOCR({
             const ctx =
                 canvas.getContext("2d");
 
+            const rect =
+                img.getBoundingClientRect();
+
             const scaleX =
-                img.naturalWidth / img.clientWidth;
+                img.naturalWidth / rect.width;
 
             const scaleY =
-                img.naturalHeight / img.clientHeight;
+                img.naturalHeight / rect.height;
 
             canvas.width =
                 selection.width * scaleX;
@@ -188,7 +190,9 @@ export default function ElectricMeterOCR({
                 {
                     tessedit_char_whitelist:
                         "0123456789",
+                    tessedit_pageseg_mode: "8",
                 }
+
             );
 
             const numbers =
@@ -257,15 +261,6 @@ export default function ElectricMeterOCR({
                         <div className="flex justify-end gap-2 mb-3">
 
                             <button
-                                onClick={() =>
-                                    setShowModal(false)
-                                }
-                                className="bg-gray-500 text-white px-3 py-2 rounded"
-                            >
-                                Đóng
-                            </button>
-
-                            <button
                                 onClick={handleReadOCR}
                                 disabled={ocrLoading}
                                 className="bg-green-600 text-white px-3 py-2 rounded"
@@ -278,14 +273,14 @@ export default function ElectricMeterOCR({
                                 onClick={handleResetSelection}
                                 className="bg-yellow-500 text-white px-3 py-2 rounded"
                             >
-                                Chọn lại vùng
+                                Chọn lại
                             </button>
                             <button
                                 onClick={handleUseResult}
                                 disabled={!ocrResult}
                                 className="bg-blue-600 text-white px-3 py-2 rounded disabled:opacity-50"
                             >
-                                Dùng kết quả
+                                Chấp nhận
                             </button>
                             <button
                                 onClick={closeModal}
@@ -297,45 +292,73 @@ export default function ElectricMeterOCR({
 
                         <div
                             ref={imageContainerRef}
-                            className="flex-1 overflow-auto relative border touch-none"
-
-                            onMouseDown={handleMouseDown}
-                            onMouseMove={handleMouseMove}
-                            onMouseUp={handleMouseUp}
-
-                            onTouchStart={handleTouchStart}
-                            onTouchMove={handleTouchMove}
-                            onTouchEnd={handleTouchEnd}
+                            className="
+                                flex-1
+                                overflow-auto
+                                relative
+                                border
+                            "
+                            style={{
+                                touchAction: "none",
+                            }}
+                            onPointerDown={handlePointerDown}
+                            onPointerMove={handlePointerMove}
+                            onPointerUp={handlePointerUp}
+                            onPointerLeave={handlePointerUp}
                         >
-                            <img
-                                id="meter-image"
-                                src={imageUrl}
-                                alt=""
-                            />
-
-                            {selection && (
-                                <div
-                                    className="absolute border-2 border-red-500 bg-red-500/20"
-                                    style={{
-                                        left: selection.x,
-                                        top: selection.y,
-                                        width: selection.width,
-                                        height: selection.height,
-                                    }}
+                            <div
+                                className="relative inline-block"
+                            >
+                                <img
+                                    id="meter-image"
+                                    src={imageUrl}
+                                    alt=""
+                                    className="
+                                        block
+                                        max-w-full
+                                        h-auto
+                                        select-none
+                                    "
+                                    draggable={false}
                                 />
-                            )}
-                        </div>
-                        {ocrResult && (
-                            <div className="mt-3 p-3 border rounded bg-green-50">
-                                <div className="font-semibold">
-                                    Kết quả OCR
-                                </div>
+                                <div
+                                    ref={selectionBoxRef}
+                                    className="
+                                        absolute
+                                        border-2
+                                        border-red-500
+                                        bg-red-500/20
+                                        pointer-events-none
+                                        hidden
+                                    "
+                                />
 
-                                <div className="text-3xl font-bold text-green-700">
-                                    {ocrResult}
-                                </div>
                             </div>
-                        )}
+                        </div>
+                        <div className="mt-3 p-3 border rounded bg-green-50">
+                            <label className="block font-semibold mb-2">
+                                Kết quả OCR (có thể sửa)
+                            </label>
+
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                value={ocrResult}
+                                onChange={(e) =>
+                                    setOcrResult(
+                                        e.target.value.replace(/\D/g, "")
+                                    )
+                                }
+                                className="w-full border rounded
+                                        px-3
+                                        py-2
+                                        text-3xl
+                                        font-bold
+                                        text-green-700
+                                    "
+                            />
+                        </div>
+
                     </div>
 
                 </div>
