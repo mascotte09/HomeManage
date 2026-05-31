@@ -3,7 +3,7 @@ import html2canvas from "html2canvas";
 import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import InvoiceSummary from "./InvoiceSummary";
-
+import ElectricMeterOCR from "./ElectricMeterOCR";
 export default function InvoiceRecord({
   room,
   homeID,
@@ -560,15 +560,26 @@ export default function InvoiceRecord({
             />
           )}
 
-          <Input
-            label="Số Điện Mới"
-            type="number"
-            name="new_electricity_number"
-            value={formData.new_electricity_number}
-            onChange={handleChange}
-            placeholder={electricityPlaceholder}
-            error={electricityError}
-          />
+          <div>
+            <Input
+              label="Số Điện Mới"
+              type="number"
+              name="new_electricity_number"
+              value={formData.new_electricity_number}
+              onChange={handleChange}
+              placeholder={electricityPlaceholder}
+              error={electricityError}
+            />
+
+            <ElectricMeterOCR
+              onDetected={(value) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  new_electricity_number: value,
+                }))
+              }
+            />
+          </div>
         </div>
 
         {/* WATER */}
