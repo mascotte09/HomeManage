@@ -29,7 +29,7 @@ export default function ElectricMeterOCR({
     const [ocrResult, setOcrResult] =
         useState("");
 
-    const FRAME_WIDTH = 200;
+    const FRAME_WIDTH = 190;
     const FRAME_HEIGHT = 50;
 
     function handleSelectImage(e) {
