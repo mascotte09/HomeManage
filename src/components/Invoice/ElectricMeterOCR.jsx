@@ -29,8 +29,8 @@ export default function ElectricMeterOCR({
     const [ocrResult, setOcrResult] =
         useState("");
 
-    const FRAME_WIDTH = 190;
-    const FRAME_HEIGHT = 50;
+    const FRAME_WIDTH = 180;
+    const FRAME_HEIGHT = 40;
 
     function handleSelectImage(e) {
         const file = e.target.files?.[0];
