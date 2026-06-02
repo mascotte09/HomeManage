@@ -12,11 +12,7 @@ export default function ElectricMeterOCR({
     const viewportRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    const transformStateRef = useRef({
-        scale: 1,
-        positionX: 0,
-        positionY: 0,
-    });
+
 
     const [showModal, setShowModal] =
         useState(false);
@@ -75,57 +71,54 @@ export default function ElectricMeterOCR({
 
             setOcrLoading(true);
 
-            const {
-                scale,
-                positionX,
-                positionY,
-            } = transformStateRef.current;
+            const imgRect =
+                img.getBoundingClientRect();
+
+            const viewportRect =
+                viewport.getBoundingClientRect();
 
             const frameLeft =
-                viewport.clientWidth /
-                    2 -
+                viewportRect.left +
+                viewportRect.width / 2 -
                 FRAME_WIDTH / 2;
 
             const frameTop =
-                viewport.clientHeight /
-                    2 -
+                viewportRect.top +
+                viewportRect.height / 2 -
                 FRAME_HEIGHT / 2;
 
-            const sx =
-                (frameLeft -
-                    positionX) /
-                scale;
+            let cropX =
+                ((frameLeft - imgRect.left) *
+                    img.naturalWidth) /
+                imgRect.width;
 
-            const sy =
-                (frameTop -
-                    positionY) /
-                scale;
+            let cropY =
+                ((frameTop - imgRect.top) *
+                    img.naturalHeight) /
+                imgRect.height;
 
-            const sw =
-                FRAME_WIDTH / scale;
+            let cropW =
+                (FRAME_WIDTH *
+                    img.naturalWidth) /
+                imgRect.width;
 
-            const sh =
-                FRAME_HEIGHT / scale;
+            let cropH =
+                (FRAME_HEIGHT *
+                    img.naturalHeight) /
+                imgRect.height;
 
-            const ratioX =
-                img.naturalWidth /
-                img.width;
+            cropX = Math.max(0, cropX);
+            cropY = Math.max(0, cropY);
 
-            const ratioY =
-                img.naturalHeight /
-                img.height;
+            cropW = Math.min(
+                cropW,
+                img.naturalWidth - cropX
+            );
 
-            const cropX =
-                sx * ratioX;
-
-            const cropY =
-                sy * ratioY;
-
-            const cropW =
-                sw * ratioX;
-
-            const cropH =
-                sh * ratioY;
+            cropH = Math.min(
+                cropH,
+                img.naturalHeight - cropY
+            );
 
             const canvas =
                 document.createElement(
@@ -193,7 +186,7 @@ export default function ElectricMeterOCR({
 
             alert(
                 "OCR Error: " +
-                    err.message
+                err.message
             );
         } finally {
             setOcrLoading(false);
@@ -358,23 +351,7 @@ export default function ElectricMeterOCR({
                                 maxScale={
                                     10
                                 }
-                                onTransformed={(
-                                    instance
-                                ) => {
-                                    const {
-                                        scale,
-                                        positionX,
-                                        positionY,
-                                    } =
-                                        instance.state;
 
-                                    transformStateRef.current =
-                                        {
-                                            scale,
-                                            positionX,
-                                            positionY,
-                                        };
-                                }}
                             >
                                 <TransformComponent
                                     wrapperClass="w-full h-full"
