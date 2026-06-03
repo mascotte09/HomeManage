@@ -11,6 +11,7 @@ import HeaderRoom from "./components/Room/HeaderRoom";
 import ListHouses from "./components/House/ListHouses";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
+import ListPayments from "./components/Payment/ListPayments.jsx";
 import MonthlyStatistic from "./components/House/MonthlyStatistic.jsx";
 
 
@@ -123,6 +124,18 @@ function App() {
                                 }}
                             />
                             <InvoicesInMonth />
+                        </>
+                    } />
+                <Route path="/payment/:houseId"
+                    element={
+                        <>
+                            <HeaderRoom
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    setCurrentUser(null);
+                                }}
+                            />
+                            <ListPayments />
                         </>
                     } />
 

@@ -16,7 +16,7 @@ export default function Header({ onLogout }) {
                     </button>
    
                     <button
-                        //onClick={() =>  navigate(`/rooms/${houseId}`)}
+                        onClick={() =>  navigate(`/payment/${houseId}`)}
                         className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded"
                     >
                         Thu Tiền

@@ -550,6 +550,7 @@ export default function InvoiceRecord({
               : "grid grid-cols-2 gap-3"
           }
         >
+          
           {!hasPreviousInvoice && (
             <Input
               label="Số Điện Cũ"
@@ -585,7 +586,7 @@ export default function InvoiceRecord({
         {/* WATER */}
         <div
           className={
-            isWaterPerPerson
+            hasPreviousInvoice
               ? "grid grid-cols-1 gap-3"
               : "grid grid-cols-2 gap-3"
           }
@@ -593,39 +594,43 @@ export default function InvoiceRecord({
 
           {!isWaterPerPerson && (
             <>
-              <Input
-                label="Số Nước Cũ"
-                type="number"
-                name="current_water_number"
-                value={
-                  formData.current_water_number
-                }
-                onChange={handleChange}
+              {!hasPreviousInvoice && (
+                <Input
+                  label="Số Nước Cũ"
+                  type="number"
+                  name="current_water_number"
+                  value={
+                    formData.current_water_number
+                  }
+                  onChange={handleChange}
+                />
+              )}
+              <div>
+                <Input
+                  label="Số Nước Mới"
+                  type="number"
+                  name="new_water_number"
+                  value={
+                    formData.new_water_number
+                  }
+                  onChange={handleChange}
 
-              />
-              <Input
-                label="Số Nước Mới"
-                type="number"
-                name="new_water_number"
-                value={
-                  formData.new_water_number
-                }
-                onChange={handleChange}
+                  placeholder={
+                    hasPreviousInvoice
+                      ? `Số cũ: ${formData.current_water_number || 0
+                      }`
+                      : ""
+                  }
+                  error={
+                    formData.new_water_number !== "" &&
+                      Number(formData.current_water_number) >
+                      Number(formData.new_water_number)
+                      ? "Số nước mới phải lớn hơn hoặc bằng số nước cũ."
+                      : ""
+                  }
+                />
+              </div>
 
-                placeholder={
-                  hasPreviousInvoice
-                    ? `Số cũ: ${formData.current_water_number || 0
-                    }`
-                    : ""
-                }
-                error={
-                  formData.new_water_number !== "" &&
-                    Number(formData.current_water_number) >
-                    Number(formData.new_water_number)
-                    ? "Số nước mới phải lớn hơn hoặc bằng số nước cũ."
-                    : ""
-                }
-              />
             </>
           )}
         </div>
