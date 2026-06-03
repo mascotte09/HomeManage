@@ -47,8 +47,8 @@ export default function PaymentRecord({
             );
 
             setDebitAmount(
-                String(
-                    invoice.debit_amount
+                formatMoney(
+                    String(invoice.debit_amount || 0)
                 )
             );
         } else {
@@ -98,11 +98,11 @@ export default function PaymentRecord({
     }
 
     return (
-        <div className="flex-1 p-6">
-            <div className="max-w-xl bg-white rounded-lg shadow p-6 text-black">
+        <div className="flex-1 p-2">
+            <div className="bg-white rounded-lg shadow p-3 text-black">
 
-                <h2 className="text-xl font-bold mb-6">
-                    Thu tiền phòng
+                <h2 className="mb-3 text-sm font-bold uppercase text-stone-700">
+                    Thu tiền: phòng {invoice.room_number}
                 </h2>
 
                 {/* Ngày tạo */}
@@ -127,7 +127,7 @@ export default function PaymentRecord({
                             w-full
                             border
                             rounded
-                            px-3
+                            px-1
                             py-2
                             bg-gray-100
                         "
@@ -150,7 +150,7 @@ export default function PaymentRecord({
                             w-full
                             border
                             rounded
-                            px-3
+                            px-1
                             py-2
                             bg-gray-100
                         "
@@ -159,9 +159,6 @@ export default function PaymentRecord({
 
                 {/* Radio */}
                 <div className="mb-5">
-                    <label className="block mb-2 font-medium">
-                        Hình thức thanh toán
-                    </label>
 
                     <div className="flex gap-6">
 
@@ -184,7 +181,7 @@ export default function PaymentRecord({
                                 }}
                             />
 
-                            Thanh toán đủ
+                            Trả đủ
                         </label>
 
                         <label className="flex items-center gap-2">
@@ -202,7 +199,7 @@ export default function PaymentRecord({
                                 }
                             />
 
-                            Thanh toán thiếu
+                            Trả thiếu
                         </label>
 
                     </div>
@@ -232,7 +229,7 @@ export default function PaymentRecord({
                             w-full
                             border
                             rounded
-                            px-3
+                            px-1
                             py-2
                             text-black
                             disabled:bg-gray-100

@@ -62,7 +62,6 @@ export default function ListPayments() {
           "home_id",
           houseId
         );
-      console.debug("roomsData: " + roomsData);
 
       if (error) {
         console.log(
