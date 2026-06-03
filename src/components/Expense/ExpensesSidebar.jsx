@@ -13,14 +13,40 @@ export default function ExpensesSidebar({
             <h2 className="mb-3 text-xs font-bold uppercase text-stone-200">
                 Chi phí
             </h2>
-            <input
-                type="month"
+            
+            <select
                 value={selectedMonth}
                 onChange={(e) =>
                     onMonthChange(e.target.value)
                 }
-                className="w-full text-xs mb-3 px-2 py-1 rounded text-black"
-            />
+                className="w-full mb-3 px-2 py-1 rounded text-black"
+            >
+                {Array.from({ length: 24 }, (_, i) => {
+                    const date = new Date();
+                    date.setMonth(
+                        date.getMonth() - 12 + i
+                    );
+
+                    const year =
+                        date.getFullYear();
+
+                    const month = String(
+                        date.getMonth() + 1
+                    ).padStart(2, "0");
+
+                    const value =
+                        `${year}-${month}`;
+
+                    return (
+                        <option
+                            key={value}
+                            value={value}
+                        >
+                            {month}/{year}
+                        </option>
+                    );
+                })}
+            </select>
             <div className="mb-3">
                 <Button onClick={onStartAddExpense}>
                     Tạo mới
@@ -52,7 +78,7 @@ export default function ExpensesSidebar({
                                 }
                             >
                                 {expense.expenses_type?.type_name} -{" "}
-                                {expense.expense?.toLocaleString()} đ
+                                {expense.expense?.toLocaleString()}
                             </button>
                         </li>
                     );

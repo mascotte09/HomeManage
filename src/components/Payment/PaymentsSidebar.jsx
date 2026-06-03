@@ -35,7 +35,7 @@ export default function PaymentsSidebar({
                         <span className="text-xs">
                             {Number(
                                 invoice.total_amount || 0
-                            ).toLocaleString("vi-VN")} đ
+                            ).toLocaleString("vi-VN")}
                         </span>
                     </button>
                 </li>
@@ -48,16 +48,39 @@ export default function PaymentsSidebar({
                 Thu Tiền
             </h2>
 
-            <input
-                type="month"
+            <select
                 value={selectedMonth}
                 onChange={(e) =>
-                    onMonthChange(
-                        e.target.value
-                    )
+                    onMonthChange(e.target.value)
                 }
-                className="w-full text-xs mb-3 px-2 py-1 rounded text-black"
-            />
+                className="w-full mb-3 px-2 py-1 rounded text-black"
+            >
+                {Array.from({ length: 24 }, (_, i) => {
+                    const date = new Date();
+                    date.setMonth(
+                        date.getMonth() - 12 + i
+                    );
+
+                    const year =
+                        date.getFullYear();
+
+                    const month = String(
+                        date.getMonth() + 1
+                    ).padStart(2, "0");
+
+                    const value =
+                        `${year}-${month}`;
+
+                    return (
+                        <option
+                            key={value}
+                            value={value}
+                        >
+                            {month}/{year}
+                        </option>
+                    );
+                })}
+            </select>
 
             {/* Chưa thu */}
             <div className="mb-4">
