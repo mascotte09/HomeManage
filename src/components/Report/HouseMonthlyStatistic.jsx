@@ -145,9 +145,8 @@ export default function MonthlyStatistic() {
                     <h3 className="font-semibold text-orange-600">Công nợ</h3>
 
                     <Row label="Còn nợ" value={stats.unpaidAmount} />
-                    <Row label="Chưa thanh toán" value={stats.unpaidInvoiceCount} />
+                    <Row label="Số phòng nợ" value={stats.unpaidInvoiceCount} />
                     <Row label="Đã thu" value={stats.paidAmount} />
-                    <Row label="Đã thanh toán" value={`${stats.paidInvoiceCount}/${stats.totalInvoice}`} />
                 </div>
 
             </div>
@@ -167,7 +166,7 @@ export default function MonthlyStatistic() {
                             </div>
 
                             <div className="text-red-500 font-medium">
-                                -{Number(e.expense).toLocaleString("vi-VN")} đ
+                                -{Number(e.expense).toLocaleString("vi-VN")} 
                             </div>
                         </div>
                     ))}
@@ -175,7 +174,7 @@ export default function MonthlyStatistic() {
 
                 <div className="flex justify-between pt-2 font-bold text-red-600">
                     <span>Tổng chi</span>
-                    <span>{stats.expenseTotal.toLocaleString("vi-VN")} đ</span>
+                    <span>{stats.expenseTotal.toLocaleString("vi-VN")} </span>
                 </div>
             </div>
 
@@ -183,7 +182,7 @@ export default function MonthlyStatistic() {
             <div className="bg-green-100 border border-green-500 rounded-lg p-3 flex justify-between">
                 <span className="font-bold text-green-800">Lợi nhuận</span>
                 <span className="font-extrabold text-green-700">
-                    {profit.toLocaleString("vi-VN")} đ
+                    {profit.toLocaleString("vi-VN")}
                 </span>
             </div>
 
@@ -197,7 +196,7 @@ function Kpi({ title, value, color }) {
         <div className="bg-white border rounded-lg p-2">
             <div className="text-xs text-black">{title}</div>
             <div className={`text-sm font-bold ${color}`}>
-                {Number(value).toLocaleString("vi-VN")} đ
+                {Number(value).toLocaleString("vi-VN")}
             </div>
         </div>
     );
@@ -214,7 +213,7 @@ function Row({ label, value, sub }) {
 
             <div className="font-medium text-black">
                 {typeof value === "number"
-                    ? value.toLocaleString("vi-VN") + " đ"
+                    ? value.toLocaleString("vi-VN")
                     : value}
             </div>
         </div>
