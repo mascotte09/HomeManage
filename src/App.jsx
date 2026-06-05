@@ -12,7 +12,7 @@ import ListHouses from "./components/House/ListHouses";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import ListPayments from "./components/Payment/ListPayments.jsx";
-import MonthlyStatistic from "./components/House/MonthlyStatistic.jsx";
+import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
 
 
 
