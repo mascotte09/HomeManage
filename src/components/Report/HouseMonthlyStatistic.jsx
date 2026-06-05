@@ -125,10 +125,10 @@ export default function MonthlyStatistic() {
 
             {/* KPI CARDS */}
             <div className="grid grid-cols-4 gap-2">
-                <Kpi title="Tổng thu" value={stats.grandTotal} color="text-blue-600" />
-                <Kpi title="Tổng chi" value={stats.expenseTotal} color="text-red-600" />
-                <Kpi title="Lợi nhuận" value={profit} color="text-green-600" />
-                <Kpi title="Công nợ" value={stats.unpaidAmount} color="text-orange-600" />
+                <Kpi title="Thu" value={stats.grandTotal} color="text-blue-600" />
+                <Kpi title="Chi" value={stats.expenseTotal} color="text-red-600" />
+                <Kpi title="Lãi" value={profit} color="text-green-600" />
+                <Kpi title="Nợ" value={stats.unpaidAmount} color="text-orange-600" />
             </div>
 
             {/* BODY */}
