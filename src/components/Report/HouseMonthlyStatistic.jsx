@@ -198,9 +198,9 @@ export default function MonthlyStatistic() {
 /* KPI CARD */
 function Kpi({ title, value, color }) {
     return (
-        <div className="bg-green-100 border rounded-lg p-2 shadow-sm">
+        <div className="bg-green-100 border rounded-lg p-2 shadow-sm flex flex-col items-center">
             <div className="text-base text-black">{title}</div>
-            <div className={`text-ms font-bold ${color}`}>
+            <div className={`text-sm font-bold ${color}`}>
                 {Number(value).toLocaleString("vi-VN")}
             </div>
         </div>
