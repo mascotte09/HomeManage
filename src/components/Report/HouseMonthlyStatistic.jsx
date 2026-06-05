@@ -98,24 +98,29 @@ export default function MonthlyStatistic() {
 
             {/* HEADER */}
             <div className="flex gap-2 text-black">
-                <select
-                    value={month}
-                    onChange={(e) => setMonth(Number(e.target.value))}
-                    className="border rounded px-2 py-1 bg-white"
-                >
-                    {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                            Tháng {i + 1}
-                        </option>
-                    ))}
-                </select>
+                <div className="flex items-center gap-2 bg-slate-50 border rounded-lg px-2 py-1">
+                    <span className="text-base font-semibold text-gray-800">
+                        Tháng báo cáo:
+                    </span>
+                    <select
+                        value={month}
+                        onChange={(e) => setMonth(Number(e.target.value))}
+                        className="border rounded px-2 py-1 bg-white"
+                    >
+                        {Array.from({ length: 12 }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>
+                                Tháng {i + 1}
+                            </option>
+                        ))}
+                    </select>
 
-                <input
-                    type="number"
-                    value={year}
-                    onChange={(e) => setYear(Number(e.target.value))}
-                    className="border rounded px-2 py-1 w-24 bg-white"
-                />
+                    <input
+                        type="number"
+                        value={year}
+                        onChange={(e) => setYear(Number(e.target.value))}
+                        className="border rounded px-2 py-1 w-24 bg-white"
+                    />
+                </div>
             </div>
 
             {/* KPI CARDS */}
@@ -159,14 +164,14 @@ export default function MonthlyStatistic() {
                     {expenses.map((e) => (
                         <div key={e.id} className="flex justify-between text-sm border-b py-1">
                             <div>
-                                <div className="text-black">{e.expenses_type?.type_name}</div>
-                                <div className="text-xs text-black">
+                                <div className="text-base text-black">{e.expenses_type?.type_name}</div>
+                                <div className="text-xs text-gray-500">
                                     {new Date(e.expense_date).toLocaleDateString("vi-VN")}
                                 </div>
                             </div>
 
                             <div className="text-red-500 font-medium">
-                                -{Number(e.expense).toLocaleString("vi-VN")} 
+                                -{Number(e.expense).toLocaleString("vi-VN")}
                             </div>
                         </div>
                     ))}
@@ -193,9 +198,9 @@ export default function MonthlyStatistic() {
 /* KPI CARD */
 function Kpi({ title, value, color }) {
     return (
-        <div className="bg-white border rounded-lg p-2">
-            <div className="text-xs text-black">{title}</div>
-            <div className={`text-sm font-bold ${color}`}>
+        <div className="bg-green-100 border rounded-lg p-2 shadow-sm">
+            <div className="text-base text-black">{title}</div>
+            <div className={`text-ms font-bold ${color}`}>
                 {Number(value).toLocaleString("vi-VN")}
             </div>
         </div>
@@ -207,8 +212,8 @@ function Row({ label, value, sub }) {
     return (
         <div className="flex justify-between items-center py-1 text-sm border-b last:border-none">
             <div>
-                <div className="text-black">{label}</div>
-                {sub && <div className="text-xs text-black">{sub}</div>}
+                <div className="text-base text-black">{label}</div>
+                {sub && <div className="text-ms text-gray-500">{sub}</div>}
             </div>
 
             <div className="font-medium text-black">
