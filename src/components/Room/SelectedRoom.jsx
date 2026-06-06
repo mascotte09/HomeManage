@@ -18,7 +18,7 @@ export default function SelectedRoom({
     showDeleteInvoiceModal,
     setShowDeleteInvoiceModal,
   ] = useState(false);
-
+  const [saving, setSaving] = useState(false);
   const [
     selectedDeleteInvoiceID,
     setSelectedDeleteInvoiceID,
@@ -73,7 +73,7 @@ export default function SelectedRoom({
 
   const [showInvoiceRecord, setShowInvoiceRecord] =
     useState(false);
-    
+
   // Load selected room
   useEffect(() => {
 
@@ -176,7 +176,7 @@ export default function SelectedRoom({
 
     setStatus(false);
   }
-   // Add / Refresh invoice
+  // Add / Refresh invoice
   function onEditInvoice(invoice) {
     setSelectedInvoice(invoice);
     setShowInvoiceRecord(true);
@@ -192,39 +192,39 @@ export default function SelectedRoom({
 
     setSelectedDeleteInvoiceID(invoiceID);
 
-  setShowDeleteInvoiceModal(true);
+    setShowDeleteInvoiceModal(true);
   }
-async function confirmDeleteInvoice() {
+  async function confirmDeleteInvoice() {
 
-  if (!selectedDeleteInvoiceID) {
-    return;
+    if (!selectedDeleteInvoiceID) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("invoices")
+      .delete()
+      .eq(
+        "id",
+        selectedDeleteInvoiceID
+      );
+
+    if (error) {
+
+      console.log(error.message);
+
+      alert(
+        "Failed to delete invoice"
+      );
+
+      return;
+    }
+
+    setShowDeleteInvoiceModal(false);
+
+    setSelectedDeleteInvoiceID(null);
+
+    await refreshInvoices();
   }
-
-  const { error } = await supabase
-    .from("invoices")
-    .delete()
-    .eq(
-      "id",
-      selectedDeleteInvoiceID
-    );
-
-  if (error) {
-
-    console.log(error.message);
-
-    alert(
-      "Failed to delete invoice"
-    );
-
-    return;
-  }
-
-  setShowDeleteInvoiceModal(false);
-
-  setSelectedDeleteInvoiceID(null);
-
-  await refreshInvoices();
-}
   async function refreshInvoices() {
 
     if (!room?.id) return;
@@ -251,79 +251,61 @@ async function confirmDeleteInvoice() {
 
   // Save / Update
   async function handleSave() {
+    if (saving) return;
 
-    // Validation
-    if (!roomName) {
+    setSaving(true);
 
+    try {
+      if (!roomName) {
+        alert("Please enter room name");
+        return;
+      }
+
+      const roomData = {
+        home_id: homeID,
+        room_name: roomName,
+        room_renter: roomRenter,
+        deposit_amount: depositAmount,
+        telephone,
+        num_person: numPerson,
+        date_pay: datePay,
+        current_electricity_number:
+          currentElectricityNumber,
+        current_water_number:
+          currentWaterNumber,
+        rent_due_date: rentDueDate || null,
+        status,
+      };
+
+      if (isNew) {
+        const { error } = await supabase
+          .from("rooms")
+          .insert([roomData]);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("rooms")
+          .update(roomData)
+          .eq("id", room.id);
+
+        if (error) throw error;
+      }
+
+      await refreshRooms();
+
+      if (isNew) {
+        resetForm();
+      }
+    } catch (error) {
+      console.error(error);
       alert(
-        "Please enter room name"
+        isNew
+          ? "Failed to create room"
+          : "Failed to update room"
       );
-
-      return;
-    }
-
-    const roomData = {
-      home_id: homeID,
-      room_name: roomName,
-      room_renter: roomRenter,
-      deposit_amount: depositAmount,
-      telephone: telephone,
-      num_person: numPerson,
-      date_pay: datePay,
-      current_electricity_number:
-        currentElectricityNumber,
-      current_water_number:
-        currentWaterNumber,
-      rent_due_date: rentDueDate || null,
-      status: status,
-    };
-
-    // CREATE
-    if (isNew) {
-
-      const { error } = await supabase
-        .from("rooms")
-        .insert([roomData]);
-
-      if (error) {
-
-        console.log(error.message);
-
-        alert(
-          "Failed to create room"
-        );
-
-        return;
-      }
-    }
-
-    // UPDATE
-    else {
-
-      const { error } = await supabase
-        .from("rooms")
-        .update(roomData)
-        .eq("id", room.id);
-
-      if (error) {
-
-        console.log(error.message);
-
-        alert(
-          "Failed to update room"
-        );
-
-        return;
-      }
-    }
-
-    // Refresh list
-    await refreshRooms();
-
-    if (isNew) {
-      resetForm();
-
-      return;
+    } finally {
+      setSaving(false);
     }
   }
   async function handleDeleteRoom() {
@@ -358,15 +340,7 @@ async function confirmDeleteInvoice() {
         <header className="flex flex-col w-full pb-4 mb-4 border-b border-stone-300">
 
           {/* Buttons */}
-          <div className="flex gap-2 mb-4">            
-
-            {/* LƯU */}
-            <button
-              onClick={handleSave}
-              className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md"
-            >
-              Lưu
-            </button>
+          <div className="flex gap-2 mb-4">
 
             {/* XÓA */}
             {!isNew && (
@@ -377,6 +351,19 @@ async function confirmDeleteInvoice() {
                 Xóa
               </button>
             )}
+            {/* LƯU */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`
+                text-white text-sm px-3 py-1 rounded-md
+                ${saving
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-blue-500 hover:bg-blue-600"}
+              `}
+            >
+              {saving ? "Đang lưu..." : "Lưu"}
+            </button>
 
             {/* Photos */}
             {!isNew && (

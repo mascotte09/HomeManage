@@ -1,25 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase.js";
 import Input from "../InputVal.jsx";
-
+import DeleteModal from "../DeleteModal.jsx";
 export default function ExpenseItem({
   expenseItem,
   home_id,
   onDelete,
   refreshExpenses,
 }) {
-
+  const [showDeleteModal, setShowDeleteModal] =
+    useState(false);
   // Check create mode
   const isNew = !expenseItem;
-
+  const [saving, setSaving] = useState(false);
   // States
   const [typeCode, setTypeCode] = useState("");
-  const [typeOtherExpense, setTypeOtherExpense] =
-    useState("");
 
   const [expense, setExpense] = useState(0);
 
   const [expenseDate, setExpenseDate] = useState("");
+  const [expenseNote, setExpenseNote] = useState("");
 
   const [expenseTypes, setExpenseTypes] = useState([]);
   // Load selected expense
@@ -29,8 +29,8 @@ export default function ExpenseItem({
       expenseItem?.type_code || ""
     );
 
-    setTypeOtherExpense(
-      expenseItem?.type_other_expense || ""
+    setExpenseNote(
+      expenseItem?.notes || ""
     );
 
     setExpense(
@@ -40,9 +40,9 @@ export default function ExpenseItem({
     setExpenseDate(
       expenseItem?.expense_date
         ? expenseItem.expense_date.substring(
-            0,
-            10
-          )
+          0,
+          10
+        )
         : ""
     );
 
@@ -83,62 +83,71 @@ export default function ExpenseItem({
       );
       return;
     }
+    setSaving(true);
+    try {
+      // CREATE
+      if (isNew) {
 
-    // CREATE
-    if (isNew) {
+        const { error } = await supabase
+          .from("expenses")
+          .insert([
+            {
+              home_id: home_id,
+              type_code: typeCode,
+              expense: expense,
+              expense_date: expenseDate,
+              notes: expenseNote,
+            },
+          ]);
 
-      const { error } = await supabase
-        .from("expenses")
-        .insert([
-          {
-            home_id: home_id,
+        if (error) {
+          console.log(error.message);
+          alert(
+            "Failed to create expense"
+          );
+          return;
+        }
+      }
+
+      // UPDATE
+      else {
+
+        const { error } = await supabase
+          .from("expenses")
+          .update({
             type_code: typeCode,
             expense: expense,
             expense_date: expenseDate,
-          },
-        ]);
+            notes: expenseNote,
+          })
+          .eq("id", expenseItem.id);
 
-      if (error) {
-        console.log(error.message);
-        alert(
-          "Failed to create expense"
-        );
-        return;
+        if (error) {
+          console.log(error.message);
+          alert(
+            "Failed to update expense"
+          );
+          return;
+        }
       }
-    }
 
-    // UPDATE
-    else {
-
-      const { error } = await supabase
-        .from("expenses")
-        .update({
-          type_code: typeCode,
-          type_other_expense:
-            typeOtherExpense,
-          expense: expense,
-          expense_date: expenseDate,
-        })
-        .eq("id", expenseItem.id);
-
-      if (error) {
-        console.log(error.message);
-        alert(
-          "Failed to update expense"
-        );
-        return;
-      }
-    }
-
-    // Refresh list
-    await refreshExpenses();
-
-    // Close create form
-    if (isNew) {
-      onDelete();
+      // Refresh list
+      await refreshExpenses();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSaving(false);
     }
   }
+  async function handleDelete() {
+    try {
+      await onDelete();
 
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error(err);
+    }
+  }
   return (
     <div className="ml-0 flex flex-col items-start">
 
@@ -148,19 +157,26 @@ export default function ExpenseItem({
         <div className="flex gap-2 mb-6">
 
           {/* Cancel / Delete */}
-          <button
-            className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
-            onClick={onDelete}
-          >
-            {isNew ? "Cancel" : "Delete"}
-          </button>
+          {!isNew && (
+            <button
+              className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Xóa
+            </button>
+          )}
 
           {/* Save / Update */}
           <button
             onClick={handleSave}
-            className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md"
+            className={`
+                text-white text-sm px-3 py-1 rounded-md
+                ${saving
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600"}
+              `}
           >
-            {isNew ? "Save" : "Update"}
+            {saving ? "Đang lưu..." : "Lưu"}
           </button>
 
         </div>
@@ -198,7 +214,14 @@ export default function ExpenseItem({
             </select>
 
           </div>
-
+          <Input
+            label="Ghi chú"
+            type="textArea"
+            value={expenseNote}
+            onChange={(e) =>
+              setExpenseNote(e.target.value)
+            }
+          />
           <Input
             label="Số tiền"
             type="text"
@@ -231,6 +254,13 @@ export default function ExpenseItem({
         </div>
 
       </header>
+      <DeleteModal
+        open={showDeleteModal}
+        header="Xóa chi phí"
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
     </div>
+
   );
 }

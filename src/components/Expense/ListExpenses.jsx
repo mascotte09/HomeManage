@@ -145,20 +145,29 @@ export default function ListExpenses() {
     }
 
     // Delete expense
-    function handleDeleteExpense() {
-        setExpensesState((prevState) => {
-            return {
-                ...prevState,
-                selectedExpenseId:
-                    undefined,
-                expenses:
-                    prevState.expenses.filter(
-                        (expense) =>
-                            expense.id !==
-                            prevState.selectedExpenseId
-                    ),
-            };
-        });
+    async function handleDeleteExpense() {
+        const expenseId =
+            expensesState.selectedExpenseId;
+
+        if (!expenseId) return;
+
+        const { error } = await supabase
+            .from("expenses")
+            .delete()
+            .eq("id", expenseId);
+
+        if (error) {
+            console.error(error);
+            alert("Không thể xóa chi phí");
+            return;
+        }
+
+        setExpensesState((prevState) => ({
+            ...prevState,
+            selectedExpenseId: undefined,
+        }));
+
+        await fetchExpenses();
     }
 
     let content;

@@ -212,8 +212,8 @@ export default function MonthlyStatistic() {
 
             {/* HEADER */}
             <div className="flex justify-between items-center">
-                
-                
+
+
 
                 {/* MONTH PICKER */}
                 <div className="flex items-center gap-2 bg-slate-50 border rounded-lg px-2 py-1">
@@ -272,15 +272,15 @@ export default function MonthlyStatistic() {
                 <div className="bg-white border rounded-lg p-2">
                     <h3 className="font-semibold text-blue-600">Doanh thu</h3>
                     <Row label="Tiền phòng" value={stats.rentalTotal} sub={`${stats.totalInvoice} hóa đơn`} />
-                    <Row label="Tiền điện" value={stats.electricityTotal} sub={`${stats.electricityUsed} kWh`}/>
-                    <Row label="Tiền nước" value={stats.waterTotal} sub={`${stats.waterUsed} m³`}/>
+                    <Row label="Tiền điện" value={stats.electricityTotal} sub={`${stats.electricityUsed} kWh`} />
+                    <Row label="Tiền nước" value={stats.waterTotal} sub={`${stats.waterUsed} m³`} />
                     <Row label="Wifi" value={stats.wifiTotal} />
                 </div>
 
                 <div className="bg-white border rounded-lg p-2">
                     <h3 className="font-semibold text-orange-600">Công nợ</h3>
-                    <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount + stats.paidDemiInvoiceCount} hóa đơn`}/>
-                    <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`}/>
+                    <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount + stats.paidDemiInvoiceCount} hóa đơn`} />
+                    <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`} />
                     <Row label="% Thu" value={`${debtRate}%`} />
                 </div>
             </div>
@@ -293,6 +293,11 @@ export default function MonthlyStatistic() {
                     <div key={e.id} className="flex justify-between text-sm border-b py-1">
                         <div>
                             <div className="text-black">{e.expenses_type?.type_name}</div>
+                            {e.notes ? (
+                                <div className="text-black">
+                                    {e.notes}
+                                </div>
+                            ) : null}
                             <div className="text-xs text-gray-500">
                                 {new Date(e.expense_date).toLocaleDateString("vi-VN")}
                             </div>

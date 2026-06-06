@@ -10,6 +10,7 @@ export default function SelectedHouse({
   refreshHouses,
 }) {
 
+  const [saving, setSaving] = useState(false);
   // Create mode
   const isNew = !house;
 
@@ -75,75 +76,56 @@ export default function SelectedHouse({
 
   // Save / Update
   async function handleSave() {
+    if (saving) return;
 
-    // Validation
-    if (!name) {
+    setSaving(true);
 
+    try {
+      if (!name) {
+        alert("Please enter house name");
+        return;
+      }
+
+      const homeData = {
+        userID,
+        name,
+        address,
+        bank_id: bankID,
+        bank_account: bankAccount,
+        electricity_price: electricityPrice,
+        water_price: waterPrice,
+        is_water_per_person: isWaterPerPerson,
+      };
+
+      if (isNew) {
+        const { error } = await supabase
+          .from("homes")
+          .insert([homeData]);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("homes")
+          .update(homeData)
+          .eq("id", house.id);
+
+        if (error) throw error;
+      }
+
+      await refreshHouses();
+
+      if (isNew) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error(error);
       alert(
-        "Please enter house name"
+        isNew
+          ? "Failed to create house"
+          : "Failed to update house"
       );
-
-      return;
-    }
-
-    const homeData = {
-      userID: userID,
-      name: name,
-      address: address,
-      bank_id: bankID,
-      bank_account: bankAccount,
-      electricity_price:
-        electricityPrice,
-      water_price: waterPrice,
-      is_water_per_person:
-        isWaterPerPerson,
-    };
-
-    // CREATE
-    if (isNew) {
-
-      const { error } = await supabase
-        .from("homes")
-        .insert([homeData]);
-
-      if (error) {
-
-        console.log(error.message);
-
-        alert(
-          "Failed to create house"
-        );
-
-        return;
-      }
-    }
-
-    // UPDATE
-    else {
-
-      const { error } = await supabase
-        .from("homes")
-        .update(homeData)
-        .eq("id", house.id);
-
-      if (error) {
-
-        console.log(error.message);
-
-        alert(
-          "Failed to update house"
-        );
-
-        return;
-      }
-    }
-
-    // Refresh
-    await refreshHouses();
-
-    // Close create form
-    if (isNew) {
-      onDelete();
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -169,9 +151,15 @@ export default function SelectedHouse({
             {/* Save / Update */}
             <button
               onClick={handleSave}
-              className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md"
+              disabled={saving}
+              className={`
+                  text-white text-sm px-3 py-1 rounded-md
+                  ${saving
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-blue-500 hover:bg-blue-600"}
+                `}
             >
-              {"Lưu"}
+              {saving ? "Đang lưu..." : "Lưu"}
             </button>
 
             {/* Rooms */}
