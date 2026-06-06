@@ -210,9 +210,12 @@ export default function MonthlyStatistic() {
 
             {/* HEADER */}
             <div className="flex justify-between items-center">
+                
+                
 
                 {/* MONTH PICKER */}
                 <div className="flex items-center gap-2 bg-slate-50 border rounded-lg px-2 py-1">
+                    <div className="text-black">Tháng</div>
                     <select
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
@@ -248,7 +251,7 @@ export default function MonthlyStatistic() {
                         onClick={handleExportExcel}
                         className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium"
                     >
-                        Excel
+                        In Excel
                     </button>
                 </div>
             </div>
