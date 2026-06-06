@@ -32,7 +32,12 @@ export default function PaymentsSidebar({
                     >
                         Phòng: {invoice.room_number}
                         <br />
-                        <span className="text-xs">
+                        <span
+                            className={`text-xs ${Number(invoice.debit_amount || 0) === 0
+                                    ? "text-green-600"
+                                    : "text-red-500"
+                                }`}
+                        >
                             {Number(
                                 invoice.total_amount || 0
                             ).toLocaleString("vi-VN")}

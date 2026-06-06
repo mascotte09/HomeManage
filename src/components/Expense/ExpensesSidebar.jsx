@@ -79,7 +79,7 @@ export default function ExpensesSidebar({
                                     {expense.expenses_type?.type_name}
                                 </span>
 
-                                <span className="text-red-500 text-sm font-semibold">
+                                <span className="text-red-500 text-sm ">
                                     {expense.expense?.toLocaleString("vi-VN")} đ
                                 </span>
                             </button>

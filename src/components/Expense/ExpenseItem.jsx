@@ -69,6 +69,12 @@ export default function ExpenseItem({
 
   }, []);
 
+  function resetForm() {
+  setTypeCode("");
+  setExpense(0);
+  setExpenseDate("");
+  setExpenseNote("");
+}
   // Save / Update
   async function handleSave() {
 
@@ -137,6 +143,7 @@ export default function ExpenseItem({
       console.error(error);
     } finally {
       setSaving(false);
+      resetForm() ;
     }
   }
   async function handleDelete() {
@@ -149,9 +156,9 @@ export default function ExpenseItem({
     }
   }
   return (
-    <div className="ml-0 flex flex-col items-start">
+    <div className="ml-0 flex flex-col items-start w-full pr-2">
 
-      <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300">
+      <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300 w-full">
 
         {/* Buttons */}
         <div className="flex gap-2 mb-6">
@@ -182,7 +189,7 @@ export default function ExpenseItem({
         </div>
 
         {/* Form */}
-        <div className="flex flex-col items-start gap-3">
+        <div className="flex flex-col items-start gap-3 w-full">
 
           <div className="flex flex-col items-start w-full">
 
