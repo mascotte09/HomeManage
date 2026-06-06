@@ -19,23 +19,23 @@ export default function InvoicesSidebar({
 
   return (
 
-    <aside className="w-21 flex-shrink-0 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col">
+    <aside className="w-21 flex-shrink-0 px-1 py-3 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col">
 
       <div>
         <Link
           to={`/rooms/${houseID}`}
-          className="block mb-5 text-blue-400 hover:text-yellow-300 text-sm font-bold"
+          className="block mb-1 text-blue-400 hover:text-yellow-300 text-sm font-bold"
         >
           ← Chọn Phòng
         </Link>
-        <h2 className="mb-5 text-xs px-2 py-1 font-bold uppercase text-stone-200">
+        <h2 className="mb-1 text-xs px-1 py-2 font-bold uppercase text-stone-200">
           Hóa Đơn{" "}
           {String(new Date().getMonth() + 1).padStart(2, "0")}
           /
           {new Date().getFullYear()}
         </h2>
 
-        <ul className="space-y-1 w-full">
+        <ul className="space-y-0 w-full">
 
           {/* ========================= */}
           {/* ROOMS WITHOUT INVOICE */}
@@ -43,7 +43,7 @@ export default function InvoicesSidebar({
           {noInvRooms.map((room) => {
 
             let cssClasses =
-              "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
+              "w-full text-left px-1 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
             if (
               room.id === selectedRoomId
             ) {
@@ -94,7 +94,7 @@ export default function InvoicesSidebar({
           {invRooms.map((room) => {
 
             let cssClasses =
-              "w-full text-left px-2 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
+              "w-full text-left px-1 py-1 text-sm rounded-sm hover:text-stone-200 hover:bg-stone-800 leading-tight";
 
             if (
               room.id === selectedRoomId
@@ -158,7 +158,7 @@ export default function InvoicesSidebar({
 
                   {/* Invoice date */}
                   <div className="text-xs text-green-400">
-                    Đã tạo:{" "}
+                    Tạo:{" "}
                     {formatDate(
                       invoiceThisMonth?.invoice_create_date
                     )}

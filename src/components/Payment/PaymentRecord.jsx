@@ -8,8 +8,6 @@ export default function PaymentRecord({
     const [paymentType, setPaymentType] =
         useState("final-pay");
 
-    const [debitAmount, setDebitAmount] =
-        useState("0");
 
     function formatMoney(value) {
         const number = value.replace(/\D/g, "");
@@ -19,6 +17,13 @@ export default function PaymentRecord({
             "."
         );
     }
+    const [debitAmount, setDebitAmount] = useState(0);
+    const finalDebitAmount =
+        paymentType === "final-pay"
+            ? 0
+            : paymentType === "extra-pay"
+                ? -Math.abs(debitAmount)
+                : Math.abs(debitAmount);
     useEffect(() => {
         if (!invoice) return;
 
@@ -69,31 +74,16 @@ export default function PaymentRecord({
     }
 
     function handleSave() {
-        const debt = Number(
-            debitAmount.replace(
-                /\./g,
-                ""
-            ) || 0
-        );
+        const total = Number(invoice.total_amount || 0);
 
-        const total = Number(
-            invoice.total_amount || 0
-        );
-
-        if (debt > total) {
-            alert(
-                "Số tiền nợ không được lớn hơn tổng tiền hóa đơn"
-            );
+        if (debitAmount > total) {
+            alert("Số tiền không hợp lệ");
             return;
         }
 
         onSave?.({
             ...invoice,
-            debit_amount:
-                paymentType ===
-                    "final-pay"
-                    ? 0
-                    : debt,
+            debit_amount: finalDebitAmount,
         });
     }
 
@@ -158,7 +148,10 @@ export default function PaymentRecord({
                 </div>
 
                 {/* Radio */}
-                <div className="mb-5">
+                <fieldset className="mb-5 border border-gray-300 rounded-lg p-3">
+                    <legend className="text-sm font-semibold text-gray-700 px-2">
+                        Trả tiền
+                    </legend>
 
                     <div className="flex gap-6">
 
@@ -166,21 +159,12 @@ export default function PaymentRecord({
                             <input
                                 type="radio"
                                 value="final-pay"
-                                checked={
-                                    paymentType ===
-                                    "final-pay"
-                                }
+                                checked={paymentType === "final-pay"}
                                 onChange={() => {
-                                    setPaymentType(
-                                        "final-pay"
-                                    );
-
-                                    setDebitAmount(
-                                        "0"
-                                    );
+                                    setPaymentType("final-pay");
+                                    setDebitAmount(0);
                                 }}
                             />
-
                             Trả đủ
                         </label>
 
@@ -188,54 +172,59 @@ export default function PaymentRecord({
                             <input
                                 type="radio"
                                 value="partial-pay"
-                                checked={
-                                    paymentType ===
-                                    "partial-pay"
-                                }
+                                checked={paymentType === "partial-pay"}
                                 onChange={() =>
-                                    setPaymentType(
-                                        "partial-pay"
-                                    )
+                                    setPaymentType("partial-pay")
                                 }
                             />
+                            Nợ
+                        </label>
 
-                            Trả thiếu
+                        <label className="flex items-center gap-2">
+                            <input
+                                type="radio"
+                                value="extra-pay"
+                                checked={paymentType === "extra-pay"}
+                                onChange={() => {
+                                    setPaymentType("extra-pay");
+                                }}
+                            />
+                            Dư
                         </label>
 
                     </div>
-                </div>
+                    {/* Công nợ */}
+                    <div className="mb-6">
+                        <label className="block mb-1 font-medium">
+                            {paymentType === "extra-pay"
+                                ? "Số tiền dư"
+                                : "Số tiền nợ"}
+                        </label>
 
-                {/* Công nợ */}
-                <div className="mb-6">
-                    <label className="block mb-1 font-medium">
-                        Số tiền nợ
-                    </label>
+                        <input
+                            type="text"
+                            disabled={paymentType === "final-pay"}
+                            value={debitAmount === 0 ? "" : debitAmount.toLocaleString("vi-VN")}
+                            onChange={(e) => {
+                                const raw = e.target.value.replace(/\D/g, "");
+                                const value = Number(raw || 0);
 
-                    <input
-                        type="text"
-                        disabled={
-                            paymentType ===
-                            "final-pay"
-                        }
-                        value={debitAmount}
-                        onChange={(e) =>
-                            setDebitAmount(
-                                formatMoney(
-                                    e.target.value
-                                )
-                            )
-                        }
-                        className="
-                            w-full
-                            border
-                            rounded
-                            px-1
-                            py-2
-                            text-black
-                            disabled:bg-gray-100
-                        "
-                    />
-                </div>
+                                setDebitAmount(value);
+                            }}
+                            className="
+    w-full
+    border
+    rounded
+    px-1
+    py-2
+    text-black
+    disabled:bg-gray-100
+  "
+                        />
+                    </div>
+                </fieldset>
+
+
 
                 {/* Buttons */}
                 <div className="flex gap-3">

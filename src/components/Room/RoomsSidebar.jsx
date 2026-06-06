@@ -2,7 +2,7 @@ import Button from "../Button.jsx";
 import { Link } from "react-router-dom";
 export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, selectedHomeId, onLogout }) {
     return (
-        <aside className="w-21 flex-shrink-0 px-1 py-8 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col justify-between">
+        <aside className="w-21 flex-shrink-0 px-1 py-3 bg-stone-900 text-stone-50 md:w-72 rounded-r-xl flex flex-col justify-between">
 
             {/* Top */}
             <div>
@@ -10,13 +10,13 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
                 {/* Houses link */}
                 <Link
                     to="/houses"
-                    className="block mb-5 text-blue-400 hover:text-yellow-300 text-sm font-bold"
+                    className="block mb-2 text-blue-400 hover:text-yellow-300 text-sm font-bold"
                 >
                     ← Chọn Nhà
                 </Link>
 
                 
-                <div className="mb-4">
+                <div className="mb-2">
                     <Button onClick={onStartAddProject}>
                         Thêm Phòng
                     </Button>

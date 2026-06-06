@@ -3,7 +3,7 @@ import html2canvas from "html2canvas";
 import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import InvoiceSummary from "./InvoiceSummary";
-import ElectricMeterOCR from "./ElectricMeterOCR";
+// import ElectricMeterOCR from "./ElectricMeterOCR";
 export default function InvoiceRecord({
   room,
   homeID,
@@ -497,10 +497,10 @@ export default function InvoiceRecord({
     : "";
 
   return (
-    <div className="w-full p-3">
+    <div className="w-full p-2">
 
       {/* HEADER */}
-      <div className="flex justify-between mb-3">
+      <div className="flex justify-between mb-2">
         <h2 className="text-xl font-bold text-black">
           Phòng số: {room?.room_name}
         </h2>
@@ -572,14 +572,14 @@ export default function InvoiceRecord({
               error={electricityError}
             />
 
-            <ElectricMeterOCR
+            {/* <ElectricMeterOCR
               onDetected={(value) =>
                 setFormData((prev) => ({
                   ...prev,
                   new_electricity_number: value,
                 }))
               }
-            />
+            /> */}
           </div>
         </div>
 
