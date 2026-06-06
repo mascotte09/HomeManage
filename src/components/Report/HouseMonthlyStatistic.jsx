@@ -22,6 +22,7 @@ export default function MonthlyStatistic() {
         rentalTotal: 0,
         totalInvoice: 0,
         paidInvoiceCount: 0,
+        paidDemiInvoiceCount: 0,
         paidAmount: 0,
         unpaidInvoiceCount: 0,
         unpaidAmount: 0,
@@ -74,6 +75,7 @@ export default function MonthlyStatistic() {
             rentalTotal: Number(stat.total_rental) || 0,
             totalInvoice: Number(stat.total_invoice) || 0,
             paidInvoiceCount: Number(stat.paid_invoice_count) || 0,
+            paidDemiInvoiceCount: Number(stat.paid_demi_invoice_count) || 0,
             paidAmount: Number(stat.paid_amount) || 0,
             unpaidInvoiceCount: Number(stat.unpaid_invoice_count) || 0,
             unpaidAmount: Number(stat.unpaid_amount) || 0,
@@ -277,7 +279,7 @@ export default function MonthlyStatistic() {
 
                 <div className="bg-white border rounded-lg p-2">
                     <h3 className="font-semibold text-orange-600">Công nợ</h3>
-                    <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount} hóa đơn`}/>
+                    <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount + stats.paidDemiInvoiceCount} hóa đơn`}/>
                     <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`}/>
                     <Row label="% Thu" value={`${debtRate}%`} />
                 </div>
