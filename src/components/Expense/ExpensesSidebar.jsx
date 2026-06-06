@@ -13,7 +13,7 @@ export default function ExpensesSidebar({
             <h2 className="mb-3 text-xs font-bold uppercase text-stone-200">
                 Chi phí
             </h2>
-            
+
             <select
                 value={selectedMonth}
                 onChange={(e) =>
@@ -70,15 +70,18 @@ export default function ExpensesSidebar({
                     return (
                         <li key={expense.id}>
                             <button
-                                className={cssClasses}
+                                className={`${cssClasses} flex flex-col items-start`}
                                 onClick={() =>
-                                    onSelectExpense(
-                                        expense.id
-                                    )
+                                    onSelectExpense(expense.id)
                                 }
                             >
-                                {expense.expenses_type?.type_name} -{" "}
-                                {expense.expense?.toLocaleString()}
+                                <span>
+                                    {expense.expenses_type?.type_name}
+                                </span>
+
+                                <span className="text-red-500 text-sm font-semibold">
+                                    {expense.expense?.toLocaleString("vi-VN")} đ
+                                </span>
                             </button>
                         </li>
                     );
