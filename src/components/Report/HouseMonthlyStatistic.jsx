@@ -92,7 +92,13 @@ export default function MonthlyStatistic() {
     }, [fetchStatistics]);
 
     const profit = stats.grandTotal - stats.expenseTotal;
-
+    const debtRate =
+        stats.paidAmount > 0
+            ? (
+                stats.paidAmount * 100 /
+                stats.grandTotal
+            ).toFixed(1)
+            : 0;
     return (
         <div className="bg-gray-50 p-2 rounded-xl space-y-2">
 
@@ -125,7 +131,7 @@ export default function MonthlyStatistic() {
 
             {/* KPI CARDS */}
             <div className="grid grid-cols-4 gap-2">
-                <Kpi title="Thu" value={stats.grandTotal} color="text-blue-600" />
+                <Kpi title="D.Thu" value={stats.grandTotal} color="text-blue-600" />
                 <Kpi title="Chi" value={stats.expenseTotal} color="text-red-600" />
                 <Kpi title="Lãi" value={profit} color="text-green-600" />
                 <Kpi title="Nợ" value={stats.unpaidAmount} color="text-orange-600" />
@@ -148,10 +154,10 @@ export default function MonthlyStatistic() {
                 {/* CÔNG NỢ */}
                 <div className="bg-white border rounded-lg p-2 space-y-1">
                     <h3 className="font-semibold text-orange-600">Công nợ</h3>
-
-                    <Row label="Còn nợ" value={stats.unpaidAmount} />
-                    <Row label="Số phòng nợ" value={stats.unpaidInvoiceCount} />
+                    <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`} />
                     <Row label="Đã thu" value={stats.paidAmount} />
+                    <Row label="% Thu" value={`${debtRate}%`}
+                    />
                 </div>
 
             </div>
