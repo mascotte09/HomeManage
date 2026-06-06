@@ -274,8 +274,8 @@ export default function MonthlyStatistic() {
 
                 <div className="bg-white border rounded-lg p-2">
                     <h3 className="font-semibold text-orange-600">Công nợ</h3>
-                    <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`}/>
-                    <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.paidInvoiceCount} hóa đơn`}/>
+                    <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount} hóa đơn`}/>
+                    <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`}/>
                     <Row label="% Thu" value={`${debtRate}%`} />
                 </div>
             </div>
