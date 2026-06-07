@@ -42,7 +42,7 @@ export default function InvoiceSummary({
             className="mt-6 bg-white rounded-2xl border border-stone-200 shadow-lg overflow-hidden"
         >
             {/* HEADER */}
-            <div className="bg-blue-600 text-white px-3 py-1 text-center">
+            <div className="bg-blue-600 text-white px-3 py-2 text-center">
                 <h2 className="text-xl font-bold tracking-wide">
                     HÓA ĐƠN
                 </h2>
@@ -150,7 +150,7 @@ export default function InvoiceSummary({
 
                 {/* NỢ CŨ */}
                 {totalOldDebt > 0 && (
-                    <div className="mt-1 bg-red-50 border border-red-200 rounded-xl p-2">
+                    <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-2">
 
                         <div className="flex justify-between mb-2">
                             <span className="font-semibold text-red-700">
@@ -187,7 +187,7 @@ export default function InvoiceSummary({
                 )}
                 {/* TIỀN DƯ CŨ */}
                 {totalExtraPaid > 0 && (
-                    <div className="mt-2 bg-blue-50 border border-blue-200 rounded-xl p-2">
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-2">
 
                         <div className="flex justify-between mb-2">
                             <span className="font-semibold text-blue-700">
@@ -223,7 +223,7 @@ export default function InvoiceSummary({
                     </div>
                 )}
                 {/* GRAND TOTAL */}
-                <div className="mt-2 bg-green-50 border-2 border-green-500 rounded-xl p-2">
+                <div className="mt-3 bg-green-50 border-2 border-green-500 rounded-xl p-3">
 
                     <div className="flex justify-between items-center">
                         <span className="text-lg font-bold text-green-800">
