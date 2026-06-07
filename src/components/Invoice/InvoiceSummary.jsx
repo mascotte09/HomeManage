@@ -241,7 +241,7 @@ export default function InvoiceSummary({
                         <img
                             src={qrUrl}
                             alt="vietqr"
-                            className="w-56 h-56 border rounded-xl shadow"
+                            className="w-44 h-44 border rounded-xl shadow"
                         />
                     </div>
                 )}
