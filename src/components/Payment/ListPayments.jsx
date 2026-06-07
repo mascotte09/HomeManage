@@ -122,7 +122,7 @@ export default function ListPayments() {
               if (
                 Number(
                   invoice.debit_amount
-                ) ===
+                ) <=
                 0
               ) {
                 collected.push(

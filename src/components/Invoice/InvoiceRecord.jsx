@@ -17,7 +17,7 @@ export default function InvoiceRecord({
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   const summaryRef = useRef(null);
-
+const [unpaidInvoices, setUnpaidInvoices] = useState([]);
   //const [isEditing, setIsEditing] = useState(false);
   const [home, setHome] = useState(null);
 
@@ -103,7 +103,44 @@ export default function InvoiceRecord({
         invoice.note || "",
     });
   }, [invoice, room]);
+useEffect(() => {
+  async function fetchUnpaidInvoices() {
+    if (!room?.id) {
+      setUnpaidInvoices([]);
+      return;
+    }
 
+    let query = supabase
+      .from("invoices")
+      .select(`
+        id,
+        invoice_create_date,
+        total_amount,
+        debit_amount
+      `)
+      .eq("room_id", room.id)
+      .gt("debit_amount", 0) // chỉ lấy hóa đơn còn nợ
+      .order("invoice_create_date", {
+        ascending: true,
+      });
+
+    // Nếu đang sửa hóa đơn thì loại chính nó ra
+    if (invoice?.id) {
+      query = query.neq("id", invoice.id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.log(error.message);
+      return;
+    }
+
+    setUnpaidInvoices(data || []);
+  }
+
+  fetchUnpaidInvoices();
+}, [room?.id, invoice?.id]);
   useEffect(() => {
     async function fetchHome() {
       console.debug("Home ID:" + homeID);
@@ -705,6 +742,7 @@ export default function InvoiceRecord({
               waterPrice={waterPrice}
               qrUrl={qrUrl}
               home={home}
+              unpaidInvoices={unpaidInvoices}
             />
           </div>
         </div>

@@ -8,76 +8,49 @@ export default function PaymentRecord({
     const [paymentType, setPaymentType] =
         useState("final-pay");
 
+    const [debitAmount, setDebitAmount] =
+        useState(0);
 
-    function formatMoney(value) {
-        const number = value.replace(/\D/g, "");
+    useEffect(() => {
+        if (!invoice) return;
 
-        return number.replace(
-            /\B(?=(\d{3})+(?!\d))/g,
-            "."
+        const debt = Number(
+            invoice.debit_amount || 0
         );
-    }
-    const [debitAmount, setDebitAmount] = useState(0);
+
+        if (debt === 0) {
+            setPaymentType("final-pay");
+            setDebitAmount(0);
+        }
+        else if (debt > 0) {
+            setPaymentType("partial-pay");
+            setDebitAmount(debt);
+        }
+        else {
+            setPaymentType("extra-pay");
+            setDebitAmount(Math.abs(debt));
+        }
+    }, [invoice]);
+
     const finalDebitAmount =
         paymentType === "final-pay"
             ? 0
             : paymentType === "extra-pay"
-                ? -Math.abs(debitAmount)
-                : Math.abs(debitAmount);
-    useEffect(() => {
-        if (!invoice) return;
-
-        if (Number(invoice.debit_amount) > 0) {
-            setPaymentType("partial-pay");
-
-            setDebitAmount(
-                Number(
-                    invoice.debit_amount
-                ).toLocaleString("vi-VN")
-            );
-        } else {
-            setPaymentType("final-pay");
-            setDebitAmount("0");
-        }
-    }, [invoice]);
-
-    useEffect(() => {
-        if (!invoice) return;
-
-        if (
-            Number(invoice.debit_amount) > 0
-        ) {
-            setPaymentType(
-                "partial-pay"
-            );
-
-            setDebitAmount(
-                formatMoney(
-                    String(invoice.debit_amount || 0)
-                )
-            );
-        } else {
-            setPaymentType(
-                "final-pay"
-            );
-
-            setDebitAmount("0");
-        }
-    }, [invoice]);
-
-    if (!invoice) {
-        return (
-            <div className="flex-1 p-6">
-                Không có hóa đơn
-            </div>
-        );
-    }
+                ? -debitAmount
+                : debitAmount;
 
     function handleSave() {
-        const total = Number(invoice.total_amount || 0);
+        const total = Number(
+            invoice.total_amount || 0
+        );
 
-        if (debitAmount > total) {
-            alert("Số tiền không hợp lệ");
+        if (
+            paymentType === "partial-pay" &&
+            debitAmount > total
+        ) {
+            alert(
+                "Số tiền nợ không được lớn hơn tổng hóa đơn"
+            );
             return;
         }
 
@@ -212,35 +185,43 @@ export default function PaymentRecord({
                                         : debitAmount.toLocaleString("vi-VN")
                                 }
                                 onChange={(e) => {
-                                    const raw = e.target.value.replace(/\D/g, "");
-                                    setDebitAmount(Number(raw || 0));
+                                    const value = Number(
+                                        e.target.value.replace(/\D/g, "")
+                                    );
+
+                                    setDebitAmount(value || 0);
                                 }}
-                                placeholder="Nhập số tiền"
+                                placeholder={
+                                    paymentType === "extra-pay"
+                                        ? "Nhập số tiền dư"
+                                        : "Nhập số tiền nợ"
+                                }
                                 className="
-          w-full
-          rounded-lg
-          border
-          border-stone-300
-          bg-white
-          px-3
-          py-2
-          text-black
-          shadow-sm
-          focus:border-blue-500
-          focus:outline-none
-          focus:ring-2
-          focus:ring-blue-200
-        "
+        w-full
+        rounded-lg
+        border
+        border-stone-300
+        bg-white
+        px-3
+        py-2
+        text-black
+        shadow-sm
+        focus:border-blue-500
+        focus:outline-none
+        focus:ring-2
+        focus:ring-blue-200
+    "
                             />
 
                             <div
-                                className={`mt-2 text-sm font-medium
-          ${paymentType === "extra-pay"
-                                        ? "text-blue-600"
-                                        : "text-red-600"
+                                className={`mt-2 text-sm font-medium ${paymentType === "extra-pay"
+                                    ? "text-blue-600"
+                                    : "text-red-600"
                                     }`}
                             >
-                                {debitAmount.toLocaleString("vi-VN")} đ
+                                {paymentType === "extra-pay"
+                                    ? `Dư: ${debitAmount.toLocaleString("vi-VN")} đ`
+                                    : `Nợ: ${debitAmount.toLocaleString("vi-VN")} đ`}
                             </div>
                         </div>
                     )}

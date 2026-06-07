@@ -9,18 +9,25 @@ export default function InvoiceSummary({
     waterPrice,
     qrUrl,
     home,
+    unpaidInvoices = [],
 }) {
+    const totalOldDebt = unpaidInvoices.reduce(
+        (sum, item) => sum + Number(item.debit_amount || 0),
+        0
+    );
+    const grandTotal = total + totalOldDebt;
     return (
         <div
             ref={summaryRef}
-            className="mt-6 bg-white border rounded-xl p-6 text-black"
+            className="mt-6 bg-white rounded-2xl border border-stone-200 shadow-lg overflow-hidden"
         >
-            <div className="text-center mb-5">
-                <h2 className="text-2xl font-bold">
-                    HÓA ĐƠN
+            {/* HEADER */}
+            <div className="bg-blue-600 text-white px-6 py-5 text-center">
+                <h2 className="text-2xl font-bold tracking-wide">
+                    HÓA ĐƠN THANH TOÁN
                 </h2>
 
-                <div className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-blue-100 mt-1">
                     Tháng{" "}
                     {String(
                         new Date(
@@ -31,134 +38,173 @@ export default function InvoiceSummary({
                     {new Date(
                         formData.invoice_create_date
                     ).getFullYear()}
-                    {" "}• Phòng: {room?.room_name}
-                </div>
+                </p>
+
+                <p className="font-medium mt-1">
+                    Phòng: {room?.room_name}
+                </p>
             </div>
 
-            <div className="space-y-2 border-b pb-4">
+            <div className="p-6">
 
-                {/* RENT */}
-                <div className="flex justify-between">
-                    <span>1. Tiền Phòng</span>
+                {/* CHI TIẾT */}
+                <div className="space-y-3">
 
-                    <span>
-                        {Number(
-                            formData.rental_amount || 0
-                        ).toLocaleString()} đ
-                    </span>
-                </div>
-
-                {/* ELECTRIC */}
-                <div className="flex justify-between">
-                    <div className="flex flex-col">
-                        <span>2. Tiền Điện</span>
-
-                        <div className="flex gap-4 text-sm text-gray-500">
-                            <span>
-                                Số cũ:{" "}
-                                {formData.current_electricity_number || 0}
-                            </span>
-
-                            <span>
-                                Số mới:{" "}
-                                {formData.new_electricity_number || 0}
-                            </span>
-                        </div>
-
-                        <span className="text-sm text-gray-500">
+                    <div className="flex justify-between">
+                        <span>Tiền phòng</span>
+                        <span>
                             {Number(
-                                formData.new_electricity_number
-                            ) -
-                                Number(
-                                    formData.current_electricity_number
-                                )}{" "}
-                            × {elecPrice.toLocaleString()} đ
+                                formData.rental_amount || 0
+                            ).toLocaleString("vi-VN")} đ
                         </span>
                     </div>
 
-                    <span>
-                        {electAmount.toLocaleString()} đ
-                    </span>
-                </div>
-
-                {/* WATER */}
-                <div className="flex justify-between">
-                    <div className="flex flex-col">
-                        <span>3. Tiền Nước</span>
-
-                        {!home?.is_water_per_person && (
-                            <div className="flex gap-4 text-sm text-gray-500">
-                                <span>
-                                    Số cũ: {formData.current_water_number || 0}
-                                </span>
-
-                                <span>
-                                    Số mới: {formData.new_water_number || 0}
-                                </span>
-                            </div>
-                        )}
-
-                        <span className="text-sm text-gray-500">
-                            {home?.is_water_per_person
-                                ? `${room?.num_person || 0} Người × ${waterPrice.toLocaleString()} đ`
-                                : `${Number(formData.new_water_number) -
-                                Number(formData.current_water_number)
-                                } × ${waterPrice.toLocaleString()} đ`}
-                        </span>
-                    </div>
-
-                    <span>
-                        {waterAmount.toLocaleString()} đ
-                    </span>
-                </div>
-
-                {/* SERVICE */}
-                <div className="flex justify-between">
-                    <div className="flex flex-col">
-                        <span>4. Tiền Dịch Vụ</span>
-
-                        <div className="flex gap-4 text-sm text-gray-500">
-                            <span>Wifi, rác...</span>
-                        </div>
-                    </div>
-
-                    <span>
-                        {Number(
-                            formData.wifi_amount || 0
-                        ).toLocaleString()} đ
-                    </span>
-                </div>
-            </div>
-
-            {/* TOTAL */}
-            <div className="flex justify-between mt-5 text-xl font-bold">
-                <span>Tổng</span>
-
-                <span className="text-red-600">
-                    {total.toLocaleString()} đ
-                </span>
-            </div>
-
-            {/* QR */}
-            {qrUrl && (
-                <div className="mt-8 flex flex-col items-center">
-                    <img
-                        src={qrUrl}
-                        alt="vietqr"
-                        className="w-56 h-56 border rounded-lg"
-                    />
-
-                    <div className="mt-4 text-center">
-                        <div className="font-semibold">
-                            {home?.bank_id}
-                        </div>
-
+                    <div className="flex justify-between items-start">
                         <div>
-                            {home?.bank_account}
+                            <div>Tiền điện</div>
+
+                            <div className="text-xs text-gray-500">
+                                {formData.current_electricity_number || 0}
+                                {" → "}
+                                {formData.new_electricity_number || 0}
+                            </div>
+
+                            <div className="text-xs text-gray-500">
+                                {Number(formData.new_electricity_number) -
+                                    Number(formData.current_electricity_number)}
+                                {" "}kWh × {elecPrice.toLocaleString("vi-VN")} đ
+                            </div>
                         </div>
+
+                        <span className="font-medium">
+                            {electAmount.toLocaleString("vi-VN")} đ
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <div>Tiền nước</div>
+
+                            {home?.is_water_per_person ? (
+                                <div className="text-xs text-gray-500">
+                                    {room?.num_person || 0} người ×{" "}
+                                    {waterPrice.toLocaleString("vi-VN")} đ
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="text-xs text-gray-500">
+                                        {formData.current_water_number || 0}
+                                        {" → "}
+                                        {formData.new_water_number || 0}
+                                    </div>
+
+                                    <div className="text-xs text-gray-500">
+                                        {Number(formData.new_water_number || 0) -
+                                            Number(formData.current_water_number || 0)}
+                                        {" "}m³ × {waterPrice.toLocaleString("vi-VN")} đ
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <span className="font-medium">
+                            {waterAmount.toLocaleString("vi-VN")} đ
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                        <span>Dịch vụ (Wifi, rác...)</span>
+
+                        <span>
+                            {Number(
+                                formData.wifi_amount || 0
+                            ).toLocaleString("vi-VN")} đ
+                        </span>
                     </div>
                 </div>
-            )}
+
+                {/* TỔNG THÁNG */}
+                <div className="mt-5 border-t pt-4">
+                    <div className="flex justify-between font-semibold">
+                        <span>Tổng hóa đơn tháng này</span>
+
+                        <span>
+                            {total.toLocaleString("vi-VN")} đ
+                        </span>
+                    </div>
+                </div>
+
+                {/* NỢ CŨ */}
+                {totalOldDebt > 0 && (
+                    <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4">
+
+                        <div className="flex justify-between mb-2">
+                            <span className="font-semibold text-red-700">
+                                Nợ cũ
+                            </span>
+
+                            <span className="font-bold text-red-700">
+                                {totalOldDebt.toLocaleString("vi-VN")} đ
+                            </span>
+                        </div>
+
+                        <div className="space-y-1 text-sm">
+                            {unpaidInvoices.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="flex justify-between text-gray-700"
+                                >
+                                    <span>
+                                        {new Date(
+                                            item.invoice_create_date
+                                        ).toLocaleDateString("vi-VN")}
+                                    </span>
+
+                                    <span>
+                                        {Number(
+                                            item.debit_amount
+                                        ).toLocaleString("vi-VN")} đ
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                    </div>
+                )}
+
+                {/* GRAND TOTAL */}
+                <div className="mt-5 bg-green-50 border-2 border-green-500 rounded-xl p-4">
+
+                    <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold text-green-800">
+                            Tổng cần thanh toán
+                        </span>
+
+                        <span className="text-2xl font-bold text-red-600">
+                            {grandTotal.toLocaleString("vi-VN")} đ
+                        </span>
+                    </div>
+
+                </div>
+
+                {/* QR */}
+                {qrUrl && (
+                    <div className="mt-6 flex flex-col items-center">
+
+                        <img
+                            src={qrUrl}
+                            alt="vietqr"
+                            className="w-56 h-56 border rounded-xl shadow"
+                        />
+
+                        <p className="mt-2 text-sm text-gray-500">
+                            Quét mã QR để thanh toán
+                        </p>
+
+                    </div>
+                )}
+
+            </div>
         </div>
     );
 }
