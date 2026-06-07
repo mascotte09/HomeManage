@@ -17,7 +17,8 @@ export default function InvoiceRecord({
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   const summaryRef = useRef(null);
-const [unpaidInvoices, setUnpaidInvoices] = useState([]);
+  const [unpaidInvoices, setUnpaidInvoices] = useState([]);
+  const [extraPaidInvoices, setExtraPaidInvoices] = useState([]);
   //const [isEditing, setIsEditing] = useState(false);
   const [home, setHome] = useState(null);
 
@@ -60,10 +61,10 @@ const [unpaidInvoices, setUnpaidInvoices] = useState([]);
         ...prev,
 
         current_electricity_number:
-          room?.current_electricity_number || "",
+          room?.current_electricity_number || "0",
 
         current_water_number:
-          room?.current_water_number || "",
+          room?.current_water_number || "0",
       }));
 
       return;
@@ -79,13 +80,13 @@ const [unpaidInvoices, setUnpaidInvoices] = useState([]);
         invoice.rental_amount || "",
 
       current_electricity_number:
-        invoice.current_electricity_number || "",
+        invoice.current_electricity_number || "0",
 
       new_electricity_number:
         invoice.new_electricity_number || "",
 
       current_water_number:
-        invoice.current_water_number || "",
+        invoice.current_water_number || "0",
 
       new_water_number:
         invoice.new_water_number || "",
@@ -103,44 +104,53 @@ const [unpaidInvoices, setUnpaidInvoices] = useState([]);
         invoice.note || "",
     });
   }, [invoice, room]);
-useEffect(() => {
-  async function fetchUnpaidInvoices() {
-    if (!room?.id) {
-      setUnpaidInvoices([]);
-      return;
-    }
 
-    let query = supabase
-      .from("invoices")
-      .select(`
+  useEffect(() => {
+    async function fetchInvoiceBalances() {
+      if (!room?.id) {
+        setUnpaidInvoices([]);
+        setExtraPaidInvoices([]);
+        return;
+      }
+
+      let query = supabase
+        .from("invoices")
+        .select(`
         id,
         invoice_create_date,
         total_amount,
         debit_amount
       `)
-      .eq("room_id", room.id)
-      .gt("debit_amount", 0) // chỉ lấy hóa đơn còn nợ
-      .order("invoice_create_date", {
-        ascending: true,
-      });
+        .eq("room_id", room.id)
+        .neq("debit_amount", 0)
+        .order("invoice_create_date", {
+          ascending: true,
+        });
 
-    // Nếu đang sửa hóa đơn thì loại chính nó ra
-    if (invoice?.id) {
-      query = query.neq("id", invoice.id);
+      if (invoice?.id) {
+        query = query.neq("id", invoice.id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.log(error.message);
+        return;
+      }
+
+      setUnpaidInvoices(
+        data.filter(item => Number(item.debit_amount) > 0)
+      );
+
+      setExtraPaidInvoices(
+        data.filter(item => Number(item.debit_amount) < 0)
+      );
     }
 
-    const { data, error } = await query;
+    fetchInvoiceBalances();
+  }, [room?.id, invoice?.id]);
 
-    if (error) {
-      console.log(error.message);
-      return;
-    }
 
-    setUnpaidInvoices(data || []);
-  }
-
-  fetchUnpaidInvoices();
-}, [room?.id, invoice?.id]);
   useEffect(() => {
     async function fetchHome() {
       console.debug("Home ID:" + homeID);
@@ -215,23 +225,6 @@ useEffect(() => {
 
   const { electAmount, waterAmount, total } =
     calculateTotal();
-
-  // =========================
-  // QR URL
-  // =========================
-  //const [qrLoaded, setQrLoaded] = useState(false);
-  const qrAmount = total || 0;
-
-  const qrContent = encodeURIComponent(
-    `${room?.room_renter || ""} Room ${room?.room_number || ""}`
-  );
-
-  const hasBankInfo =
-    home?.bank_id && home?.bank_account;
-
-  const qrUrl = hasBankInfo
-    ? `https://img.vietqr.io/image/${home.bank_id}-${home.bank_account}-compact2.png?amount=${qrAmount}&addInfo=${qrContent}`
-    : null;
 
   async function captureAndShare() {
     if (!summaryRef.current) return;
@@ -587,7 +580,7 @@ useEffect(() => {
               : "grid grid-cols-2 gap-3"
           }
         >
-          
+
           {!hasPreviousInvoice && (
             <Input
               label="Số Điện Cũ"
@@ -740,9 +733,9 @@ useEffect(() => {
               total={total}
               elecPrice={elecPrice}
               waterPrice={waterPrice}
-              qrUrl={qrUrl}
               home={home}
               unpaidInvoices={unpaidInvoices}
+              extraPaidInvoices={extraPaidInvoices}
             />
           </div>
         </div>

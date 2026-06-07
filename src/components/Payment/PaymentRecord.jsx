@@ -147,7 +147,10 @@ export default function PaymentRecord({
 
                         <button
                             type="button"
-                            onClick={() => setPaymentType("partial-pay")}
+                            onClick={() => {
+                                setPaymentType("partial-pay");
+                                setDebitAmount(invoice.total_amount);
+                            }}
                             className={`rounded-lg border p-3 text-center transition
         ${paymentType === "partial-pay"
                                     ? "border-red-500 bg-red-50 text-red-700"
@@ -160,7 +163,10 @@ export default function PaymentRecord({
 
                         <button
                             type="button"
-                            onClick={() => setPaymentType("extra-pay")}
+                            onClick={() => {
+                                setPaymentType("extra-pay");
+                                setDebitAmount(0);
+                            }}
                             className={`rounded-lg border p-3 text-center transition
         ${paymentType === "extra-pay"
                                     ? "border-blue-500 bg-blue-50 text-blue-700"
