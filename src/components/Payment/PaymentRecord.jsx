@@ -148,80 +148,103 @@ export default function PaymentRecord({
                 </div>
 
                 {/* Radio */}
-                <fieldset className="mb-5 border border-gray-300 rounded-lg p-3">
-                    <legend className="text-sm font-semibold text-gray-700 px-2">
-                        Trả tiền
+                <fieldset className="mb-5 rounded-xl border border-stone-200 bg-stone-50 p-4 shadow-sm">
+                    <legend className="px-2 text-sm font-bold text-stone-700">
+                        Thanh toán
                     </legend>
 
-                    <div className="flex gap-6">
+                    {/* Payment Type */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
 
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="radio"
-                                value="final-pay"
-                                checked={paymentType === "final-pay"}
-                                onChange={() => {
-                                    setPaymentType("final-pay");
-                                    setDebitAmount(0);
-                                }}
-                            />
-                            Trả đủ
-                        </label>
-
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="radio"
-                                value="partial-pay"
-                                checked={paymentType === "partial-pay"}
-                                onChange={() =>
-                                    setPaymentType("partial-pay")
-                                }
-                            />
-                            Nợ
-                        </label>
-
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="radio"
-                                value="extra-pay"
-                                checked={paymentType === "extra-pay"}
-                                onChange={() => {
-                                    setPaymentType("extra-pay");
-                                }}
-                            />
-                            Dư
-                        </label>
-
-                    </div>
-                    {/* Công nợ */}
-                    <div className="mb-6">
-                        <label className="block mb-1 font-medium">
-                            {paymentType === "extra-pay"
-                                ? "Số tiền dư"
-                                : "Số tiền nợ"}
-                        </label>
-
-                        <input
-                            type="text"
-                            disabled={paymentType === "final-pay"}
-                            value={debitAmount === 0 ? "" : debitAmount.toLocaleString("vi-VN")}
-                            onChange={(e) => {
-                                const raw = e.target.value.replace(/\D/g, "");
-                                const value = Number(raw || 0);
-
-                                setDebitAmount(value);
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setPaymentType("final-pay");
+                                setDebitAmount(0);
                             }}
-                            className="
-    w-full
-    border
-    rounded
-    px-1
-    py-2
-    text-black
-    disabled:bg-gray-100
-  "
-                        />
+                            className={`rounded-lg border p-3 text-center transition
+        ${paymentType === "final-pay"
+                                    ? "border-green-500 bg-green-50 text-green-700"
+                                    : "border-stone-300 bg-white hover:bg-stone-100"
+                                }`}
+                        >
+                            <div className="text-lg">✅</div>
+                            <div className="font-medium">Đủ</div>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setPaymentType("partial-pay")}
+                            className={`rounded-lg border p-3 text-center transition
+        ${paymentType === "partial-pay"
+                                    ? "border-red-500 bg-red-50 text-red-700"
+                                    : "border-stone-300 bg-white hover:bg-stone-100"
+                                }`}
+                        >
+                            <div className="text-lg">⚠️</div>
+                            <div className="font-medium">Nợ</div>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setPaymentType("extra-pay")}
+                            className={`rounded-lg border p-3 text-center transition
+        ${paymentType === "extra-pay"
+                                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                                    : "border-stone-300 bg-white hover:bg-stone-100"
+                                }`}
+                        >
+                            <div className="text-lg">💰</div>
+                            <div className="font-medium">Dư</div>
+                        </button>
+
                     </div>
+
+                    {/* Debt / Extra Money */}
+                    {paymentType !== "final-pay" && (
+                        <div>
+
+                            <input
+                                type="text"
+                                value={
+                                    debitAmount === 0
+                                        ? ""
+                                        : debitAmount.toLocaleString("vi-VN")
+                                }
+                                onChange={(e) => {
+                                    const raw = e.target.value.replace(/\D/g, "");
+                                    setDebitAmount(Number(raw || 0));
+                                }}
+                                placeholder="Nhập số tiền"
+                                className="
+          w-full
+          rounded-lg
+          border
+          border-stone-300
+          bg-white
+          px-3
+          py-2
+          text-black
+          shadow-sm
+          focus:border-blue-500
+          focus:outline-none
+          focus:ring-2
+          focus:ring-blue-200
+        "
+                            />
+
+                            <div
+                                className={`mt-2 text-sm font-medium
+          ${paymentType === "extra-pay"
+                                        ? "text-blue-600"
+                                        : "text-red-600"
+                                    }`}
+                            >
+                                {debitAmount.toLocaleString("vi-VN")} đ
+                            </div>
+                        </div>
+                    )}
+
                 </fieldset>
 
 
