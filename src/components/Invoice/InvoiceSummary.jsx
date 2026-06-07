@@ -150,9 +150,9 @@ export default function InvoiceSummary({
 
                 {/* NỢ CŨ */}
                 {totalOldDebt > 0 && (
-                    <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-2">
+                    <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3">
 
-                        <div className="flex justify-between mb-2">
+                        <div className="flex justify-between mb-1">
                             <span className="font-semibold text-red-700">
                                 Nợ cũ
                             </span>
@@ -187,7 +187,7 @@ export default function InvoiceSummary({
                 )}
                 {/* TIỀN DƯ CŨ */}
                 {totalExtraPaid > 0 && (
-                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-2">
+                    <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
 
                         <div className="flex justify-between mb-2">
                             <span className="font-semibold text-blue-700">
