@@ -127,15 +127,22 @@ export default function InvoiceSummary({
                         </span>
                     </div>
 
-                    <div className="flex justify-between">
-                        <span>4. Dịch vụ (Wifi, rác...)</span>
+                    {Number(formData.wifi_amount || 0) > 0 && (
+                        <div className="flex justify-between">
+                            <div>
+                                <div>4. Dịch vụ</div>
+                                <div className="text-xs text-gray-500">
+                                    Wifi, rác...
+                                </div>
+                            </div>
 
-                        <span>
-                            {Number(
-                                formData.wifi_amount || 0
-                            ).toLocaleString("vi-VN")}
-                        </span>
-                    </div>
+                            <span>
+                                {Number(
+                                    formData.wifi_amount || 0
+                                ).toLocaleString("vi-VN")}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* TỔNG THÁNG */}
@@ -226,7 +233,7 @@ export default function InvoiceSummary({
                 <div className="mt-3 pt-1 border-t-2 border-green-500">
                     <div className="flex justify-between items-center">
                         <span className="text-lg font-bold text-green-800">
-                            Tổng 
+                            Tổng
                         </span>
 
                         <span className="text-xl font-bold text-red-600">
@@ -241,7 +248,7 @@ export default function InvoiceSummary({
                         <img
                             src={qrUrl}
                             alt="vietqr"
-                            className="w-44 h-44 border rounded-xl shadow"
+                            className="w-36 h-36 border rounded-xl shadow"
                         />
                     </div>
                 )}
