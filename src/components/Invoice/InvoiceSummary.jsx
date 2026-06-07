@@ -67,7 +67,7 @@ export default function InvoiceSummary({
                 <div className="space-y-2 text-black">
 
                     <div className="flex justify-between">
-                        <span>Tiền phòng</span>
+                        <span>1. Tiền phòng</span>
                         <span>
                             {Number(
                                 formData.rental_amount || 0
@@ -77,7 +77,7 @@ export default function InvoiceSummary({
 
                     <div className="flex justify-between items-start">
                         <div>
-                            <div>Tiền điện</div>
+                            <div>2. Tiền điện</div>
 
                             <div className="text-xs text-gray-500">
                                 {formData.current_electricity_number || 0}
@@ -99,7 +99,7 @@ export default function InvoiceSummary({
 
                     <div className="flex justify-between items-start">
                         <div>
-                            <div>Tiền nước</div>
+                            <div>3. Tiền nước</div>
                             {home?.is_water_per_person ? (
                                 <div className="text-xs text-gray-500">
                                     {room?.num_person || 0} người ×{" "}
@@ -123,12 +123,12 @@ export default function InvoiceSummary({
                         </div>
 
                         <span className="font-medium">
-                            {waterAmount.toLocaleString("vi-VN")} đ
+                            {waterAmount.toLocaleString("vi-VN")}
                         </span>
                     </div>
 
                     <div className="flex justify-between">
-                        <span>Dịch vụ (Wifi, rác...)</span>
+                        <span>4. Dịch vụ (Wifi, rác...)</span>
 
                         <span>
                             {Number(
@@ -223,11 +223,10 @@ export default function InvoiceSummary({
                     </div>
                 )}
                 {/* GRAND TOTAL */}
-                <div className="mt-3 bg-green-50 border-2 border-green-500 rounded-xl p-3">
-
+                <div className="mt-3 pt-1 border-t-2 border-green-500">
                     <div className="flex justify-between items-center">
                         <span className="text-lg font-bold text-green-800">
-                            Tổng
+                            Tổng 
                         </span>
 
                         <span className="text-xl font-bold text-red-600">
