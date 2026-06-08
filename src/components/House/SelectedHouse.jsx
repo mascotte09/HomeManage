@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import { useNavigate } from "react-router-dom";
+import DeleteModal from "../DeleteModal.jsx";
 
 export default function SelectedHouse({
   userID,
@@ -9,7 +10,8 @@ export default function SelectedHouse({
   onDelete,
   refreshHouses,
 }) {
-
+  const [showDeleteModal, setShowDeleteModal] =
+    useState(false);
   const [saving, setSaving] = useState(false);
   // Create mode
   const isNew = !house;
@@ -73,6 +75,33 @@ export default function SelectedHouse({
     );
 
   }, [house]);
+  function handleDeleteHouse() {
+    if (isNew) {
+      onDelete?.();
+      return;
+    }
+
+    setShowDeleteModal(true);
+  }
+
+  async function handleConfirmDelete() {
+    if (!house?.id) return;
+
+    const { error } = await supabase
+      .from("homes")
+      .delete()
+      .eq("id", house.id);
+
+    if (error) {
+      console.log(error.message);
+      alert("Failed to delete house");
+      return;
+    }
+
+    await refreshHouses();
+
+    setShowDeleteModal(false);
+  }
 
   // Save / Update
   async function handleSave() {
@@ -141,7 +170,7 @@ export default function SelectedHouse({
             {/* Cancel / Delete */}
             <button
               className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
-              onClick={onDelete}
+              onClick={handleDeleteHouse}
             >
               {isNew
                 ? "Thoát"
@@ -155,8 +184,8 @@ export default function SelectedHouse({
               className={`
                   text-white text-sm px-3 py-1 rounded-md
                   ${saving
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-600"}
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"}
                 `}
             >
               {saving ? "Đang lưu..." : "Lưu"}
@@ -343,6 +372,13 @@ export default function SelectedHouse({
 
         </header>
       </div>
+      <DeleteModal
+        open={showDeleteModal}
+        title="Xóa nhà trọ"
+        message="Bạn có chắc muốn xóa nhà trọ này?"
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 }

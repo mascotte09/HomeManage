@@ -18,7 +18,7 @@ export default function RoomsSidebar({ onStartAddProject, homes, onSelectHome, s
                 
                 <div className="mb-2">
                     <Button onClick={onStartAddProject}>
-                        Thêm Phòng
+                        Tạo mới
                     </Button>
                 </div>
 

@@ -4,7 +4,7 @@ import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import Photos from "../Photos.jsx";
 import InvoiceRecord from "../Invoice/InvoiceRecord.jsx";
-import DeleteInvoiceModal from "../Invoice/DeleteInvoiceModal.jsx";
+import DeleteModal from "../DeleteModal.jsx";
 
 export default function SelectedRoom({
   homeID,
@@ -14,10 +14,13 @@ export default function SelectedRoom({
   onDeleteTask,
   refreshRooms,
 }) {
-  const [
-    showDeleteInvoiceModal,
-    setShowDeleteInvoiceModal,
-  ] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] =
+    useState(false);
+
+  const [deleteType, setDeleteType] =
+    useState(null); // "room" | "invoice"
+
   const [saving, setSaving] = useState(false);
   const [
     selectedDeleteInvoiceID,
@@ -186,45 +189,13 @@ export default function SelectedRoom({
     setShowInvoiceRecord(true);
   }
   // Delete invoice
-  async function onDeleteInvoice(
-    invoiceID
-  ) {
-
+  function onDeleteInvoice(invoiceID) {
     setSelectedDeleteInvoiceID(invoiceID);
 
-    setShowDeleteInvoiceModal(true);
+    setDeleteType("invoice");
+    setShowDeleteModal(true);
   }
-  async function confirmDeleteInvoice() {
 
-    if (!selectedDeleteInvoiceID) {
-      return;
-    }
-
-    const { error } = await supabase
-      .from("invoices")
-      .delete()
-      .eq(
-        "id",
-        selectedDeleteInvoiceID
-      );
-
-    if (error) {
-
-      console.log(error.message);
-
-      alert(
-        "Failed to delete invoice"
-      );
-
-      return;
-    }
-
-    setShowDeleteInvoiceModal(false);
-
-    setSelectedDeleteInvoiceID(null);
-
-    await refreshInvoices();
-  }
   async function refreshInvoices() {
 
     if (!room?.id) return;
@@ -309,30 +280,72 @@ export default function SelectedRoom({
     }
   }
   async function handleDeleteRoom() {
+    setDeleteType("room");
+    setShowDeleteModal(true);
+  }
+
+  async function handleConfirmDelete() {
+
+    if (deleteType === "invoice") {
+      if (!selectedDeleteInvoiceID) return;
+
+      const { error } = await supabase
+        .from("invoices")
+        .delete()
+        .eq("id", selectedDeleteInvoiceID);
+
+      if (error) {
+        console.log(error.message);
+        alert("Failed to delete invoice");
+        return;
+      }
+
+      await refreshInvoices();
+      setSelectedDeleteInvoiceID(null);
+    }
+
+    else if (deleteType === "room") {
+      if (!room?.id) return;
+
+      const { error } = await supabase
+        .from("rooms")
+        .delete()
+        .eq("id", room.id);
+
+      if (error) {
+        console.log(error.message);
+        alert("Failed to delete room");
+        return;
+      }
+
+      await refreshRooms();
+      onDelete?.();
+    }
+
+    setShowDeleteModal(false);
+    setDeleteType(null);
+  }
+  async function refreshCurrentRoom() {
     if (!room?.id) return;
 
-    const confirmDelete =
-      window.confirm("Xóa phòng này?");
-
-    if (!confirmDelete) return;
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("rooms")
-      .delete()
-      .eq("id", room.id);
+      .select("*")
+      .eq("id", room.id)
+      .single();
 
     if (error) {
-
       console.log(error.message);
-
-      alert("Failed to delete room");
-
       return;
     }
 
-    await refreshRooms();
+    setCurrentElectricityNumber(
+      data.current_electricity_number || 0
+    );
 
-    onDelete?.();
+    setCurrentWaterNumber(
+      data.current_water_number || 0
+    );
   }
   return (
     <>
@@ -358,8 +371,8 @@ export default function SelectedRoom({
               className={`
                 text-white text-sm px-3 py-1 rounded-md
                 ${saving
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-blue-500 hover:bg-blue-600"}
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"}
               `}
             >
               {saving ? "Đang lưu..." : "Lưu"}
@@ -563,7 +576,7 @@ export default function SelectedRoom({
               onAdd={async () => {
 
                 await refreshInvoices();
-
+                await refreshCurrentRoom();
                 setShowInvoiceRecord(false);
 
                 setSelectedInvoice(null);
@@ -574,15 +587,24 @@ export default function SelectedRoom({
 
         </div>
       )}
-      <DeleteInvoiceModal
-        open={showDeleteInvoiceModal}
+      <DeleteModal
+        open={showDeleteModal}
+        title={
+          deleteType === "room"
+            ? "Xóa phòng"
+            : "Xóa hóa đơn"
+        }
+        message={
+          deleteType === "room"
+            ? "Bạn có chắc muốn xóa phòng này?"
+            : "Bạn có chắc muốn xóa hóa đơn này?"
+        }
         onClose={() => {
-
-          setShowDeleteInvoiceModal(false);
-
+          setShowDeleteModal(false);
+          setDeleteType(null);
           setSelectedDeleteInvoiceID(null);
         }}
-        onConfirm={confirmDeleteInvoice}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );
