@@ -13,7 +13,7 @@ export default function Header({ onLogout }) {
     const menuButtonClass = `
   flex flex-col items-center justify-center
   w-20 h-16 rounded-xl
-  bg-white text-gray-700
+  bg-gray-200 text-gray-700
   shadow-[0_0_15px_3px_rgba(255,255,255,0.7)]
   hover:shadow-[0_0_25px_6px_rgba(255,255,255,1)]
   hover:-translate-y-1

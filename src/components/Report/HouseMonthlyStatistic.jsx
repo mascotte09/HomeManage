@@ -208,7 +208,7 @@ export default function MonthlyStatistic() {
     // UI
     // =========================
     return (
-        <div ref={reportRef} className="bg-gray-50 p-2 rounded-xl space-y-2">
+        <div ref={reportRef} className="bg-gray-200 p-2 rounded-xl space-y-2">
 
             {/* HEADER */}
             <div className="flex justify-between items-center">
