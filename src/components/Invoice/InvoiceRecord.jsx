@@ -56,54 +56,54 @@ export default function InvoiceRecord({
   // LOAD INVOICE
   // =========================
   useEffect(() => {
-    if (!invoice) {
-      setFormData((prev) => ({
-        ...prev,
+    if (invoice) return;
 
-        current_electricity_number:
-          room?.current_electricity_number || "0",
+    setFormData((prev) => ({
+      ...prev,
+      current_electricity_number:
+        room?.current_electricity_number ?? "0",
+      current_water_number:
+        room?.current_water_number ?? "0",
+      new_electricity_number:"",
+      new_water_number:""
+    }));
+  }, [room, invoice]);
 
-        current_water_number:
-          room?.current_water_number || "0",
-      }));
-
-      return;
-    }
+  useEffect(() => {
+    if (!invoice) return;
 
     setFormData({
       invoice_create_date:
-        invoice.invoice_create_date
-          ? invoice.invoice_create_date.substring(0, 10)
-          : "",
+        invoice.invoice_create_date?.substring(0, 10) ?? "",
 
       rental_amount:
-        invoice.rental_amount || "",
+        invoice.rental_amount ?? "",
 
       current_electricity_number:
-        invoice.current_electricity_number || "0",
+        invoice.current_electricity_number ?? "0",
 
       new_electricity_number:
-        invoice.new_electricity_number || "",
+        invoice.new_electricity_number ?? "",
 
       current_water_number:
-        invoice.current_water_number || "0",
+        invoice.current_water_number ?? "0",
 
       new_water_number:
-        invoice.new_water_number || "",
+        invoice.new_water_number ?? "",
 
       wifi_amount:
-        invoice.wifi_amount || "",
+        invoice.wifi_amount ?? "",
 
       surcharge:
-        invoice.surcharge || "",
+        invoice.surcharge ?? "",
 
       amount_already_pay:
-        invoice.amount_already_pay || "",
+        invoice.amount_already_pay ?? "",
 
       note:
-        invoice.note || "",
+        invoice.note ?? "",
     });
-  }, [invoice, room]);
+  }, [invoice]);
 
   useEffect(() => {
     async function fetchInvoiceBalances() {
