@@ -549,7 +549,7 @@ export default function SelectedRoom({
 
       </div>
       {/* Photos Modal */}
-      {!isNew && (
+      {!isNew && showPhotos &&(
         <Photos
           room={room}
           open={showPhotos}
