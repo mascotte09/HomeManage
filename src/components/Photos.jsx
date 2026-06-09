@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../supabase";
+import { FiShare } from "react-icons/fi";
 
 export default function Photos({ room, open, onClose }) {
   const [photos, setPhotos] = useState([]);
@@ -167,9 +168,13 @@ export default function Photos({ room, open, onClose }) {
           {photos.length > 0 && (
             <button
               onClick={handleSharePhotos}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              className="flex flex-col items-center text-blue-600 hover:text-blue-700"
             >
-              Chia sẻ
+              <FiShare size={26} />
+
+              <span className="text-xs mt-1">
+                Chia sẻ
+              </span>
             </button>
           )}
         </div>
