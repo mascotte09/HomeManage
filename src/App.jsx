@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import HeaderHouse from "./components/House/HeaderHouse";
 import HeaderRoom from "./components/Room/HeaderRoom";
-import ListHouses from "./components/House/ListHouses";
+import HousePage from "./components/House/HousePage.jsx";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import ListPayments from "./components/Payment/ListPayments.jsx";
@@ -83,7 +83,7 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <ListHouses user_id={currentUser.id} />
+                            <HousePage user_id={currentUser.id} />
                         </>
                     }
                 />
@@ -97,7 +97,7 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <ListHouses user_id={currentUser.id} />
+                            <HousePage user_id={currentUser.id} />
                         </>
                     }
                 />

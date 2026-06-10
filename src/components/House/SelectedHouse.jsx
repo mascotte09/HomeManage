@@ -1,26 +1,30 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
-import Input from "../InputVal.jsx";
 import { useNavigate } from "react-router-dom";
+import {
+  FiArrowLeft,
+  FiSave,
+  FiHome,
+} from "react-icons/fi";
+import Input from "../InputVal.jsx";
 import DeleteModal from "../DeleteModal.jsx";
 
 export default function SelectedHouse({
   userID,
   house,
   onDelete,
+  onBack,
   refreshHouses,
 }) {
-  const [showDeleteModal, setShowDeleteModal] =
-    useState(false);
-  const [saving, setSaving] = useState(false);
-  // Create mode
-  const isNew = !house;
-
   const navigate = useNavigate();
 
-  // States
-  const [name, setName] = useState("");
+  const isNew = !house;
 
+  const [saving, setSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] =
+    useState(false);
+
+  const [name, setName] = useState("");
   const [address, setAddress] =
     useState("");
 
@@ -43,12 +47,8 @@ export default function SelectedHouse({
     setIsWaterPerPerson,
   ] = useState(false);
 
-  // Load selected house
   useEffect(() => {
-
-    setName(
-      house?.name || ""
-    );
+    setName(house?.name || "");
 
     setAddress(
       house?.address || ""
@@ -73,15 +73,65 @@ export default function SelectedHouse({
     setIsWaterPerPerson(
       house?.is_water_per_person || false
     );
-
   }, [house]);
-  function handleDeleteHouse() {
-    if (isNew) {
-      onDelete?.();
-      return;
-    }
 
-    setShowDeleteModal(true);
+  async function handleSave() {
+    if (saving) return;
+
+    setSaving(true);
+
+    try {
+      if (!name.trim()) {
+        alert("Vui lòng nhập tên nhà trọ");
+        return;
+      }
+
+      const homeData = {
+        userID,
+        name,
+        address,
+        bank_id: bankID,
+        bank_account: bankAccount,
+        electricity_price:
+          electricityPrice,
+        water_price: waterPrice,
+        is_water_per_person:
+          isWaterPerPerson,
+      };
+
+      if (isNew) {
+        const { error } =
+          await supabase
+            .from("homes")
+            .insert([homeData]);
+
+        if (error) throw error;
+      } else {
+        const { error } =
+          await supabase
+            .from("homes")
+            .update(homeData)
+            .eq("id", house.id);
+
+        if (error) throw error;
+      }
+
+      await refreshHouses();
+
+      if (isNew) {
+        onDelete?.();
+      }
+    } catch (error) {
+      console.log(error);
+
+      alert(
+        isNew
+          ? "Không thể tạo nhà trọ"
+          : "Không thể cập nhật nhà trọ"
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleConfirmDelete() {
@@ -94,121 +144,88 @@ export default function SelectedHouse({
 
     if (error) {
       console.log(error.message);
-      alert("Failed to delete house");
+
+      alert("Không thể xóa nhà trọ");
+
       return;
     }
 
     await refreshHouses();
 
     setShowDeleteModal(false);
-  }
 
-  // Save / Update
-  async function handleSave() {
-    if (saving) return;
-
-    setSaving(true);
-
-    try {
-      if (!name) {
-        alert("Please enter house name");
-        return;
-      }
-
-      const homeData = {
-        userID,
-        name,
-        address,
-        bank_id: bankID,
-        bank_account: bankAccount,
-        electricity_price: electricityPrice,
-        water_price: waterPrice,
-        is_water_per_person: isWaterPerPerson,
-      };
-
-      if (isNew) {
-        const { error } = await supabase
-          .from("homes")
-          .insert([homeData]);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("homes")
-          .update(homeData)
-          .eq("id", house.id);
-
-        if (error) throw error;
-      }
-
-      await refreshHouses();
-
-      if (isNew) {
-        onDelete();
-      }
-    } catch (error) {
-      console.error(error);
-      alert(
-        isNew
-          ? "Failed to create house"
-          : "Failed to update house"
-      );
-    } finally {
-      setSaving(false);
-    }
   }
 
   return (
     <>
-      <div className="ml-0 flex flex-col items-start w-full pr-2">
+      <div className="flex-1 p-3 md:p-5 overflow-y-auto">
 
-        <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300 w-full">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-3 mb-4">
 
-          {/* Buttons */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex items-center justify-between">
 
-            {/* Cancel / Delete */}
+            {/* Back */}
             <button
-              className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
-              onClick={handleDeleteHouse}
+              onClick={onBack}
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-100"
             >
-              {isNew
-                ? "Thoát"
-                : "Xóa"}
+              <FiArrowLeft size={20} />
             </button>
 
-            {/* Save / Update */}
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`
-                  text-white text-sm px-3 py-1 rounded-md
-                  ${saving
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"}
-                `}
-            >
-              {saving ? "Đang lưu..." : "Lưu"}
-            </button>
+            <div className="flex gap-2">
 
-            {/* Rooms */}
-            {!isNew && (
+              {/* Rooms */}
+              {!isNew && (
+                <button
+  onClick={() => navigate(`/rooms/${house.id}`)}
+  className="
+    h-10 px-3
+    flex items-center gap-2
+    rounded-full
+    bg-blue-600 text-white
+    shadow-md
+    hover:bg-blue-700
+    transition
+  "
+>
+  <FiHome size={18} />
+  <span className="text-sm font-medium">
+    Quản Lý Phòng
+  </span>
+</button>
+              )}
+
+              {/* Save */}
               <button
-                onClick={() =>
-                  navigate(
-                    `/rooms/${house.id}`
-                  )
-                }
-                className="bg-stone-700 hover:bg-stone-800 text-white text-sm px-3 py-1 rounded-md"
+                onClick={handleSave}
+                disabled={saving}
+                className={`
+          w-10 h-10 rounded-full flex items-center justify-center text-white
+          ${saving
+                    ? "bg-gray-400"
+                    : "bg-blue-600 hover:bg-blue-700"
+                  }
+        `}
+                title="Lưu"
               >
-                Phòng
+                <FiSave size={18} />
               </button>
-            )}
+
+            </div>
 
           </div>
 
-          {/* Form */}
-          <div className="flex flex-col items-start gap-2 w-full">
+        </div>
+
+        {/* Basic Information */}
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 mb-4">
+
+          <h3 className="font-semibold text-stone-700 mb-4">
+            Thông tin nhà trọ
+          </h3>
+
+          <div className="space-y-3">
 
             <Input
               label="Tên nhà trọ"
@@ -232,119 +249,120 @@ export default function SelectedHouse({
               }
             />
 
-            {/* Price Section */}
-            <div className="w-full py-3 my-2 border-t border-b border-stone-300">
+          </div>
 
-              {/* Electricity */}
-              <div className="mb-3">
+        </div>
 
-                <Input
-                  label="Giá điện"
-                  type="text"
-                  value={electricityPrice.toLocaleString("vi-VN")}
-                  onChange={(e) => {
+        {/* Utility Prices */}
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4 mb-4">
 
-                    const rawValue =
-                      e.target.value.replace(
-                        /\./g,
-                        ""
-                      );
+          <h3 className="font-semibold text-stone-700 mb-4">
+            Giá dịch vụ
+          </h3>
 
-                    const numberValue =
-                      Number(
-                        rawValue.replace(
-                          /\D/g,
-                          ""
-                        )
-                      );
+          <div className="space-y-3">
 
-                    setElectricityPrice(
-                      numberValue
-                    );
-                  }}
-                />
+            <Input
+              label="Giá điện"
+              type="text"
+              value={electricityPrice.toLocaleString(
+                "vi-VN"
+              )}
+              onChange={(e) => {
+                const value = Number(
+                  e.target.value
+                    .replace(/\./g, "")
+                    .replace(/\D/g, "")
+                );
 
-              </div>
+                setElectricityPrice(
+                  value
+                );
+              }}
+            />
 
-              {/* Water Type */}
-              <div className="flex flex-col items-start gap-1 w-full mb-3">
+            <div>
+              <label className="text-xs font-bold uppercase text-stone-500 block mb-2">
+                Cách tính nước
+              </label>
 
-                <label className="text-left text-xs font-bold uppercase text-stone-500">
-                  Cách tính nước
+              <div className="flex gap-4">
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={
+                      !isWaterPerPerson
+                    }
+                    onChange={() =>
+                      setIsWaterPerPerson(
+                        false
+                      )
+                    }
+                  />
+
+                  <span>
+                    Theo khối
+                  </span>
                 </label>
 
-                <div className="flex gap-4 mt-1">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={
+                      isWaterPerPerson
+                    }
+                    onChange={() =>
+                      setIsWaterPerPerson(
+                        true
+                      )
+                    }
+                  />
 
-                  {/* Theo khối */}
-                  <label className="flex items-center gap-1 text-sm text-stone-600">
-
-                    <input
-                      type="radio"
-                      checked={!isWaterPerPerson}
-                      onChange={() =>
-                        setIsWaterPerPerson(
-                          false
-                        )
-                      }
-                    />
-
-                    Tính khối
-                  </label>
-
-                  {/* Theo người */}
-                  <label className="flex items-center gap-1 text-sm text-stone-600">
-
-                    <input
-                      type="radio"
-                      checked={
-                        isWaterPerPerson
-                      }
-                      onChange={() =>
-                        setIsWaterPerPerson(
-                          true
-                        )
-                      }
-                    />
-
-                    Đầu người
-                  </label>
-
-                </div>
+                  <span>
+                    Theo người
+                  </span>
+                </label>
 
               </div>
 
-              {/* Water Price */}
-              <Input
-                label={
-                  isWaterPerPerson
-                    ? "Giá nước theo người"
-                    : "Giá nước theo khối"
-                }
-                type="text"
-                value={waterPrice.toLocaleString("vi-VN")}
-                onChange={(e) => {
-
-                  const rawValue =
-                    e.target.value.replace(
-                      /\./g,
-                      ""
-                    );
-
-                  const numberValue =
-                    Number(
-                      rawValue.replace(
-                        /\D/g,
-                        ""
-                      )
-                    );
-
-                  setWaterPrice(
-                    numberValue
-                  );
-                }}
-              />
-
             </div>
+
+            <Input
+              label={
+                isWaterPerPerson
+                  ? "Giá nước / người"
+                  : "Giá nước / khối"
+              }
+              type="text"
+              value={waterPrice.toLocaleString(
+                "vi-VN"
+              )}
+              onChange={(e) => {
+                const value = Number(
+                  e.target.value
+                    .replace(/\./g, "")
+                    .replace(/\D/g, "")
+                );
+
+                setWaterPrice(
+                  value
+                );
+              }}
+            />
+
+          </div>
+
+        </div>
+
+        {/* Banking */}
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
+
+          <h3 className="font-semibold text-stone-700 mb-4">
+            Thông tin thanh toán
+          </h3>
+
+          <div className="space-y-3">
 
             <Input
               label="Ngân hàng"
@@ -358,7 +376,7 @@ export default function SelectedHouse({
             />
 
             <Input
-              label="Tài khoản"
+              label="Số tài khoản"
               type="text"
               value={bankAccount}
               onChange={(e) =>
@@ -370,13 +388,17 @@ export default function SelectedHouse({
 
           </div>
 
-        </header>
+        </div>
+
       </div>
+
       <DeleteModal
         open={showDeleteModal}
         title="Xóa nhà trọ"
-        message="Bạn có chắc muốn xóa nhà trọ này?"
-        onClose={() => setShowDeleteModal(false)}
+        message="Bạn có chắc muốn xóa nhà trọ này không?"
+        onClose={() =>
+          setShowDeleteModal(false)
+        }
         onConfirm={handleConfirmDelete}
       />
     </>
