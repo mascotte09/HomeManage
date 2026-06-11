@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useCallback, useState } from "react";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiEye } from "react-icons/fi";
 import { supabase } from "../../supabase.js";
-
 import NoHouseSelected from "./NoHouseSelected.jsx";
 import SelectedHouse from "./SelectedHouse.jsx";
 import DeleteModal from "../DeleteModal.jsx";
-
+import { useNavigate } from "react-router-dom";
 const VIEW = {
   LIST: "list",
   CREATE: "create",
@@ -17,18 +16,19 @@ function HouseCard({ house, selected, onSelect, onDelete }) {
   const totalRooms = house.rooms?.length || 0;
   const emptyRooms = house.rooms?.filter((r) => !r.status).length || 0;
   const occupiedRooms = totalRooms - emptyRooms;
-
+  const navigate = useNavigate();
   return (
     <button
-      onClick={() => onSelect(house.id)}
+      onClick={() => navigate(`/rooms/${house.id}`)}
       className={`
-        w-full text-left p-4 rounded-2xl border transition active:scale-[0.98]
-        ${selected
+    w-full text-left p-4 rounded-2xl border transition active:scale-[0.98]
+    ${selected
           ? "border-blue-400 bg-blue-50"
           : "border-stone-200 bg-white hover:border-stone-300"}
-      `}
+  `}
     >
       <div className="flex items-start justify-between gap-2">
+
         {/* Info */}
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-stone-800 truncate">
@@ -58,16 +58,33 @@ function HouseCard({ house, selected, onSelect, onDelete }) {
           </div>
         </div>
 
-        {/* Delete */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(house);
-          }}
-          className="w-9 h-9 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition flex-shrink-0"
-        >
-          <FiTrash2 size={17} />
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+
+          {/* View rooms */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(house.id);
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded-full text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition"
+          >
+            <FiEye size={17} />
+          </button>
+
+          {/* Delete */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(house);
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition"
+            title="Xóa nhà trọ"
+          >
+            <FiTrash2 size={17} />
+          </button>
+
+        </div>
       </div>
     </button>
   );
@@ -156,7 +173,7 @@ export default function HousePage({ user_id }) {
   }, [houseToDelete, closeDeleteModal]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
-  const isListView   = view === VIEW.LIST;
+  const isListView = view === VIEW.LIST;
   const isCreateView = view === VIEW.CREATE;
   const isDetailView = view === VIEW.DETAIL;
 
