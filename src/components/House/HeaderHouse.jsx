@@ -1,26 +1,18 @@
+import { MdLogout } from "react-icons/md";
 export default function Header({ onLogout }) {
-  return (
-    <header className="bg-gray-200 text-white px-3 py-0 flex justify-between items-center m-0">
-   
-      <div>
-        <h1 className="text-lg font-bold text-stone-800">
-          🏠 Quản Trọ
-        </h1>
+    return (
+        <header className="bg-white border-b border-stone-200 px-4 h-12 flex justify-between items-center flex-shrink-0 mt-4 mb-4">
+            <h1 className="text-base font-semibold text-stone-800">
+                🏠 Quản Trọ
+            </h1>
 
-        
-      </div>
-
-      <button
-        onClick={onLogout}
-        className="
-          w-10 h-10
-          rounded-full
-          bg-red-50
-          text-red-600
-        "
-      >
-        🚪
-      </button>
-    </header>
-  );
+            <button
+                onClick={onLogout}
+                className="w-9 h-9 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition active:scale-95"
+                title="Đăng xuất"
+            >
+                <MdLogout size={20} />
+            </button>
+        </header>
+    );
 }
