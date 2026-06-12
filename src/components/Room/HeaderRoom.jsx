@@ -43,9 +43,9 @@ export default function HeaderRoom() {
   const { houseId } = useParams();
 
   return (
-    <header className="bg-white border-b border-stone-200 flex-shrink-0  mt-0">
+    <header className="bg-white border-b border-stone-200 flex-shrink-0 m-0 p-0">
       {/* Back strip */}
-      <div className="px-4 h-11 flex items-center border-b border-stone-100">
+      <div className="px-4 h-10 flex items-center border-b border-stone-100">
         <button
           onClick={() => navigate("/houses")}
           className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition"
@@ -61,12 +61,12 @@ export default function HeaderRoom() {
           <button
             key={label}
             onClick={() => navigate(path(houseId))}
-            className="flex-1 flex flex-col items-center justify-center py-2.5 gap-1 hover:bg-stone-50 active:scale-95 transition"
+            className="flex-1 flex flex-col items-center justify-center py-1.5 gap-0.5 hover:bg-stone-50 active:scale-95 transition"
           >
-            <span className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center`}>
-              <Icon size={18} className={color} />
+            <span className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
+              <Icon size={16} className={color} />
             </span>
-            <span className="text-[11px] font-medium text-stone-600">{label}</span>
+            <span className="text-[11px] font-medium text-stone-600 leading-tight">{label}</span>
           </button>
         ))}
       </div>

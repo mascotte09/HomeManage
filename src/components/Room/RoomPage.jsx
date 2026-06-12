@@ -172,10 +172,10 @@ export default function RoomPage() {
 
       {/* ── LIST ── */}
       {isListView && (
-        <div className="flex-1 px-3 pt-0 pb-24">
+        <div className="p-4 pb-24">
           {/* Summary row */}
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-bold text-stone-800">
+            <h2 className="text-lg font-bold text-stone-800 mb-4">
               Danh sách phòng
             </h2>
             {rooms.length > 0 && (
