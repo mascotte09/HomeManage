@@ -10,6 +10,7 @@ import HeaderHouse from "./components/House/HeaderHouse";
 import HeaderRoom from "./components/Room/HeaderRoom";
 import HousePage from "./components/House/HousePage.jsx";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
+import Invoices from "./components/Invoice/Invoices";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import ListPayments from "./components/Payment/ListPayments.jsx";
 import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
@@ -123,6 +124,22 @@ function App() {
                             </div>
                         </div>
                     } />
+
+                <Route path="/invoicesRoom/:roomId/:houseId"
+                    element={
+                        <div className="flex flex-col h-dvh">
+                            <HeaderRoom
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    setCurrentUser(null);
+                                }}
+                            />
+                            <div className="flex-1 overflow-y-auto">
+                                <Invoices />
+                            </div>
+                        </div>
+                    } />
+                    
                 <Route path="/payment/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">

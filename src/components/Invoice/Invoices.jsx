@@ -1,171 +1,313 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabase";
+import {
+  FiFileText,
+  FiEye,
+  FiTrash2,
+  FiPlus,
+  FiArrowLeft,
+} from "react-icons/fi";
+import InvoiceRecord from "./InvoiceRecord";
 
-export default function Invoices({
-  homeID,
-  room,
-  invoices,
-  onDelete,
-  onEdit,
-  onAdd,
-}) {
+export default function Invoices() {
+  const { roomId } = useParams();
+  const navigate = useNavigate();
 
-  // =========================
-  // HOME
-  // =========================
-  const [home, setHome] =
-    useState(null);
+  const [home, setHome] = useState(null);
+  const [room, setRoom] = useState(null);
+  const [invoices, setInvoices] = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showInvoiceRecord, setShowInvoiceRecord] = useState(false);
 
-  // =========================
-  // LOAD HOME
-  // =========================
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
+    if (!roomId) return;
 
-    async function fetchHome() {
+    try {
+      // Room
+      const { data: roomData, error: roomError } =
+        await supabase
+          .from("rooms")
+          .select("*")
+          .eq("id", roomId)
+          .single();
 
-      if (!homeID) {
+      if (roomError || !roomData) {
+        console.error(roomError?.message);
         return;
       }
 
-      const { data, error } =
+      setRoom(roomData);
+
+      // Home
+      const { data: homeData, error: homeError } =
         await supabase
           .from("homes")
           .select("*")
-          .eq("id", homeID)
+          .eq("id", roomData.home_id)
           .single();
 
-      if (error) {
-
-        console.log(error.message);
-
-        return;
+      if (!homeError) {
+        setHome(homeData);
       }
 
-      setHome(data);
+      // Invoices
+      const { data: invoiceData, error: invoiceError } =
+        await supabase
+          .from("invoices")
+          .select("*")
+          .eq("room_id", roomId)
+          .order("invoice_create_date", {
+            ascending: false,
+          });
+
+      if (!invoiceError) {
+        setInvoices(invoiceData || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [roomId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  function handleBack() {
+    navigate(`/rooms/${room?.home_id}`);
+  }
+
+  function handleView(invoice) {
+    setSelectedInvoice(invoice);
+    setShowInvoiceRecord(true);
+  }
+
+  function handleAdd() {
+    setSelectedInvoice(null);
+    setShowInvoiceRecord(true);
+  }
+
+  async function handleDelete(invoiceId) {
+    const ok = window.confirm(
+      "Bạn có chắc muốn xóa hóa đơn này?"
+    );
+
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("invoices")
+      .delete()
+      .eq("id", invoiceId);
+
+    if (error) {
+      alert("Không thể xóa hóa đơn");
+      return;
     }
 
-    fetchHome();
+    setInvoices((prev) =>
+      prev.filter((i) => i.id !== invoiceId)
+    );
+  }
 
-  }, [homeID]);
-
-  // =========================
-  // FORMAT DATE
-  // =========================
   function formatDate(dateString) {
-    if (!dateString) {
-      return "";
-    }
+    if (!dateString) return "";
 
-    const d = new Date(dateString);
-
-    return d.toLocaleDateString(
-      "vi-VN"
-    );
+    return new Date(dateString)
+      .toLocaleDateString("vi-VN");
   }
 
-  // =========================
-  // FORMAT MONEY
-  // =========================
   function formatMoney(value) {
-    return (
-      Number(value || 0)
-        .toLocaleString("vi-VN") 
-    );
+    return Number(value || 0)
+      .toLocaleString("vi-VN");
   }
-    
+
   return (
-    <section className="w-full">
+    <div className="min-h-screen bg-stone-50 p-4">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-5">
 
-        <div>
-          <h2 className="text-lg font-bold text-stone-700">
-            Hóa đơn
-          </h2>
+  <div className="flex items-center gap-3">
+    <button
+      onClick={handleBack}
+      className="
+        w-10 h-10
+        rounded-full
+        flex items-center justify-center
+        bg-white
+        border border-stone-200
+        text-stone-600
+        hover:bg-stone-100
+        transition
+      "
+    >
+      <FiArrowLeft size={18} />
+    </button>
 
-          {home && (
-            <div className="text-xs text-stone-500 mt-1">
-              {home.bank_id} • {home.bank_account}
-            </div>
-          )}
-        </div>
+    <h1 className="text-xl font-bold text-stone-800">
+      Hóa đơn phòng {room?.room_name}
+    </h1>
+  </div>
 
-        <button
-          onClick={onAdd}
-          className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded-md"
-        >
-          Tạo mới
-        </button>
+  <button
+    onClick={handleAdd}
+    className="
+      flex items-center gap-2
+      bg-green-600
+      hover:bg-green-700
+      text-white
+      px-4 py-2
+      rounded-xl
+      transition
+      active:scale-95
+    "
+  >
+    <FiPlus size={16} />
+    Tạo mới
+  </button>
 
-      </div>
+</div>
 
       {/* EMPTY */}
       {invoices.length === 0 ? (
-
-        <p className="text-sm text-stone-500 my-4">
-          Chưa có hóa đơn.
-        </p>
-
+        <div className="
+          bg-white
+          border
+          border-stone-200
+          rounded-2xl
+          p-8
+          text-center
+        ">
+          <p className="text-stone-500">
+            Chưa có hóa đơn
+          </p>
+        </div>
       ) : (
-
-        <ul className="mt-2 rounded-md border border-stone-200 overflow-hidden">
+        <div className="space-y-3">
 
           {invoices.map((invoice) => (
-
-            <li
+            <div
               key={invoice.id}
-              className="flex items-center justify-between px-3 py-2 border-b border-stone-200 bg-stone-50 hover:bg-stone-100"
+              className="
+                bg-white
+                border border-stone-200
+                rounded-2xl
+                p-4
+                hover:border-stone-300
+                transition
+              "
             >
+              <div className="flex items-start justify-between gap-3">
 
-              {/* LEFT */}
-              <div className="flex flex-col text-sm">              
-                {/* DATE */}
-                <div className="text-sm text-stone-700">
-                  Ngày tạo:{" "}
-                  {formatDate(
-                    invoice.invoice_create_date
-                  )}
+                {/* LEFT */}
+                <div className="flex items-center gap-3 min-w-0">
+
+                  <div className="
+                    w-10 h-10
+                    rounded-xl
+                    bg-green-50
+                    flex items-center justify-center
+                  ">
+                    <FiFileText
+                      size={18}
+                      className="text-green-600"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="font-semibold text-stone-800">
+                      Hóa đơn
+                    </div>
+
+                    <div className="text-sm text-stone-500">
+                      {formatDate(
+                        invoice.invoice_create_date
+                      )}
+                    </div>
+                  </div>
+
                 </div>
-              </div>
 
-              {/* RIGHT */}
-              <div className="flex items-center gap-4">
-                {/* AMOUNT */}
-                <div className="text-sm font-bold text-green-600">
-                  {formatMoney(
-                    invoice.total_amount
-                  )}
+                {/* RIGHT */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+
+                  <span
+                    className="
+                      px-3 py-1
+                      rounded-full
+                      bg-green-50
+                      text-green-700
+                      text-sm
+                      font-semibold
+                    "
+                  >
+                    {formatMoney(
+                      invoice.total_amount
+                    )} đ
+                  </span>
+
+                  <button
+                    onClick={() =>
+                      handleView(invoice)
+                    }
+                    className="
+                      w-9 h-9
+                      rounded-full
+                      bg-blue-50
+                      text-blue-500
+                      flex items-center justify-center
+                      hover:bg-blue-100
+                      transition
+                    "
+                  >
+                    <FiEye size={16} />
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      handleDelete(invoice.id)
+                    }
+                    className="
+                      w-9 h-9
+                      rounded-full
+                      bg-red-50
+                      text-red-500
+                      flex items-center justify-center
+                      hover:bg-red-100
+                      transition
+                    "
+                  >
+                    <FiTrash2 size={16} />
+                  </button>
+
                 </div>
 
-                {/* EDIT */}
-                <button
-                  className="text-xs text-blue-500 hover:text-blue-700"
-                  onClick={() =>
-                    onEdit(invoice)
-                  }
-                >
-                  Xem
-                </button>
-
-                {/* DELETE */}
-                <button
-                  className="text-xs text-red-500 hover:text-red-700"
-                  onClick={() =>
-                    onDelete(invoice.id)
-                  }
-                >
-                  Xóa
-                </button>
-
               </div>
-
-            </li>
+            </div>
           ))}
 
-        </ul>
+        </div>
       )}
-
-    </section>
+      {showInvoiceRecord && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-auto max-h-[95vh]">
+            <InvoiceRecord
+              room={room}
+              homeID={home?.id}
+              invoice={selectedInvoice}
+              onCancel={() => {
+                setShowInvoiceRecord(false);
+                setSelectedInvoice(null);
+              }}
+              onAdd={async () => {
+                await fetchData();
+                setShowInvoiceRecord(false);
+                setSelectedInvoice(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
