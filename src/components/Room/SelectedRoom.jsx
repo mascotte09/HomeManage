@@ -1,609 +1,358 @@
-import Invoices from "../Invoice/Invoices.jsx";
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase";
+import {
+  FiArrowLeft,
+  FiSave,
+  FiTrash2,
+  FiCamera,
+} from "react-icons/fi";
 import Input from "../InputVal.jsx";
+import Invoices from "../Invoice/Invoices.jsx";
 import Photos from "../Photos.jsx";
 import InvoiceRecord from "../Invoice/InvoiceRecord.jsx";
 import DeleteModal from "../DeleteModal.jsx";
 
+// ─── Reusable section wrapper ────────────────────────────────────────────────
+function Section({ title, children }) {
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden mb-3">
+      <div className="px-4 pt-3 pb-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+          {title}
+        </p>
+      </div>
+      <div className="px-4 pb-4 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
 export default function SelectedRoom({
   homeID,
   room,
-  onDelete,
-  onAddTask,
-  onDeleteTask,
+  onBack,
   refreshRooms,
 }) {
-
-  const [showDeleteModal, setShowDeleteModal] =
-    useState(false);
-
-  const [deleteType, setDeleteType] =
-    useState(null); // "room" | "invoice"
-
-  const [saving, setSaving] = useState(false);
-  const [
-    selectedDeleteInvoiceID,
-    setSelectedDeleteInvoiceID,
-  ] = useState(null);
-  // Check create mode
   const isNew = !room;
 
-  // States
-  const [roomName, setRoomName] =
-    useState("");
+  const [saving, setSaving]               = useState(false);
+  const [showPhotos, setShowPhotos]       = useState(false);
+  const [showInvoiceRecord, setShowInvoiceRecord] = useState(false);
+  const [selectedInvoice, setSelectedInvoice]     = useState(null);
+  const [invoices, setInvoices]           = useState([]);
 
-  const [roomRenter, setRoomRenter] =
-    useState("");
+  // Delete modal handles both room + invoice deletes
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteType, setDeleteType]           = useState(null); // "room" | "invoice"
+  const [deleteInvoiceId, setDeleteInvoiceId] = useState(null);
 
-  const [depositAmount, setDepositAmount] =
-    useState(0);
+  // ── Form state ─────────────────────────────────────────────────────────────
+  const [roomName,                 setRoomName]                 = useState("");
+  const [roomRenter,               setRoomRenter]               = useState("");
+  const [depositAmount,            setDepositAmount]            = useState(0);
+  const [telephone,                setTelephone]                = useState("");
+  const [numPerson,                setNumPerson]                = useState(1);
+  const [datePay,                  setDatePay]                  = useState(1);
+  const [currentElectricityNumber, setCurrentElectricityNumber] = useState(0);
+  const [currentWaterNumber,       setCurrentWaterNumber]       = useState(0);
+  const [rentDueDate,              setRentDueDate]              = useState("");
+  const [status,                   setStatus]                   = useState(false);
 
-  const [telephone, setTelephone] =
-    useState("");
-
-  const [numPerson, setNumPerson] =
-    useState(1);
-
-  const [datePay, setDatePay] =
-    useState(1);
-
-  const [
-    currentElectricityNumber,
-    setCurrentElectricityNumber,
-  ] = useState(0);
-
-  const [
-    currentWaterNumber,
-    setCurrentWaterNumber,
-  ] = useState(0);
-
-  const [rentDueDate, setRentDueDate] =
-    useState("");
-
-  const [status, setStatus] =
-    useState(false);
-
-  const [showPhotos, setShowPhotos] =
-    useState(false);
-
-  // Invoices
-  const [invoices, setInvoices] =
-    useState([]);
-
-  const [selectedInvoice, setSelectedInvoice] =
-    useState(null);
-
-  const [showInvoiceRecord, setShowInvoiceRecord] =
-    useState(false);
-
-  // Load selected room
+  // ── Load room into form ────────────────────────────────────────────────────
   useEffect(() => {
-
-    setRoomName(
-      room?.room_name || ""
-    );
-
-    setRoomRenter(
-      room?.room_renter || ""
-    );
-
-    setDepositAmount(
-      room?.deposit_amount || 0
-    );
-
-    setTelephone(
-      room?.telephone || ""
-    );
-
-    setNumPerson(
-      room?.num_person || 1
-    );
-
-    setDatePay(
-      room?.date_pay || 1
-    );
-
-    setCurrentElectricityNumber(
-      room?.current_electricity_number || 0
-    );
-
-    setCurrentWaterNumber(
-      room?.current_water_number || 0
-    );
-
-    setStatus(
-      room?.status || false
-    );
-
+    setRoomName(room?.room_name || "");
+    setRoomRenter(room?.room_renter || "");
+    setDepositAmount(room?.deposit_amount || 0);
+    setTelephone(room?.telephone || "");
+    setNumPerson(room?.num_person || 1);
+    setDatePay(room?.date_pay || 1);
+    setCurrentElectricityNumber(room?.current_electricity_number || 0);
+    setCurrentWaterNumber(room?.current_water_number || 0);
+    setStatus(room?.status || false);
     setRentDueDate(
-      room?.rent_due_date
-        ? room.rent_due_date.substring(0, 10)
-        : ""
+      room?.rent_due_date ? room.rent_due_date.substring(0, 10) : ""
     );
-
   }, [room]);
 
-  // Fetch invoices
+  // ── Fetch invoices ─────────────────────────────────────────────────────────
   useEffect(() => {
-
-    async function fetchInvoices() {
-
-      if (!room?.id) {
-        setInvoices([]);
-        return;
-      }
-
-      const { data, error } =
-        await supabase
-          .from("invoices")
-          .select("*")
-          .eq("room_id", room.id)
-          .order(
-            "invoice_create_date",
-            { ascending: false }
-          );
-
-      if (error) {
-
-        console.log(error.message);
-
-        return;
-      }
-
-      setInvoices(data || []);
-    }
-
-    fetchInvoices();
-
+    if (!room?.id) { setInvoices([]); return; }
+    supabase
+      .from("invoices")
+      .select("*")
+      .eq("room_id", room.id)
+      .order("invoice_create_date", { ascending: false })
+      .then(({ data, error }) => {
+        if (!error) setInvoices(data || []);
+      });
   }, [room]);
-
-  function resetForm() {
-    setRoomName("");
-
-    setRoomRenter("");
-
-    setDepositAmount(0);
-
-    setTelephone("");
-
-    setNumPerson(1);
-
-    setDatePay(1);
-
-    setCurrentElectricityNumber(0);
-
-    setCurrentWaterNumber(0);
-
-    setRentDueDate("");
-
-    setStatus(false);
-  }
-  // Add / Refresh invoice
-  function onEditInvoice(invoice) {
-    setSelectedInvoice(invoice);
-    setShowInvoiceRecord(true);
-  }
-  function onAddInvoice() {
-    setSelectedInvoice(null);
-    setShowInvoiceRecord(true);
-  }
-  // Delete invoice
-  function onDeleteInvoice(invoiceID) {
-    setSelectedDeleteInvoiceID(invoiceID);
-
-    setDeleteType("invoice");
-    setShowDeleteModal(true);
-  }
 
   async function refreshInvoices() {
-
     if (!room?.id) return;
-
-    const { data, error } =
-      await supabase
-        .from("invoices")
-        .select("*")
-        .eq("room_id", room.id)
-        .order(
-          "invoice_create_date",
-          { ascending: false }
-        );
-
-    if (error) {
-
-      console.log(error.message);
-
-      return;
-    }
-
-    setInvoices(data || []);
+    const { data, error } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("room_id", room.id)
+      .order("invoice_create_date", { ascending: false });
+    if (!error) setInvoices(data || []);
   }
 
-  // Save / Update
+  async function refreshCurrentRoom() {
+    if (!room?.id) return;
+    const { data, error } = await supabase
+      .from("rooms").select("*").eq("id", room.id).single();
+    if (!error) {
+      setCurrentElectricityNumber(data.current_electricity_number || 0);
+      setCurrentWaterNumber(data.current_water_number || 0);
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function parseCurrency(str) {
+    return Number(str.replace(/\./g, "").replace(/\D/g, ""));
+  }
+
+  function resetForm() {
+    setRoomName(""); setRoomRenter(""); setDepositAmount(0);
+    setTelephone(""); setNumPerson(1); setDatePay(1);
+    setCurrentElectricityNumber(0); setCurrentWaterNumber(0);
+    setRentDueDate(""); setStatus(false);
+  }
+
+  // ── Save ───────────────────────────────────────────────────────────────────
   async function handleSave() {
     if (saving) return;
-
+    if (!roomName.trim()) { alert("Vui lòng nhập số phòng"); return; }
     setSaving(true);
-
     try {
-      if (!roomName) {
-        alert("Please enter room name");
-        return;
-      }
-
-      const roomData = {
+      const payload = {
         home_id: homeID,
-        room_name: roomName,
-        room_renter: roomRenter,
+        room_name: roomName.trim(),
+        room_renter: roomRenter.trim(),
         deposit_amount: depositAmount,
-        telephone,
+        telephone: telephone.trim(),
         num_person: numPerson,
         date_pay: datePay,
-        current_electricity_number:
-          currentElectricityNumber,
-        current_water_number:
-          currentWaterNumber,
+        current_electricity_number: currentElectricityNumber,
+        current_water_number: currentWaterNumber,
         rent_due_date: rentDueDate || null,
         status,
       };
-
       if (isNew) {
-        const { error } = await supabase
-          .from("rooms")
-          .insert([roomData]);
-
+        const { error } = await supabase.from("rooms").insert([payload]);
         if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("rooms")
-          .update(roomData)
-          .eq("id", room.id);
-
-        if (error) throw error;
-      }
-
-      await refreshRooms();
-
-      if (isNew) {
+        await refreshRooms();
         resetForm();
+      } else {
+        const { error } = await supabase.from("rooms").update(payload).eq("id", room.id);
+        if (error) throw error;
+        await refreshRooms();
       }
-    } catch (error) {
-      console.error(error);
-      alert(
-        isNew
-          ? "Failed to create room"
-          : "Failed to update room"
-      );
+    } catch (err) {
+      console.error(err);
+      alert(isNew ? "Không thể tạo phòng" : "Không thể cập nhật phòng");
     } finally {
       setSaving(false);
     }
   }
-  async function handleDeleteRoom() {
-    setDeleteType("room");
-    setShowDeleteModal(true);
-  }
 
+  // ── Delete room / invoice ──────────────────────────────────────────────────
   async function handleConfirmDelete() {
-
     if (deleteType === "invoice") {
-      if (!selectedDeleteInvoiceID) return;
-
-      const { error } = await supabase
-        .from("invoices")
-        .delete()
-        .eq("id", selectedDeleteInvoiceID);
-
-      if (error) {
-        console.log(error.message);
-        alert("Failed to delete invoice");
-        return;
-      }
-
+      if (!deleteInvoiceId) return;
+      const { error } = await supabase.from("invoices").delete().eq("id", deleteInvoiceId);
+      if (error) { alert("Không thể xóa hóa đơn"); return; }
       await refreshInvoices();
-      setSelectedDeleteInvoiceID(null);
-    }
-
-    else if (deleteType === "room") {
+      setDeleteInvoiceId(null);
+    } else if (deleteType === "room") {
       if (!room?.id) return;
-
-      const { error } = await supabase
-        .from("rooms")
-        .delete()
-        .eq("id", room.id);
-
-      if (error) {
-        console.log(error.message);
-        alert("Failed to delete room");
-        return;
-      }
-
+      const { error } = await supabase.from("rooms").delete().eq("id", room.id);
+      if (error) { alert("Không thể xóa phòng"); return; }
       await refreshRooms();
-      onDelete?.();
+      onBack();
     }
-
     setShowDeleteModal(false);
     setDeleteType(null);
   }
-  async function refreshCurrentRoom() {
-    if (!room?.id) return;
 
-    const { data, error } = await supabase
-      .from("rooms")
-      .select("*")
-      .eq("id", room.id)
-      .single();
-
-    if (error) {
-      console.log(error.message);
-      return;
-    }
-
-    setCurrentElectricityNumber(
-      data.current_electricity_number || 0
-    );
-
-    setCurrentWaterNumber(
-      data.current_water_number || 0
-    );
-  }
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="w-full flex flex-col pr-2 pl-0">
-        <header className="flex flex-col w-full pb-4 mb-4 border-b border-stone-300">
+      <div className="flex-1 bg-stone-50 flex flex-col min-h-0">
 
-          {/* Buttons */}
-          <div className="flex gap-2 mb-4">
+        {/* ── Sticky top bar ── */}
+        <div className="bg-white border-b border-stone-200 px-3 py-2 flex items-center justify-between gap-2 sticky top-0 z-10">
+          {/* Back */}
+          <button
+            onClick={onBack}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-100 text-stone-600 transition flex-shrink-0"
+            aria-label="Quay lại"
+          >
+            <FiArrowLeft size={20} />
+          </button>
 
-            {/* XÓA */}
-            {!isNew && (
-              <button
-                onClick={handleDeleteRoom}
-                className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
-              >
-                Xóa
-              </button>
-            )}
-            {/* LƯU */}
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`
-                text-white text-sm px-3 py-1 rounded-md
-                ${saving
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"}
-              `}
-            >
-              {saving ? "Đang lưu..." : "Lưu"}
-            </button>
+          {/* Title */}
+          <p className="flex-1 font-semibold text-stone-800 text-sm truncate">
+            {isNew ? "Thêm phòng mới" : `Phòng ${roomName}`}
+          </p>
 
+          {/* Actions */}
+          <div className="flex gap-2 flex-shrink-0">
             {/* Photos */}
             {!isNew && (
               <button
                 onClick={() => setShowPhotos(true)}
-                className="bg-stone-700 hover:bg-stone-800 text-white text-sm px-3 py-1 rounded-md"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 transition"
+                aria-label="Ảnh phòng"
               >
-                Photos
+                <FiCamera size={16} />
               </button>
             )}
+
+            {/* Delete */}
+            {!isNew && (
+              <button
+                onClick={() => { setDeleteType("room"); setShowDeleteModal(true); }}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition"
+                aria-label="Xóa phòng"
+              >
+                <FiTrash2 size={16} />
+              </button>
+            )}
+
+            {/* Save */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`
+                h-9 px-4 flex items-center gap-1.5 rounded-full text-white text-sm font-medium transition
+                ${saving ? "bg-blue-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 active:scale-95"}
+              `}
+            >
+              <FiSave size={15} />
+              {saving ? "Đang lưu..." : "Lưu"}
+            </button>
           </div>
+        </div>
 
-          {/* Form */}
-          <div className="flex flex-col items-start gap-2 w-full">
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto p-4 pb-8">
 
-            <Input
-              label="Phòng số"
-              type="text"
-              value={roomName}
-              onChange={(e) =>
-                setRoomName(
-                  e.target.value
-                )
-              }
-            />
-
-            <Input
-              label="Người thuê"
-              type="text"
-              value={roomRenter}
-              onChange={(e) =>
-                setRoomRenter(
-                  e.target.value
-                )
-              }
-            />
-
-            <Input
-              label="Tiền cọc"
-              type="text"
-              value={depositAmount.toLocaleString("vi-VN")}
-              onChange={(e) => {
-
-                const rawValue =
-                  e.target.value.replace(/\./g, "");
-
-                const numberValue =
-                  Number(
-                    rawValue.replace(/\D/g, "")
-                  );
-
-                setDepositAmount(numberValue);
-              }}
-            />
-
-            <Input
-              label="Số điện thoại"
-              type="text"
-              value={telephone}
-              onChange={(e) =>
-                setTelephone(
-                  e.target.value
-                )
-              }
-            />
-
-            <Input
-              label="Số người"
-              type="number"
-              value={numPerson}
-              onChange={(e) =>
-                setNumPerson(
-                  Number(
-                    e.target.value
-                  )
-                )
-              }
-            />
-
-            <Input
-              label="Ngày đóng tiền"
-              type="number"
-              value={datePay}
-              onChange={(e) =>
-                setDatePay(
-                  Number(
-                    e.target.value
-                  )
-                )
-              }
-            />
-
-            <Input
-              label="Số điện"
-              type="number"
-              value={
-                currentElectricityNumber
-              }
-              onChange={(e) =>
-                setCurrentElectricityNumber(
-                  Number(
-                    e.target.value
-                  )
-                )
-              }
-            />
-
-            <Input
-              label="Số nước"
-              type="number"
-              value={
-                currentWaterNumber
-              }
-              onChange={(e) =>
-                setCurrentWaterNumber(
-                  Number(
-                    e.target.value
-                  )
-                )
-              }
-            />
-
-            <Input
-              label="Ngày hết hạn"
-              type="date"
-              value={rentDueDate}
-              onChange={(e) =>
-                setRentDueDate(
-                  e.target.value
-                )
-              }
-            />
-
-            {/* Status */}
-            <div className="flex items-center gap-2 mt-2 scale-90 origin-top-left">
-
-              <label className="text-xs font-bold uppercase text-stone-500">
-                Đã thuê
-              </label>
-
-              <input
-                type="checkbox"
-                checked={status}
-                onChange={(e) =>
-                  setStatus(
-                    e.target.checked
-                  )
-                }
-                className="w-4 h-4"
-              />
-
+          <Section title="Thông tin phòng">
+            {/* Status toggle */}
+            <div className="flex items-center justify-between py-1">
+              <span className="text-sm font-medium text-stone-700">Tình trạng</span>
+              <button
+                onClick={() => setStatus((s) => !s)}
+                className={`
+                  relative inline-flex h-6 w-11 items-center rounded-full transition
+                  ${status ? "bg-blue-600" : "bg-stone-200"}
+                `}
+                aria-label="Toggle trạng thái phòng"
+              >
+                <span
+                  className={`
+                    inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
+                    ${status ? "translate-x-6" : "translate-x-1"}
+                  `}
+                />
+              </button>
+              <span className={`text-xs font-medium ${status ? "text-green-600" : "text-stone-400"}`}>
+                {status ? "Đang có người thuê" : "Phòng trống"}
+              </span>
             </div>
 
-          </div>
+            <Input label="Số phòng"     type="text"   value={roomName}   onChange={(e) => setRoomName(e.target.value)} />
+            <Input label="Người thuê"   type="text"   value={roomRenter}  onChange={(e) => setRoomRenter(e.target.value)} />
+            <Input label="Số điện thoại" type="text"  value={telephone}   onChange={(e) => setTelephone(e.target.value)} />
+            <Input label="Số người"     type="number" value={numPerson}   onChange={(e) => setNumPerson(Number(e.target.value))} />
+          </Section>
 
-        </header>
+          <Section title="Tài chính">
+            <Input
+              label="Tiền cọc (đ)"
+              type="text"
+              value={depositAmount.toLocaleString("vi-VN")}
+              onChange={(e) => setDepositAmount(parseCurrency(e.target.value))}
+            />
+            <Input
+              label="Ngày đóng tiền hàng tháng"
+              type="number"
+              value={datePay}
+              onChange={(e) => setDatePay(Number(e.target.value))}
+            />
+            <Input
+              label="Ngày hết hạn hợp đồng"
+              type="date"
+              value={rentDueDate}
+              onChange={(e) => setRentDueDate(e.target.value)}
+            />
+          </Section>
 
-        {/* Invoices */}
-        {!isNew && (
-          <Invoices
-            homeID={homeID}
-            room={room}
-            invoices={invoices}
-            onAdd={onAddInvoice}
-            onEdit={onEditInvoice}
-            onDelete={onDeleteInvoice}
-          />
-        )}
+          <Section title="Chỉ số điện nước">
+            <Input
+              label="Số điện hiện tại (kWh)"
+              type="number"
+              value={currentElectricityNumber}
+              onChange={(e) => setCurrentElectricityNumber(Number(e.target.value))}
+            />
+            <Input
+              label="Số nước hiện tại (m³)"
+              type="number"
+              value={currentWaterNumber}
+              onChange={(e) => setCurrentWaterNumber(Number(e.target.value))}
+            />
+          </Section>
 
-
+          {/* Invoices section */}
+          {!isNew && (
+            <Invoices
+              homeID={homeID}
+              room={room}
+              invoices={invoices}
+              onAdd={() => { setSelectedInvoice(null); setShowInvoiceRecord(true); }}
+              onEdit={(inv) => { setSelectedInvoice(inv); setShowInvoiceRecord(true); }}
+              onDelete={(id) => { setDeleteInvoiceId(id); setDeleteType("invoice"); setShowDeleteModal(true); }}
+            />
+          )}
+        </div>
       </div>
-      {/* Photos Modal */}
-      {!isNew && showPhotos &&(
-        <Photos
-          room={room}
-          open={showPhotos}
-          onClose={() =>
-            setShowPhotos(false)
-          }
-        />
+
+      {/* ── Photos modal ── */}
+      {!isNew && showPhotos && (
+        <Photos room={room} open={showPhotos} onClose={() => setShowPhotos(false)} />
       )}
+
+      {/* ── Invoice record modal ── */}
       {showInvoiceRecord && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex justify-center items-center">
-
-          <div className="bg-white w-full max-w-4xl rounded-xl overflow-auto max-h-[95vh]">
-
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-auto max-h-[95vh]">
             <InvoiceRecord
               room={room}
               homeID={homeID}
               invoice={selectedInvoice}
-              onCancel={() => {
-
-                setShowInvoiceRecord(false);
-
-                setSelectedInvoice(null);
-              }}
+              onCancel={() => { setShowInvoiceRecord(false); setSelectedInvoice(null); }}
               onAdd={async () => {
-
                 await refreshInvoices();
                 await refreshCurrentRoom();
                 setShowInvoiceRecord(false);
-
                 setSelectedInvoice(null);
               }}
             />
-
           </div>
-
         </div>
       )}
+
+      {/* ── Delete modal ── */}
       <DeleteModal
         open={showDeleteModal}
-        title={
-          deleteType === "room"
-            ? "Xóa phòng"
-            : "Xóa hóa đơn"
-        }
+        title={deleteType === "room" ? "Xóa phòng" : "Xóa hóa đơn"}
         message={
           deleteType === "room"
-            ? "Bạn có chắc muốn xóa phòng này?"
+            ? `Bạn có chắc muốn xóa phòng "${roomName}"? Thao tác này không thể hoàn tác.`
             : "Bạn có chắc muốn xóa hóa đơn này?"
         }
-        onClose={() => {
-          setShowDeleteModal(false);
-          setDeleteType(null);
-          setSelectedDeleteInvoiceID(null);
-        }}
+        onClose={() => { setShowDeleteModal(false); setDeleteType(null); setDeleteInvoiceId(null); }}
         onConfirm={handleConfirmDelete}
       />
     </>

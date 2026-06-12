@@ -2,7 +2,7 @@ import Signup from "./components/Signup.jsx";
 import Login from "./components/StateLogin.jsx";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
-import ListRooms from './components/Room/ListRooms.jsx'
+import RoomPage from './components/Room/RoomPage.jsx'
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -101,18 +101,9 @@ function App() {
                         </>
                     }
                 />
+                {/* RoomPage already includes HeaderRoom internally */}
                 <Route path="/rooms/:houseId"
-                    element={
-                        <>
-                            <HeaderRoom
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
-                            />
-                            <ListRooms />
-                        </>
-                    } />
+                    element={<RoomPage />} />
 
                 <Route path="/invoicesInMonth/:houseId"
                     element={

@@ -1,7 +1,7 @@
 import { MdLogout } from "react-icons/md";
 export default function Header({ onLogout }) {
     return (
-        <header className="bg-white border-b border-stone-200 px-4 h-12 flex justify-between items-center flex-shrink-0 mt-4 mb-4">
+        <header className="bg-white border-b border-stone-200 px-4 h-12 flex justify-between items-center flex-shrink-0">
             <h1 className="text-base font-semibold text-stone-800">
                 🏠 Quản Trọ
             </h1>

@@ -1,94 +1,75 @@
-import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-    FaFileInvoiceDollar,
-    FaMoneyBillWave,
-    FaWallet,
-    FaChartBar,
-} from "react-icons/fa";
+  FiFileText,
+  FiDollarSign,
+  FiCreditCard,
+  FiBarChart2,
+  FiArrowLeft,
+} from "react-icons/fi";
 
-export default function Header({ onLogout }) {
-    const navigate = useNavigate();
-    const { houseId } = useParams();
-    const menuButtonClass = `
-  flex flex-col items-center justify-center
-  w-20 h-16 rounded-xl
-  bg-gray-200 text-gray-700
-  shadow-[0_0_15px_3px_rgba(255,255,255,0.7)]
-  hover:shadow-[0_0_25px_6px_rgba(255,255,255,1)]
-  hover:-translate-y-1
-  transition-all duration-200
-`;
-    return (
-        <header className="bg-gray-700 text-white px-3 py-2 flex justify-center items-center m-0">
-            <div className="flex gap-2">
+const NAV = [
+  {
+    label: "Hóa Đơn",
+    icon: FiFileText,
+    color: "text-green-600",
+    bg: "bg-green-50",
+    path: (id) => `/invoicesInMonth/${id}`,
+  },
+  {
+    label: "Thu Tiền",
+    icon: FiDollarSign,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    path: (id) => `/payment/${id}`,
+  },
+  {
+    label: "Chi Phí",
+    icon: FiCreditCard,
+    color: "text-red-500",
+    bg: "bg-red-50",
+    path: (id) => `/expense/${id}`,
+  },
+  {
+    label: "Báo Cáo",
+    icon: FiBarChart2,
+    color: "text-amber-500",
+    bg: "bg-amber-50",
+    path: (id) => `/statistic/${id}`,
+  },
+];
 
-                {/* Hóa đơn */}
-                <button
-                    onClick={() =>
-                        navigate(`/invoicesInMonth/${houseId}`)
-                    }
-                     className={menuButtonClass}
-                >
-                    <FaFileInvoiceDollar
-                        size={22}
-                        className="text-green-500"
-                    />
-                    <span className="text-[11px] mt-1">
-                        Hóa Đơn
-                    </span>
-                </button>
+export default function HeaderRoom() {
+  const navigate = useNavigate();
+  const { houseId } = useParams();
 
-                {/* Thu tiền */}
-                <button
-                    onClick={() => navigate(`/payment/${houseId}`)}
-                    className={menuButtonClass}
-                >
-                    <FaMoneyBillWave
-                        size={22}
-                        className="text-blue-500"
-                    />
-                    <span className="text-[11px] mt-1">
-                        Thu Tiền
-                    </span>
-                </button>
+  return (
+    <header className="bg-white border-b border-stone-200 flex-shrink-0  mt-0">
+      {/* Back strip */}
+      <div className="px-4 h-11 flex items-center border-b border-stone-100">
+        <button
+          onClick={() => navigate("/houses")}
+          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition"
+        >
+          <FiArrowLeft size={15} />
+          Danh sách nhà
+        </button>
+      </div>
 
-                {/* Chi phí */}
-                <button
-                    onClick={() =>
-                        navigate(`/expense/${houseId}`)
-                    }
-                    className={menuButtonClass}
-                >
-                    <FaWallet
-                        size={22}
-                        className="text-red-500"
-                    />
-                    <span className="text-[11px] mt-1">
-                        Chi Phí
-                    </span>
-                </button>
-
-                {/* Báo cáo */}
-                <button
-                    onClick={() =>
-                        navigate(`/statistic/${houseId}`)
-                    }
-                    className={menuButtonClass}
-                >
-                    <FaChartBar
-                        size={22}
-                        className="text-yellow-500"
-                    />
-                    <span className="text-[11px] mt-1">
-                        Báo Cáo
-                    </span>
-                </button>
-
-
-            </div>
-        </header>
-
-
-    );
+      {/* Action nav */}
+      <div className="flex">
+        {NAV.map(({ label, icon: Icon, color, bg, path }) => (
+          <button
+            key={label}
+            onClick={() => navigate(path(houseId))}
+            className="flex-1 flex flex-col items-center justify-center py-2.5 gap-1 hover:bg-stone-50 active:scale-95 transition"
+          >
+            <span className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center`}>
+              <Icon size={18} className={color} />
+            </span>
+            <span className="text-[11px] font-medium text-stone-600">{label}</span>
+          </button>
+        ))}
+      </div>
+    </header>
+  );
 }
