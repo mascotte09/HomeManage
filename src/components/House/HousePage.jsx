@@ -182,7 +182,7 @@ export default function HousePage({ user_id }) {
 
       {/* ── LIST ── */}
       {isListView && (
-        <div className="p-4 pb-24">
+        <div className="p-4">
           <h2 className="text-lg font-bold text-stone-800 mb-4">
             Nhà trọ của bạn
           </h2>
