@@ -1,273 +1,237 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabase.js";
+import { FiArrowLeft, FiSave, FiTrash2 } from "react-icons/fi";
 import Input from "../InputVal.jsx";
 import DeleteModal from "../DeleteModal.jsx";
+
+// ─── Section wrapper ────────────────────────────────────────────────────────
+function Section({ title, children }) {
+  return (
+    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden mb-3">
+      <div className="px-4 pt-3 pb-1">
+        <p className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+          {title}
+        </p>
+      </div>
+      <div className="px-4 pb-4 space-y-3">{children}</div>
+    </div>
+  );
+}
+
+// ─── Main component ──────────────────────────────────────────────────────────
 export default function ExpenseItem({
   expenseItem,
   home_id,
-  onDelete,
+  onBack,
   refreshExpenses,
 }) {
-  const [showDeleteModal, setShowDeleteModal] =
-    useState(false);
-  // Check create mode
   const isNew = !expenseItem;
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  // States
-  const [typeCode, setTypeCode] = useState("");
 
-  const [expense, setExpense] = useState(0);
-
+  const [typeCode, setTypeCode]       = useState("");
+  const [expense, setExpense]         = useState(0);
   const [expenseDate, setExpenseDate] = useState("");
   const [expenseNote, setExpenseNote] = useState("");
-
   const [expenseTypes, setExpenseTypes] = useState([]);
-  // Load selected expense
+
+  // ── Load selected expense ───────────────────────────────────────────────────
   useEffect(() => {
-
-    setTypeCode(
-      expenseItem?.type_code || ""
-    );
-
-    setExpenseNote(
-      expenseItem?.notes || ""
-    );
-
-    setExpense(
-      expenseItem?.expense || 0
-    );
-
+    setTypeCode(expenseItem?.type_code || "");
+    setExpenseNote(expenseItem?.notes || "");
+    setExpense(expenseItem?.expense || 0);
     setExpenseDate(
       expenseItem?.expense_date
-        ? expenseItem.expense_date.substring(
-          0,
-          10
-        )
+        ? expenseItem.expense_date.substring(0, 10)
         : ""
     );
-
   }, [expenseItem]);
 
+  // ── Load expense types ───────────────────────────────────────────────────────
   useEffect(() => {
-    async function fetchExpenseTypes() {
-
-      const { data, error } =
-        await supabase
-          .from("expenses_type")
-          .select("*")
-          .order("type_name");
-
-      if (error) {
-        console.log(error.message);
-        return;
-      }
-
-      setExpenseTypes(data || []);
-    }
-
-    fetchExpenseTypes();
-
+    supabase
+      .from("expenses_type")
+      .select("*")
+      .order("type_name")
+      .then(({ data, error }) => {
+        if (!error) setExpenseTypes(data || []);
+      });
   }, []);
 
   function resetForm() {
-  setTypeCode("");
-  setExpense(0);
-  setExpenseDate("");
-  setExpenseNote("");
-}
-  // Save / Update
-  async function handleSave() {
+    setTypeCode("");
+    setExpense(0);
+    setExpenseDate("");
+    setExpenseNote("");
+  }
 
-    // Validation
-    if (
-      !typeCode ||
-      !expenseDate ||
-      expense <= 0
-    ) {
-      alert(
-        "Please enter required fields"
-      );
+  // ── Save ───────────────────────────────────────────────────────────────────
+  async function handleSave() {
+    if (!typeCode || !expenseDate || expense <= 0) {
+      alert("Vui lòng điền đầy đủ thông tin");
       return;
     }
+
     setSaving(true);
+
     try {
-      // CREATE
+      const payload = {
+        home_id,
+        type_code: typeCode,
+        expense,
+        expense_date: expenseDate,
+        notes: expenseNote,
+      };
+
       if (isNew) {
-
+        const { error } = await supabase.from("expenses").insert([payload]);
+        if (error) throw error;
+        await refreshExpenses();
+        resetForm();
+      } else {
         const { error } = await supabase
           .from("expenses")
-          .insert([
-            {
-              home_id: home_id,
-              type_code: typeCode,
-              expense: expense,
-              expense_date: expenseDate,
-              notes: expenseNote,
-            },
-          ]);
-
-        if (error) {
-          console.log(error.message);
-          alert(
-            "Failed to create expense"
-          );
-          return;
-        }
-      }
-
-      // UPDATE
-      else {
-
-        const { error } = await supabase
-          .from("expenses")
-          .update({
-            type_code: typeCode,
-            expense: expense,
-            expense_date: expenseDate,
-            notes: expenseNote,
-          })
+          .update(payload)
           .eq("id", expenseItem.id);
-
-        if (error) {
-          console.log(error.message);
-          alert(
-            "Failed to update expense"
-          );
-          return;
-        }
+        if (error) throw error;
+        await refreshExpenses();
+        onBack();
       }
-
-      // Refresh list
-      await refreshExpenses();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setSaving(false);
-      resetForm() ;
-    }
-  }
-  async function handleDelete() {
-    try {
-      await onDelete();
-
-      setShowDeleteModal(false);
     } catch (err) {
       console.error(err);
+      alert(isNew ? "Không thể tạo chi phí" : "Không thể cập nhật chi phí");
+    } finally {
+      setSaving(false);
     }
   }
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  async function handleConfirmDelete() {
+    if (!expenseItem?.id) return;
+
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", expenseItem.id);
+
+    if (error) {
+      console.error(error.message);
+      alert("Không thể xóa chi phí");
+      return;
+    }
+
+    await refreshExpenses();
+    setShowDeleteModal(false);
+    onBack();
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="ml-0 flex flex-col items-start w-full pr-2">
+    <>
+      <div className="min-h-screen bg-stone-50 pb-6">
 
-      <header className="flex flex-col items-start pb-4 mb-4 border-b border-stone-300 w-full">
+        {/* ── Top bar ── */}
+        <div className="bg-white border-b border-stone-200 px-3 py-2 flex items-center justify-between gap-2 sticky top-0 z-10">
 
-        {/* Buttons */}
-        <div className="flex gap-2 mb-6">
-
-          {/* Cancel / Delete */}
-          {!isNew && (
-            <button
-              className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md"
-              onClick={() => setShowDeleteModal(true)}
-            >
-              Xóa
-            </button>
-          )}
-
-          {/* Save / Update */}
           <button
-            onClick={handleSave}
-            className={`
-                text-white text-sm px-3 py-1 rounded-md
-                ${saving
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"}
-              `}
+            onClick={onBack}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-100 transition text-stone-600 flex-shrink-0"
+            aria-label="Quay lại"
           >
-            {saving ? "Đang lưu..." : "Lưu"}
+            <FiArrowLeft size={20} />
           </button>
 
-        </div>
+          <p className="flex-1 font-semibold text-stone-800 text-sm truncate">
+            {isNew ? "Thêm chi phí mới" : "Chi tiết chi phí"}
+          </p>
 
-        {/* Form */}
-        <div className="flex flex-col items-start gap-3 w-full">
+          <div className="flex gap-2 flex-shrink-0">
+            {!isNew && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition"
+                aria-label="Xóa chi phí"
+              >
+                <FiTrash2 size={16} />
+              </button>
+            )}
 
-          <div className="flex flex-col items-start w-full">
-
-            <label className="text-left font-bold uppercase text-stone-500">
-              Loại chi phí
-            </label>
-
-            <select
-              value={typeCode}
-              onChange={(e) =>
-                setTypeCode(e.target.value)
-              }
-              className="w-full p-1 border-b-2 rounded-sm border-stone-300 bg-stone-200 text-stone-600 focus:outline-none focus:border-stone-600"
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`
+                h-9 px-4 flex items-center gap-1.5 rounded-full text-white text-sm font-medium transition
+                ${saving
+                  ? "bg-blue-300 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 active:scale-95"}
+              `}
             >
-
-              <option value="">
-                -- Chọn loại chi phí --
-              </option>
-
-              {expenseTypes.map((item) => (
-                <option
-                  key={item.type_code}
-                  value={item.type_code}
-                >
-                  {item.type_name}
-                </option>
-              ))}
-
-            </select>
-
+              <FiSave size={15} />
+              {saving ? "Đang lưu..." : "Lưu"}
+            </button>
           </div>
-          <Input
-            label="Ghi chú"
-            type="textArea"
-            value={expenseNote}
-            onChange={(e) =>
-              setExpenseNote(e.target.value)
-            }
-          />
-          <Input
-            label="Số tiền"
-            type="text"
-            value={expense.toLocaleString("vi-VN")}
-            onChange={(e) => {
-
-              // remove dấu chấm
-              const rawValue =
-                e.target.value.replace(/\./g, "");
-
-              // chỉ giữ số
-              const numberValue =
-                Number(rawValue.replace(/\D/g, ""));
-
-              setExpense(numberValue);
-            }}
-          />
-
-          <Input
-            label="Ngày chi"
-            type="date"
-            value={expenseDate}
-            onChange={(e) =>
-              setExpenseDate(
-                e.target.value
-              )
-            }
-          />
-
         </div>
 
-      </header>
+        {/* ── Form body ── */}
+        <div className="p-4">
+
+          <Section title="Thông tin chi phí">
+            {/* Loại chi phí */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-stone-400 block mb-1">
+                Loại chi phí
+              </label>
+              <select
+                value={typeCode}
+                onChange={(e) => setTypeCode(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-stone-200 bg-white text-stone-800 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="">-- Chọn loại chi phí --</option>
+                {expenseTypes.map((item) => (
+                  <option key={item.type_code} value={item.type_code}>
+                    {item.type_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Input
+              label="Số tiền (đ)"
+              type="text"
+              value={expense.toLocaleString("vi-VN")}
+              onChange={(e) => {
+                const rawValue = e.target.value.replace(/\./g, "");
+                const numberValue = Number(rawValue.replace(/\D/g, ""));
+                setExpense(numberValue);
+              }}
+            />
+
+            <Input
+              label="Ngày chi"
+              type="date"
+              value={expenseDate}
+              onChange={(e) => setExpenseDate(e.target.value)}
+            />
+
+            <Input
+              label="Ghi chú"
+              type="textArea"
+              value={expenseNote}
+              onChange={(e) => setExpenseNote(e.target.value)}
+            />
+          </Section>
+
+        </div>
+      </div>
+
       <DeleteModal
         open={showDeleteModal}
-        header="Xóa chi phí"
+        title="Xóa chi phí"
+        message="Bạn có chắc muốn xóa chi phí này? Thao tác này không thể hoàn tác."
         onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDelete}
+        onConfirm={handleConfirmDelete}
       />
-    </div>
-
+    </>
   );
 }

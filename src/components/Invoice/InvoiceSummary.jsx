@@ -39,11 +39,11 @@ export default function InvoiceSummary({
     return (
         <div
             ref={summaryRef}
-            className="mt-6 bg-white rounded-2xl border border-stone-200 shadow-lg overflow-hidden"
+            className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden"
         >
             {/* HEADER */}
-            <div className="bg-blue-600 text-white px-3 py-2 text-center">
-                <h2 className="text-xl font-bold tracking-wide">
+            <div className="bg-blue-600 text-white px-4 py-3 text-center">
+                <h2 className="text-lg font-bold tracking-wide">
                     HÓA ĐƠN
                 </h2>
 
@@ -57,18 +57,18 @@ export default function InvoiceSummary({
                     /
                     {new Date(
                         formData.invoice_create_date
-                    ).getFullYear()} - Phòng: {room?.room_name}
+                    ).getFullYear()} · Phòng {room?.room_name}
                 </p>
             </div>
 
-            <div className="p-3">
+            <div className="p-4">
 
                 {/* CHI TIẾT */}
-                <div className="space-y-2 text-black">
+                <div className="space-y-3 text-stone-800 text-sm">
 
                     <div className="flex justify-between">
                         <span>1. Tiền phòng</span>
-                        <span>
+                        <span className="font-medium">
                             {Number(
                                 formData.rental_amount || 0
                             ).toLocaleString("vi-VN")}
@@ -79,16 +79,15 @@ export default function InvoiceSummary({
                         <div>
                             <div>2. Tiền điện</div>
 
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-stone-400 mt-0.5">
                                 {formData.current_electricity_number || 0}
                                 {" → "}
                                 {formData.new_electricity_number || 0}
-                            </div>
-
-                            <div className="text-xs text-gray-500">
+                                {" · "}
                                 {Number(formData.new_electricity_number) -
                                     Number(formData.current_electricity_number)}
-                                {" "}kWh × {elecPrice.toLocaleString("vi-VN")}
+                                {" kWh × "}
+                                {elecPrice.toLocaleString("vi-VN")}
                             </div>
                         </div>
 
@@ -101,24 +100,21 @@ export default function InvoiceSummary({
                         <div>
                             <div>3. Tiền nước</div>
                             {home?.is_water_per_person ? (
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-stone-400 mt-0.5">
                                     {room?.num_person || 0} người ×{" "}
                                     {waterPrice.toLocaleString("vi-VN")}
                                 </div>
                             ) : (
-                                <>
-                                    <div className="text-xs text-gray-500">
-                                        {formData.current_water_number || 0}
-                                        {" → "}
-                                        {formData.new_water_number || 0}
-                                    </div>
-
-                                    <div className="text-xs text-gray-500">
-                                        {Number(formData.new_water_number || 0) -
-                                            Number(formData.current_water_number || 0)}
-                                        {" "}m³ × {waterPrice.toLocaleString("vi-VN")}
-                                    </div>
-                                </>
+                                <div className="text-xs text-stone-400 mt-0.5">
+                                    {formData.current_water_number || 0}
+                                    {" → "}
+                                    {formData.new_water_number || 0}
+                                    {" · "}
+                                    {Number(formData.new_water_number || 0) -
+                                        Number(formData.current_water_number || 0)}
+                                    {" m³ × "}
+                                    {waterPrice.toLocaleString("vi-VN")}
+                                </div>
                             )}
                         </div>
 
@@ -128,15 +124,15 @@ export default function InvoiceSummary({
                     </div>
 
                     {Number(formData.wifi_amount || 0) > 0 && (
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-start">
                             <div>
                                 <div>4. Dịch vụ</div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-stone-400 mt-0.5">
                                     Wifi, rác...
                                 </div>
                             </div>
 
-                            <span>
+                            <span className="font-medium">
                                 {Number(
                                     formData.wifi_amount || 0
                                 ).toLocaleString("vi-VN")}
@@ -145,26 +141,26 @@ export default function InvoiceSummary({
                     )}
                 </div>
 
-                {/* TỔNG THÁNG */}
-                {(totalOldDebt > 0 || totalExtraPaid > 0) && (<div className="mt-3 border-t pt-2 text-black">
-                    <div className="flex justify-between font-semibold">
-                        <span>Tổng </span>
-                        <span>
-                            {total.toLocaleString("vi-VN")}
-                        </span>
+                {/* TỔNG THÁNG (chỉ hiện khi có nợ/dư) */}
+                {(totalOldDebt > 0 || totalExtraPaid > 0) && (
+                    <div className="mt-3 border-t border-stone-200 pt-2">
+                        <div className="flex justify-between font-semibold text-sm text-stone-800">
+                            <span>Tổng tháng này</span>
+                            <span>{total.toLocaleString("vi-VN")}</span>
+                        </div>
                     </div>
-                </div>)}
+                )}
 
                 {/* NỢ CŨ */}
                 {totalOldDebt > 0 && (
                     <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3">
 
                         <div className="flex justify-between mb-1">
-                            <span className="font-semibold text-red-700">
+                            <span className="font-semibold text-red-700 text-sm">
                                 Nợ cũ
                             </span>
 
-                            <span className="font-bold text-red-700">
+                            <span className="font-bold text-red-700 text-sm">
                                 {totalOldDebt.toLocaleString("vi-VN")}
                             </span>
                         </div>
@@ -173,7 +169,7 @@ export default function InvoiceSummary({
                             {unpaidInvoices.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="flex justify-between text-gray-700"
+                                    className="flex justify-between text-stone-600"
                                 >
                                     <span>
                                         {new Date(
@@ -192,16 +188,17 @@ export default function InvoiceSummary({
 
                     </div>
                 )}
+
                 {/* TIỀN DƯ CŨ */}
                 {totalExtraPaid > 0 && (
                     <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
 
                         <div className="flex justify-between mb-2">
-                            <span className="font-semibold text-blue-700">
+                            <span className="font-semibold text-blue-700 text-sm">
                                 Tiền dư kỳ trước
                             </span>
 
-                            <span className="font-bold text-blue-700">
+                            <span className="font-bold text-blue-700 text-sm">
                                 -{totalExtraPaid.toLocaleString("vi-VN")}
                             </span>
                         </div>
@@ -210,7 +207,7 @@ export default function InvoiceSummary({
                             {extraPaidInvoices.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="flex justify-between text-gray-700"
+                                    className="flex justify-between text-stone-600"
                                 >
                                     <span>
                                         {new Date(
@@ -229,11 +226,12 @@ export default function InvoiceSummary({
 
                     </div>
                 )}
+
                 {/* GRAND TOTAL */}
-                <div className="mt-3 pt-1 border-t-2 border-green-500">
+                <div className="mt-3 pt-3 border-t-2 border-green-500">
                     <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-green-800">
-                            Tổng
+                        <span className="text-base font-bold text-green-800">
+                            Tổng cộng
                         </span>
 
                         <span className="text-xl font-bold text-red-600">
@@ -244,12 +242,15 @@ export default function InvoiceSummary({
 
                 {/* QR */}
                 {qrUrl && (
-                    <div className="mt-3 flex flex-col items-center">
+                    <div className="mt-4 flex flex-col items-center">
                         <img
                             src={qrUrl}
-                            alt="vietqr"
-                            className="w-36 h-36 border rounded-xl shadow"
+                            alt="VietQR thanh toán"
+                            className="w-40 h-40 border border-stone-200 rounded-xl shadow-sm"
                         />
+                        <p className="text-xs text-stone-400 mt-2">
+                            Quét mã để thanh toán
+                        </p>
                     </div>
                 )}
 
