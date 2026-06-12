@@ -167,12 +167,12 @@ export default function RoomPage() {
   const isDetailView = view === VIEW.DETAIL;
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="h-dvh bg-stone-50 flex flex-col overflow-hidden">
       <HeaderRoom />
 
       {/* ── LIST ── */}
       {isListView && (
-        <div className="p-4 pb-24">
+        <div className="flex-1 overflow-y-auto p-4 pb-24">
           {/* Summary row */}
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-lg font-bold text-stone-800 mb-4">
