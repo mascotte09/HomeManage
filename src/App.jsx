@@ -74,6 +74,7 @@ function App() {
                     path="/"
                     element={
                         <>
+                        <div className="flex flex-col h-dvh">
                             <HeaderHouse
                                 onLogout={() => {
                                     localStorage.removeItem(
@@ -84,6 +85,7 @@ function App() {
                                 }}
                             />
                             <HousePage user_id={currentUser.id} />
+                            </div>
                         </>
                     }
                 />
@@ -91,6 +93,7 @@ function App() {
                     path="/houses"
                     element={
                         <>
+                        <div className="flex flex-col h-dvh">
                             <HeaderHouse
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
@@ -98,6 +101,7 @@ function App() {
                                 }}
                             />
                             <HousePage user_id={currentUser.id} />
+                        </div>
                         </>
                     }
                 />
@@ -108,6 +112,7 @@ function App() {
                 <Route path="/invoicesInMonth/:houseId"
                     element={
                         <>
+                        <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
@@ -115,11 +120,13 @@ function App() {
                                 }}
                             />
                             <InvoicesInMonth />
+                            </div>
                         </>
                     } />
                 <Route path="/payment/:houseId"
                     element={
                         <>
+                        <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
@@ -127,12 +134,14 @@ function App() {
                                 }}
                             />
                             <ListPayments />
+                            </div>
                         </>
                     } />
 
                 <Route path="/expense/:houseId"
                     element={
                         <>
+                        <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
@@ -140,11 +149,13 @@ function App() {
                                 }}
                             />
                             <ListExpenses />
+                            </div>
                         </>
                     } />
                 <Route path="/statistic/:houseId"
                     element={
                         <>
+                        <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
@@ -152,6 +163,7 @@ function App() {
                                 }}
                             />
                             <MonthlyStatistic />
+                            </div>
                         </>
                     } />
             </Routes>

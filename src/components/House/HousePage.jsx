@@ -178,7 +178,7 @@ export default function HousePage({ user_id }) {
   const isDetailView = view === VIEW.DETAIL;
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="bg-stone-50">
 
       {/* ── LIST ── */}
       {isListView && (
