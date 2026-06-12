@@ -73,7 +73,6 @@ function App() {
                 <Route
                     path="/"
                     element={
-                        <>
                         <div className="flex flex-col h-dvh">
                             <HeaderHouse
                                 onLogout={() => {
@@ -84,15 +83,15 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <HousePage user_id={currentUser.id} />
+                            <div className="flex-1 overflow-y-auto">
+                                <HousePage user_id={currentUser.id} />
                             </div>
-                        </>
+                        </div>
                     }
                 />
                 <Route
                     path="/houses"
                     element={
-                        <>
                         <div className="flex flex-col h-dvh">
                             <HeaderHouse
                                 onLogout={async () => {
@@ -100,9 +99,10 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <HousePage user_id={currentUser.id} />
+                            <div className="flex-1 overflow-y-auto">
+                                <HousePage user_id={currentUser.id} />
+                            </div>
                         </div>
-                        </>
                     }
                 />
                 {/* RoomPage already includes HeaderRoom internally */}
@@ -111,7 +111,6 @@ function App() {
 
                 <Route path="/invoicesInMonth/:houseId"
                     element={
-                        <>
                         <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
@@ -119,13 +118,13 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <InvoicesInMonth />
+                            <div className="flex-1 overflow-y-auto">
+                                <InvoicesInMonth />
                             </div>
-                        </>
+                        </div>
                     } />
                 <Route path="/payment/:houseId"
                     element={
-                        <>
                         <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
@@ -133,14 +132,14 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <ListPayments />
+                            <div className="flex-1 overflow-y-auto">
+                                <ListPayments />
                             </div>
-                        </>
+                        </div>
                     } />
 
                 <Route path="/expense/:houseId"
                     element={
-                        <>
                         <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
@@ -148,13 +147,13 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <ListExpenses />
+                            <div className="flex-1 overflow-y-auto">
+                                <ListExpenses />
                             </div>
-                        </>
+                        </div>
                     } />
                 <Route path="/statistic/:houseId"
                     element={
-                        <>
                         <div className="flex flex-col h-dvh">
                             <HeaderRoom
                                 onLogout={async () => {
@@ -162,9 +161,10 @@ function App() {
                                     setCurrentUser(null);
                                 }}
                             />
-                            <MonthlyStatistic />
+                            <div className="flex-1 overflow-y-auto">
+                                <MonthlyStatistic />
                             </div>
-                        </>
+                        </div>
                     } />
             </Routes>
 

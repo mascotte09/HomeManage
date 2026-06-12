@@ -164,7 +164,7 @@ const isDirty = () => {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="min-h-screen bg-stone-50 pb-6">
+      <div className="bg-stone-50 pb-6">
 
         {/* ── Top bar ── */}
         <div className="bg-white border-b border-stone-200 px-3 py-2 flex items-center justify-between gap-2 sticky top-0 z-10">
