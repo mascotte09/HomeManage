@@ -5,10 +5,11 @@ import { FiShare } from "react-icons/fi";
 export default function Photos({ room, open, onClose }) {
   const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [home, setHome] = useState(null);
+  const [showDescription, setShowDescription] = useState(false);
 
   // NEW: selected photos
   const [selectedPhotos, setSelectedPhotos] = useState([]);
-
 
   const fetchPhotos = useCallback(async () => {
     const { data, error } = await supabase
@@ -26,11 +27,30 @@ export default function Photos({ room, open, onClose }) {
     setSelectedPhotos([]);
   }, [room.id]);
 
+  // Fetch home info
+  const fetchHome = useCallback(async () => {
+    if (!room?.home_id) return;
+    
+    const { data, error } = await supabase
+      .from("homes")
+      .select("*")
+      .eq("id", room.home_id)
+      .single();
+
+    if (error) {
+      console.log(error.message);
+      return;
+    }
+
+    setHome(data);
+  }, [room?.home_id]);
+
   useEffect(() => {
     if (open) {
       fetchPhotos();
+      fetchHome();
     }
-  }, [open, fetchPhotos]);
+  }, [open, fetchPhotos, fetchHome]);
 
   async function handleUploadPhoto(e) {
     const file = e.target.files[0];
@@ -108,6 +128,92 @@ export default function Photos({ room, open, onClose }) {
     });
   }
 
+  // Build room description
+  function buildRoomDescription() {
+    let desc = "╔════════════════════════════════════╗\n";
+    desc += "║     THÔNG TIN CHI TIẾT PHÒNG        ║\n";
+    desc += "╚════════════════════════════════════╝\n\n";
+
+    // Home info
+    if (home?.name) {
+      desc += `🏠 Nhà trọ: ${home.name}\n`;
+    }
+    if (home?.address) {
+      desc += `📍 Địa chỉ: ${home.address}\n`;
+    }
+
+    desc += "\n─── THÔNG TIN PHÒNG ───\n";
+    
+    // Room basic
+    if (room?.room_name) {
+      desc += `🚪 Phòng: ${room.room_name}\n`;
+    }
+    if (room?.room_renter) {
+      desc += `👤 Người thuê: ${room.room_renter}\n`;
+    }
+    if (room?.telephone) {
+      desc += `📱 SĐT: ${room.telephone}\n`;
+    }
+
+    desc += "\n─── THÔNG TIN CHI TIẾT ───\n";
+    
+    // Room details
+    if (room?.area && room.area > 0) {
+      desc += `📐 Diện tích: ${room.area} m²\n`;
+    }
+    if (room?.monthly_rent && room.monthly_rent > 0) {
+      desc += `💰 Tiền thuê: ${room.monthly_rent.toLocaleString("vi-VN")} đ/tháng\n`;
+    }
+    if (room?.deposit_amount && room.deposit_amount > 0) {
+      desc += `🏦 Tiền cọc: ${room.deposit_amount.toLocaleString("vi-VN")} đ\n`;
+    }
+    if (room?.num_person && room.num_person > 0) {
+      desc += `👥 Số người: ${room.num_person} người\n`;
+    }
+
+    // Amenities
+    if (room?.amenities) {
+      try {
+        const amenities = typeof room.amenities === 'string' ? JSON.parse(room.amenities) : room.amenities;
+        const amenityList = [];
+        
+        if (amenities.hotWater) amenityList.push("🚿 Nước nóng");
+        if (amenities.airConditioner) amenityList.push("❄️ Máy lạnh");
+        if (amenities.wifi) amenityList.push("📶 WiFi");
+        if (amenities.parking) amenityList.push("🅿️ Bãi đỗ xe");
+        if (amenities.kitchen) amenityList.push("🍳 Bếp");
+        if (amenities.balcony) amenityList.push("🪟 Ban công");
+
+        if (amenityList.length > 0) {
+          desc += `\n🎁 Tiện nghi:\n`;
+          amenityList.forEach(item => {
+            desc += `   • ${item}\n`;
+          });
+        }
+      } catch (e) {
+        // Skip if parse error
+      }
+    }
+
+    // Meter readings
+    desc += "\n─── CHỈ SỐ ĐIỆN NƯỚC ───\n";
+    if (room?.current_electricity_number) {
+      desc += `⚡ Điện: ${room.current_electricity_number} kWh\n`;
+    }
+    if (room?.current_water_number) {
+      desc += `💧 Nước: ${room.current_water_number} m³\n`;
+    }
+
+    // Status
+    desc += "\n─── TÌNH TRẠNG ───\n";
+    desc += `${room?.status ? "✅ Đang có người thuê" : "⚪ Phòng trống"}\n`;
+
+    desc += "\n" + "═".repeat(35) + "\n";
+    desc += `Chia sẻ lúc: ${new Date().toLocaleString('vi-VN')}\n`;
+
+    return desc;
+  }
+
   async function handleSharePhotos() {
     const selected = photos.filter((p) =>
       selectedPhotos.includes(p.id)
@@ -116,9 +222,7 @@ export default function Photos({ room, open, onClose }) {
     const files = await Promise.all(
       selected.map(async (photo, index) => {
         const response = await fetch(photo.image_url);
-
         const blob = await response.blob();
-
         return new File(
           [blob],
           `photo-${index + 1}.jpg`,
@@ -127,14 +231,42 @@ export default function Photos({ room, open, onClose }) {
       })
     );
 
-    if (
-      navigator.canShare &&
-      navigator.canShare({ files })
-    ) {
+    // Create description text file
+    const description = buildRoomDescription();
+    const descFile = new File(
+      [description],
+      "Mo_ta_phong.txt",
+      { type: "text/plain" }
+    );
+
+    const shareData = {
+      title: `Phòng ${room?.room_name} - ${home?.name || 'Nhà trọ'}`,
+      text: description,
+      files: [...files, descFile],
+    };
+
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Error sharing:', err);
+        }
+      }
+    } else if (navigator.canShare && navigator.canShare({ files })) {
+      // Fallback: share only files if text is not supported
       await navigator.share({
-        title: "Hình ảnh phòng",
-        files,
+        title: `Phòng ${room?.room_name} - ${home?.name || 'Nhà trọ'}`,
+        files: [...files, descFile],
       });
+    } else {
+      // Fallback: copy to clipboard and alert
+      try {
+        await navigator.clipboard.writeText(description);
+        alert("✅ Mô tả đã sao chép vào clipboard!\n\nBạn có thể dán và chia sẻ manual.");
+      } catch {
+        alert("Thiết bị của bạn không hỗ trợ chia sẻ. Vui lòng sử dụng cách khác để chia sẻ ảnh.");
+      }
     }
   }
   return (
@@ -166,18 +298,62 @@ export default function Photos({ room, open, onClose }) {
           />
 
           {photos.length > 0 && (
-            <button
-              onClick={handleSharePhotos}
-              className="flex flex-col items-center text-blue-600 hover:text-blue-700"
-            >
-              <FiShare size={26} />
+            <div className="flex gap-3">
+              {/* Preview description */}
+              <button
+                onClick={() => setShowDescription(true)}
+                className="flex flex-col items-center text-purple-600 hover:text-purple-700"
+                title="Xem mô tả chi tiết"
+              >
+                <span className="text-2xl">📋</span>
+                <span className="text-xs mt-1">Mô tả</span>
+              </button>
 
-              <span className="text-xs mt-1">
-                Chia sẻ
-              </span>
-            </button>
+              {/* Share button */}
+              <button
+                onClick={handleSharePhotos}
+                className="flex flex-col items-center text-blue-600 hover:text-blue-700"
+                title="Chia sẻ ảnh + mô tả"
+              >
+                <FiShare size={26} />
+                <span className="text-xs mt-1">
+                  Chia sẻ
+                </span>
+              </button>
+            </div>
           )}
         </div>
+
+        {/* Description Preview Modal */}
+        {showDescription && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-auto mx-4">
+              <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                <h3 className="font-semibold text-stone-800">Mô Tả Chi Tiết Phòng</h3>
+                <button
+                  onClick={() => setShowDescription(false)}
+                  className="text-stone-400 hover:text-stone-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6">
+                <pre className="font-mono text-sm text-stone-700 whitespace-pre-wrap break-words">
+                  {buildRoomDescription()}
+                </pre>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(buildRoomDescription());
+                    alert("✅ Mô tả đã sao chép vào clipboard!");
+                  }}
+                  className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  📋 Sao chép mô tả
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Loading */}
         {uploading && (

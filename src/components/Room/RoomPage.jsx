@@ -19,6 +19,25 @@ const VIEW = {
 function RoomCard({ room, selected, onSelect, onDelete }) {
     const isOccupied = room.status;
     const navigate = useNavigate();
+    
+    // Parse amenities from JSON
+    const amenities = (() => {
+        try {
+            if (!room.amenities) return {};
+            return typeof room.amenities === 'string' ? JSON.parse(room.amenities) : room.amenities;
+        } catch {
+            return {};
+        }
+    })();
+    
+    const amenityIcons = [];
+    if (amenities.hotWater) amenityIcons.push('🚿');
+    if (amenities.airConditioner) amenityIcons.push('❄️');
+    if (amenities.wifi) amenityIcons.push('📶');
+    if (amenities.parking) amenityIcons.push('🅿️');
+    if (amenities.kitchen) amenityIcons.push('🍳');
+    if (amenities.balcony) amenityIcons.push('🪟');
+    
     return (
         <button
             onClick={() => navigate(`/invoicesRoom/${room.id}/${room.home_id}`)}
@@ -52,6 +71,31 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
                         <div className="flex items-center gap-1.5 text-sm text-stone-500 mb-2">
                             <FiUser size={12} />
                             <span className="truncate">{room.room_renter}</span>
+                        </div>
+                    )}
+                    
+                    {/* Room details */}
+                    {(room.area || room.monthly_rent) && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {room.area > 0 && (
+                                <span className="text-xs text-stone-600 bg-stone-100 px-2 py-1 rounded-full">
+                                    📐 {room.area} m²
+                                </span>
+                            )}
+                            {room.monthly_rent > 0 && (
+                                <span className="text-xs text-stone-600 bg-stone-100 px-2 py-1 rounded-full">
+                                    💰 {(room.monthly_rent).toLocaleString("vi-VN")} đ
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    
+                    {/* Amenities */}
+                    {amenityIcons.length > 0 && (
+                        <div className="flex gap-1 mb-2 flex-wrap">
+                            {amenityIcons.map((icon, idx) => (
+                                <span key={idx} className="text-lg" title={icon}>{icon}</span>
+                            ))}
                         </div>
                     )}
 

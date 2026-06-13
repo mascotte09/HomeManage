@@ -49,6 +49,16 @@ export default function SelectedRoom({
   const [currentWaterNumber, setCurrentWaterNumber] = useState(0);
   const [rentDueDate, setRentDueDate] = useState("");
   const [status, setStatus] = useState(false);
+  const [area, setArea] = useState(0);
+  const [monthlyRent, setMonthlyRent] = useState(0);
+  const [amenities, setAmenities] = useState({
+    hotWater: false,
+    airConditioner: false,
+    wifi: false,
+    parking: false,
+    kitchen: false,
+    balcony: false,
+  });
 
   // ── Load room into form ────────────────────────────────────────────────────
   useEffect(() => {
@@ -64,6 +74,24 @@ export default function SelectedRoom({
     setRentDueDate(
       room?.rent_due_date ? room.rent_due_date.substring(0, 10) : ""
     );
+    setArea(room?.area || 0);
+    setMonthlyRent(room?.monthly_rent || 0);
+    
+    // Parse amenities from JSON if it exists
+    if (room?.amenities) {
+      try {
+        setAmenities(typeof room.amenities === 'string' ? JSON.parse(room.amenities) : room.amenities);
+      } catch {
+        setAmenities({
+          hotWater: false,
+          airConditioner: false,
+          wifi: false,
+          parking: false,
+          kitchen: false,
+          balcony: false,
+        });
+      }
+    }
   }, [room]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -76,6 +104,15 @@ export default function SelectedRoom({
     setTelephone(""); setNumPerson(1); setDatePay(1);
     setCurrentElectricityNumber(0); setCurrentWaterNumber(0);
     setRentDueDate(""); setStatus(false);
+    setArea(0); setMonthlyRent(0);
+    setAmenities({
+      hotWater: false,
+      airConditioner: false,
+      wifi: false,
+      parking: false,
+      kitchen: false,
+      balcony: false,
+    });
   }
 
   // ── Save ───────────────────────────────────────────────────────────────────
@@ -96,6 +133,9 @@ export default function SelectedRoom({
         current_water_number: currentWaterNumber,
         rent_due_date: rentDueDate || null,
         status,
+        area,
+        monthly_rent: monthlyRent,
+        amenities: JSON.stringify(amenities),
       };
       if (isNew) {
         const { error } = await supabase.from("rooms").insert([payload]);
@@ -216,6 +256,49 @@ export default function SelectedRoom({
             <Input label="Người thuê" type="text" value={roomRenter} onChange={(e) => setRoomRenter(e.target.value)} />
             <Input label="Số điện thoại" type="text" value={telephone} onChange={(e) => setTelephone(e.target.value)} />
             <Input label="Số người" type="number" value={numPerson} onChange={(e) => setNumPerson(Number(e.target.value))} />
+          </Section>
+
+          <Section title="Thông tin chi tiết phòng">
+            <Input
+              label="Diện tích (m²)"
+              type="number"
+              value={area}
+              onChange={(e) => setArea(Number(e.target.value))}
+            />
+            <Input
+              label="Tiền thuê hàng tháng (đ)"
+              type="text"
+              value={monthlyRent.toLocaleString("vi-VN")}
+              onChange={(e) => setMonthlyRent(parseCurrency(e.target.value))}
+            />
+            
+            {/* Amenities */}
+            <div className="pt-2">
+              <p className="text-sm font-medium text-stone-700 mb-3">Tiện nghi</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: 'hotWater', label: '🚿 Nước nóng', icon: '🚿' },
+                  { key: 'airConditioner', label: '❄️ Máy lạnh', icon: '❄️' },
+                  { key: 'wifi', label: '📶 WiFi', icon: '📶' },
+                  { key: 'parking', label: '🅿️ Bãi đỗ xe', icon: '🅿️' },
+                  { key: 'kitchen', label: '🍳 Bếp', icon: '🍳' },
+                  { key: 'balcony', label: '🪟 Ban công', icon: '🪟' },
+                ].map((item) => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={amenities[item.key] || false}
+                      onChange={(e) => setAmenities({
+                        ...amenities,
+                        [item.key]: e.target.checked
+                      })}
+                      className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
+                    />
+                    <span className="text-sm text-stone-700">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </Section>
 
           <Section title="Tài chính">
