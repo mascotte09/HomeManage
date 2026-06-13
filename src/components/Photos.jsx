@@ -32,7 +32,7 @@ export default function Photos({ room, open, onClose }) {
   // Fetch home info
   const fetchHome = useCallback(async () => {
     if (!room?.home_id) return;
-    
+
     const { data, error } = await supabase
       .from("homes")
       .select("*")
@@ -155,7 +155,7 @@ export default function Photos({ room, open, onClose }) {
       try {
         const amenities = typeof room.amenities === 'string' ? JSON.parse(room.amenities) : room.amenities;
         const amenityList = [];
-        
+
         if (amenities.hotWater) amenityList.push("Nước nóng");
         if (amenities.airConditioner) amenityList.push("Máy lạnh");
         if (amenities.bed) amenityList.push("Giường");
@@ -255,37 +255,20 @@ export default function Photos({ room, open, onClose }) {
             className="text-sm"
           />
 
-          {photos.length > 0 && (
-            <div className="flex gap-3">
-              {/* Preview description */}
-              <button
-                onClick={() => {
-                  setEditedDescription(buildRoomDescription());
-                  setShowDescription(true);
-                }}
-                className="flex flex-col items-center text-purple-600 hover:text-purple-700"
-                title="Xem & chỉnh sửa mô tả"
-              >
-                <span className="text-2xl">📋</span>
-                <span className="text-xs mt-1">Mô tả</span>
-              </button>
-
-              {/* Share button */}
-              <button
-                onClick={() => {
-                  setEditedDescription(buildRoomDescription());
-                  setIsShareMode(true);
-                  setShowDescription(true);
-                }}
-                className="flex flex-col items-center text-blue-600 hover:text-blue-700"
-                title="Chia sẻ ảnh + mô tả"
-              >
-                <FiShare size={26} />
-                <span className="text-xs mt-1">
-                  Chia sẻ
-                </span>
-              </button>
-            </div>
+          {selectedPhotos.length > 0 && (
+            <button
+              onClick={() => {
+                setEditedDescription(buildRoomDescription());
+                setIsShareMode(true);
+                setShowDescription(true);
+              }}
+              className="flex flex-col items-center text-blue-600 hover:text-blue-700"
+            >
+              <FiShare size={26} />
+              <span className="text-xs mt-1">
+                Chia sẻ ({selectedPhotos.length})
+              </span>
+            </button>
           )}
         </div>
 
