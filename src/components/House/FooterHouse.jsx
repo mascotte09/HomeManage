@@ -13,20 +13,13 @@ export default function FooterHouse() {
 
         {/* Made with love */}
         <div className="flex items-center justify-center gap-1 text-xs text-stone-600">
-          <span>📧</span>
-          <a 
-            href="mailto:ngdz0912@gmail.com"
-            className="hover:text-blue-600 transition"
-          >
-            ngdang09@yahoo.com
-          </a>
-          <span>•</span>
-          <span>📱</span>
+          
+          <span>📱 Contact: </span>
           <a 
             href="tel:0777107877"
             className="hover:text-blue-600 transition"
           >
-            0777107877
+            0777 107 877
           </a>
         </div>
 
