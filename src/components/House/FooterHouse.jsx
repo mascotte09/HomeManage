@@ -18,7 +18,7 @@ export default function FooterHouse() {
             href="mailto:ngdz0912@gmail.com"
             className="hover:text-blue-600 transition"
           >
-            ngdz0912@gmail.com
+            ngdang09@yahoo.com
           </a>
           <span>•</span>
           <span>📱</span>
