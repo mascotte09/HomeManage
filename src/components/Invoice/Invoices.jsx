@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabase";
 import {
   FiFileText,
-  FiEye,
   FiTrash2,
   FiPlus,
   FiArrowLeft,
@@ -125,48 +124,26 @@ export default function Invoices() {
     <div className="min-h-screen bg-stone-50 p-4">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-5">
-
-  <div className="flex items-center gap-3">
-    <button
-      onClick={handleBack}
-      className="
-        w-10 h-10
-        rounded-full
-        flex items-center justify-center
-        bg-white
-        border border-stone-200
-        text-stone-600
-        hover:bg-stone-100
-        transition
-      "
-    >
-      <FiArrowLeft size={18} />
-    </button>
-
-    <h1 className="text-xl font-bold text-stone-800">
-      Hóa đơn phòng {room?.room_name}
-    </h1>
-  </div>
-
-  <button
-    onClick={handleAdd}
-    className="
-      flex items-center gap-2
-      bg-green-600
-      hover:bg-green-700
-      text-white
-      px-4 py-2
-      rounded-xl
-      transition
-      active:scale-95
-    "
-  >
-    <FiPlus size={16} />
-    Tạo mới
-  </button>
-
-</div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleBack}
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-white border border-stone-200 text-stone-600 hover:bg-stone-100 transition"
+          >
+            <FiArrowLeft size={17} />
+          </button>
+          <h1 className="text-base font-bold text-stone-800">
+            Hóa đơn phòng {room?.room_name}
+          </h1>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="w-9 h-9 rounded-full flex items-center justify-center bg-green-600 hover:bg-green-700 text-white transition active:scale-95"
+          title="Tạo hóa đơn mới"
+        >
+          <FiPlus size={18} />
+        </button>
+      </div>
 
       {/* EMPTY */}
       {invoices.length === 0 ? (
@@ -184,109 +161,63 @@ export default function Invoices() {
         </div>
       ) : (
         <div className="space-y-3">
-
           {invoices.map((invoice) => (
-            <div
+            <button
               key={invoice.id}
-              className="
-                bg-white
-                border border-stone-200
-                rounded-2xl
-                p-4
-                hover:border-stone-300
-                transition
-              "
+              onClick={() => handleView(invoice)}
+              className="w-full text-left bg-white border border-stone-200 rounded-2xl p-4 hover:border-stone-300 active:scale-[0.98] transition"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
 
                 {/* LEFT */}
                 <div className="flex items-center gap-3 min-w-0">
-
-                  <div className="
-                    w-10 h-10
-                    rounded-xl
-                    bg-green-50
-                    flex items-center justify-center
-                  ">
-                    <FiFileText
-                      size={18}
-                      className="text-green-600"
-                    />
+                  <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+                    <FiFileText size={18} className="text-green-600" />
                   </div>
-
                   <div>
                     <div className="font-semibold text-stone-800">
-                      Hóa đơn
-                    </div>
-
-                    <div className="text-sm text-stone-500">
                       {formatDate(
                         invoice.invoice_create_date
                       )}
                     </div>
-                  </div>
 
+                    <div
+  className={`text-sm font-medium ${
+    Number(invoice.debit_amount) > 0
+      ? "text-red-500"
+      : Number(invoice.debit_amount) < 0
+      ? "text-green-600"
+      : "text-blue-600"
+  }`}
+>
+  {Number(invoice.debit_amount) > 0
+    ? `Nợ: ${formatMoney(invoice.debit_amount)} đ`
+    : Number(invoice.debit_amount) < 0
+    ? `Tiền dư: ${formatMoney(Math.abs(invoice.debit_amount))} đ`
+    : "Đã thanh toán"}
+</div>
+                  </div>
                 </div>
 
                 {/* RIGHT */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-
-                  <span
-                    className="
-                      px-3 py-1
-                      rounded-full
-                      bg-green-50
-                      text-green-700
-                      text-sm
-                      font-semibold
-                    "
-                  >
-                    {formatMoney(
-                      invoice.total_amount
-                    )} đ
+                  <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-semibold">
+                    {formatMoney(invoice.total_amount)} đ
                   </span>
-
                   <button
-                    onClick={() =>
-                      handleView(invoice)
-                    }
-                    className="
-                      w-9 h-9
-                      rounded-full
-                      bg-blue-50
-                      text-blue-500
-                      flex items-center justify-center
-                      hover:bg-blue-100
-                      transition
-                    "
-                  >
-                    <FiEye size={16} />
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      handleDelete(invoice.id)
-                    }
-                    className="
-                      w-9 h-9
-                      rounded-full
-                      bg-red-50
-                      text-red-500
-                      flex items-center justify-center
-                      hover:bg-red-100
-                      transition
-                    "
+                    onClick={(e) => { e.stopPropagation(); handleDelete(invoice.id); }}
+                    className="w-9 h-9 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition"
                   >
                     <FiTrash2 size={16} />
                   </button>
-
                 </div>
 
               </div>
-            </div>
+            </button>
           ))}
 
         </div>
+        
       )}
       {showInvoiceRecord && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">

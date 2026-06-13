@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  FiHome,
   FiFileText,
   FiDollarSign,
   FiCreditCard,
@@ -8,6 +9,13 @@ import {
 } from "react-icons/fi";
 
 const NAV = [
+  {
+    label: "Phòng",
+    icon: FiHome,
+    color: "text-stone-600",
+    bg: "bg-stone-100",
+    path: (id) => `/rooms/${id}`,
+  },
   {
     label: "Hóa Đơn",
     icon: FiFileText,
