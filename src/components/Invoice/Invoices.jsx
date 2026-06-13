@@ -182,20 +182,19 @@ export default function Invoices() {
                     </div>
 
                     <div
-  className={`text-sm font-medium ${
-    Number(invoice.debit_amount) > 0
-      ? "text-red-500"
-      : Number(invoice.debit_amount) < 0
-      ? "text-green-600"
-      : "text-blue-600"
-  }`}
->
-  {Number(invoice.debit_amount) > 0
-    ? `Nợ: ${formatMoney(invoice.debit_amount)} đ`
-    : Number(invoice.debit_amount) < 0
-    ? `Tiền dư: ${formatMoney(Math.abs(invoice.debit_amount))} đ`
-    : "Đã thanh toán"}
-</div>
+                      className={`text-sm font-medium ${Number(invoice.debit_amount) > 0
+                          ? "text-red-500"
+                          : Number(invoice.debit_amount) < 0
+                            ? "text-green-600"
+                            : "text-blue-600"
+                        }`}
+                    >
+                      {Number(invoice.debit_amount) > 0
+                        ? `Nợ: ${formatMoney(invoice.debit_amount)} đ`
+                        : Number(invoice.debit_amount) < 0
+                          ? `Tiền dư: ${formatMoney(Math.abs(invoice.debit_amount))} đ`
+                          : "Đã thanh toán"}
+                    </div>
                   </div>
                 </div>
 
@@ -217,7 +216,7 @@ export default function Invoices() {
           ))}
 
         </div>
-        
+
       )}
       {showInvoiceRecord && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">

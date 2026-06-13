@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  FiHome,
+  FiGrid,
   FiFileText,
   FiDollarSign,
   FiCreditCard,
@@ -11,7 +11,7 @@ import {
 const NAV = [
   {
     label: "Phòng",
-    icon: FiHome,
+    icon: FiGrid,
     color: "text-stone-600",
     bg: "bg-stone-100",
     path: (id) => `/rooms/${id}`,

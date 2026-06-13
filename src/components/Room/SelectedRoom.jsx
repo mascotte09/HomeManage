@@ -3,7 +3,6 @@ import { supabase } from "../../supabase";
 import {
   FiArrowLeft,
   FiSave,
-  FiTrash2,
   FiCamera,
 } from "react-icons/fi";
 import Input from "../InputVal.jsx";
@@ -35,28 +34,28 @@ export default function SelectedRoom({
 }) {
   const isNew = !room;
 
-  const [saving, setSaving]               = useState(false);
-  const [showPhotos, setShowPhotos]       = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
   const [showInvoiceRecord, setShowInvoiceRecord] = useState(false);
-  const [selectedInvoice, setSelectedInvoice]     = useState(null);
-  const [invoices, setInvoices]           = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [invoices, setInvoices] = useState([]);
 
   // Delete modal handles both room + invoice deletes
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteType, setDeleteType]           = useState(null); // "room" | "invoice"
+  const [deleteType, setDeleteType] = useState(null); // "room" | "invoice"
   const [deleteInvoiceId, setDeleteInvoiceId] = useState(null);
 
   // ── Form state ─────────────────────────────────────────────────────────────
-  const [roomName,                 setRoomName]                 = useState("");
-  const [roomRenter,               setRoomRenter]               = useState("");
-  const [depositAmount,            setDepositAmount]            = useState(0);
-  const [telephone,                setTelephone]                = useState("");
-  const [numPerson,                setNumPerson]                = useState(1);
-  const [datePay,                  setDatePay]                  = useState(1);
+  const [roomName, setRoomName] = useState("");
+  const [roomRenter, setRoomRenter] = useState("");
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [telephone, setTelephone] = useState("");
+  const [numPerson, setNumPerson] = useState(1);
+  const [datePay, setDatePay] = useState(1);
   const [currentElectricityNumber, setCurrentElectricityNumber] = useState(0);
-  const [currentWaterNumber,       setCurrentWaterNumber]       = useState(0);
-  const [rentDueDate,              setRentDueDate]              = useState("");
-  const [status,                   setStatus]                   = useState(false);
+  const [currentWaterNumber, setCurrentWaterNumber] = useState(0);
+  const [rentDueDate, setRentDueDate] = useState("");
+  const [status, setStatus] = useState(false);
 
   // ── Load room into form ────────────────────────────────────────────────────
   useEffect(() => {
@@ -202,23 +201,22 @@ export default function SelectedRoom({
             {!isNew && (
               <button
                 onClick={() => setShowPhotos(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 transition"
-                aria-label="Ảnh phòng"
+                className="
+                  h-9 px-4
+                  flex items-center gap-2
+                  rounded-full
+                  bg-purple-200
+                  text-purple-600
+                  hover:bg-purple-300
+                  transition
+                  active:scale-95
+                "
               >
                 <FiCamera size={16} />
+                Hình
               </button>
             )}
 
-            {/* Delete */}
-            {!isNew && (
-              <button
-                onClick={() => { setDeleteType("room"); setShowDeleteModal(true); }}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition"
-                aria-label="Xóa phòng"
-              >
-                <FiTrash2 size={16} />
-              </button>
-            )}
 
             {/* Save */}
             <button
@@ -262,10 +260,10 @@ export default function SelectedRoom({
               </span>
             </div>
 
-            <Input label="Số phòng"     type="text"   value={roomName}   onChange={(e) => setRoomName(e.target.value)} />
-            <Input label="Người thuê"   type="text"   value={roomRenter}  onChange={(e) => setRoomRenter(e.target.value)} />
-            <Input label="Số điện thoại" type="text"  value={telephone}   onChange={(e) => setTelephone(e.target.value)} />
-            <Input label="Số người"     type="number" value={numPerson}   onChange={(e) => setNumPerson(Number(e.target.value))} />
+            <Input label="Số phòng" type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} />
+            <Input label="Người thuê" type="text" value={roomRenter} onChange={(e) => setRoomRenter(e.target.value)} />
+            <Input label="Số điện thoại" type="text" value={telephone} onChange={(e) => setTelephone(e.target.value)} />
+            <Input label="Số người" type="number" value={numPerson} onChange={(e) => setNumPerson(Number(e.target.value))} />
           </Section>
 
           <Section title="Tài chính">
@@ -304,43 +302,12 @@ export default function SelectedRoom({
             />
           </Section>
 
-          {/* Invoices section */}
-          {!isNew && (
-            <Invoices
-              homeID={homeID}
-              room={room}
-              invoices={invoices}
-              onAdd={() => { setSelectedInvoice(null); setShowInvoiceRecord(true); }}
-              onEdit={(inv) => { setSelectedInvoice(inv); setShowInvoiceRecord(true); }}
-              onDelete={(id) => { setDeleteInvoiceId(id); setDeleteType("invoice"); setShowDeleteModal(true); }}
-            />
-          )}
         </div>
       </div>
 
       {/* ── Photos modal ── */}
       {!isNew && showPhotos && (
         <Photos room={room} open={showPhotos} onClose={() => setShowPhotos(false)} />
-      )}
-
-      {/* ── Invoice record modal ── */}
-      {showInvoiceRecord && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-auto max-h-[95vh]">
-            <InvoiceRecord
-              room={room}
-              homeID={homeID}
-              invoice={selectedInvoice}
-              onCancel={() => { setShowInvoiceRecord(false); setSelectedInvoice(null); }}
-              onAdd={async () => {
-                await refreshInvoices();
-                await refreshCurrentRoom();
-                setShowInvoiceRecord(false);
-                setSelectedInvoice(null);
-              }}
-            />
-          </div>
-        </div>
       )}
 
       {/* ── Delete modal ── */}
