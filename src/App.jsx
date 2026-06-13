@@ -7,6 +7,7 @@ import RoomPage from './components/Room/RoomPage.jsx'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import HeaderHouse from "./components/House/HeaderHouse";
+import FooterHouse from "./components/House/FooterHouse";
 import HeaderRoom from "./components/Room/HeaderRoom";
 import HousePage from "./components/House/HousePage.jsx";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
@@ -87,6 +88,7 @@ function App() {
                             <div className="flex-1 overflow-y-auto">
                                 <HousePage user_id={currentUser.id} />
                             </div>
+                            <FooterHouse />
                         </div>
                     }
                 />
@@ -103,6 +105,7 @@ function App() {
                             <div className="flex-1 overflow-y-auto">
                                 <HousePage user_id={currentUser.id} />
                             </div>
+                            <FooterHouse />
                         </div>
                     }
                 />
