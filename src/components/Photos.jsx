@@ -255,7 +255,7 @@ export default function Photos({ room, open, onClose }) {
             className="text-sm"
           />
 
-          {selectedPhotos.length > 0 && (
+          {photos.length > 0 && (
             <button
               onClick={() => {
                 setEditedDescription(buildRoomDescription());
