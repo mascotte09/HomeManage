@@ -60,6 +60,7 @@ export default function InvoiceRecord({
 
     setFormData((prev) => ({
       ...prev,
+      rental_amount: room?.monthly_rent ?? "",
       current_electricity_number:
         room?.current_electricity_number ?? "0",
       current_water_number:
@@ -402,7 +403,8 @@ export default function InvoiceRecord({
       .select(`
       id,
       new_electricity_number,
-      new_water_number
+      new_water_number,
+      rental_amount
     `)
       .eq("room_id", room.id)
       .order(
@@ -430,9 +432,10 @@ export default function InvoiceRecord({
           .update({
             current_electricity_number:
               newestInvoice.new_electricity_number,
-
             current_water_number:
               newestInvoice.new_water_number,
+            monthly_rent: 
+              newestInvoice.rental_amount
           })
           .eq("id", room.id);
       }
