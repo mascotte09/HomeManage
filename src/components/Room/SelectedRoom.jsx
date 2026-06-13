@@ -6,9 +6,7 @@ import {
   FiCamera,
 } from "react-icons/fi";
 import Input from "../InputVal.jsx";
-import Invoices from "../Invoice/Invoices.jsx";
 import Photos from "../Photos.jsx";
-import InvoiceRecord from "../Invoice/InvoiceRecord.jsx";
 import DeleteModal from "../DeleteModal.jsx";
 
 // ─── Reusable section wrapper ────────────────────────────────────────────────
@@ -36,14 +34,9 @@ export default function SelectedRoom({
 
   const [saving, setSaving] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
-  const [showInvoiceRecord, setShowInvoiceRecord] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [invoices, setInvoices] = useState([]);
 
   // Delete modal handles both room + invoice deletes
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteType, setDeleteType] = useState(null); // "room" | "invoice"
-  const [deleteInvoiceId, setDeleteInvoiceId] = useState(null);
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [roomName, setRoomName] = useState("");
@@ -72,39 +65,6 @@ export default function SelectedRoom({
       room?.rent_due_date ? room.rent_due_date.substring(0, 10) : ""
     );
   }, [room]);
-
-  // ── Fetch invoices ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!room?.id) { setInvoices([]); return; }
-    supabase
-      .from("invoices")
-      .select("*")
-      .eq("room_id", room.id)
-      .order("invoice_create_date", { ascending: false })
-      .then(({ data, error }) => {
-        if (!error) setInvoices(data || []);
-      });
-  }, [room]);
-
-  async function refreshInvoices() {
-    if (!room?.id) return;
-    const { data, error } = await supabase
-      .from("invoices")
-      .select("*")
-      .eq("room_id", room.id)
-      .order("invoice_create_date", { ascending: false });
-    if (!error) setInvoices(data || []);
-  }
-
-  async function refreshCurrentRoom() {
-    if (!room?.id) return;
-    const { data, error } = await supabase
-      .from("rooms").select("*").eq("id", room.id).single();
-    if (!error) {
-      setCurrentElectricityNumber(data.current_electricity_number || 0);
-      setCurrentWaterNumber(data.current_water_number || 0);
-    }
-  }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   function parseCurrency(str) {
@@ -157,21 +117,13 @@ export default function SelectedRoom({
 
   // ── Delete room / invoice ──────────────────────────────────────────────────
   async function handleConfirmDelete() {
-    if (deleteType === "invoice") {
-      if (!deleteInvoiceId) return;
-      const { error } = await supabase.from("invoices").delete().eq("id", deleteInvoiceId);
-      if (error) { alert("Không thể xóa hóa đơn"); return; }
-      await refreshInvoices();
-      setDeleteInvoiceId(null);
-    } else if (deleteType === "room") {
-      if (!room?.id) return;
-      const { error } = await supabase.from("rooms").delete().eq("id", room.id);
-      if (error) { alert("Không thể xóa phòng"); return; }
-      await refreshRooms();
-      onBack();
-    }
+    if (!room?.id) return;
+    const { error } = await supabase.from("rooms").delete().eq("id", room.id);
+    if (error) { alert("Không thể xóa phòng"); return; }
+    await refreshRooms();
+    onBack();
+
     setShowDeleteModal(false);
-    setDeleteType(null);
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -313,13 +265,11 @@ export default function SelectedRoom({
       {/* ── Delete modal ── */}
       <DeleteModal
         open={showDeleteModal}
-        title={deleteType === "room" ? "Xóa phòng" : "Xóa hóa đơn"}
-        message={
-          deleteType === "room"
-            ? `Bạn có chắc muốn xóa phòng "${roomName}"? Thao tác này không thể hoàn tác.`
-            : "Bạn có chắc muốn xóa hóa đơn này?"
+        title="Xóa phòng" 
+        message={ `Bạn có chắc muốn xóa phòng "${roomName}"? Thao tác này không thể hoàn tác.`
+            
         }
-        onClose={() => { setShowDeleteModal(false); setDeleteType(null); setDeleteInvoiceId(null); }}
+        onClose={() => { setShowDeleteModal(false);   }}
         onConfirm={handleConfirmDelete}
       />
     </>
