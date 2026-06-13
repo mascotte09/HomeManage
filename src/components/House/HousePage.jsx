@@ -21,7 +21,7 @@ function HouseCard({ house, selected, onSelect, onDelete }) {
     <button
       onClick={() => navigate(`/rooms/${house.id}`)}
       className={`
-    w-full text-left p-4 rounded-2xl border transition active:scale-[0.98]
+    w-full text-left p-3 rounded-2xl border transition active:scale-[0.98]
     ${selected
           ? "border-blue-400 bg-blue-50"
           : "border-stone-200 bg-white hover:border-stone-300"}

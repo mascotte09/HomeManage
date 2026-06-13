@@ -17,7 +17,7 @@ function ExpenseCard({ expense, onSelect, onDelete }) {
   return (
     <button
       onClick={() => onSelect(expense.id)}
-      className="w-full text-left p-4 rounded-2xl border border-stone-200 bg-white hover:border-stone-300 transition active:scale-[0.98]"
+      className="w-full text-left p-3 rounded-2xl border border-stone-200 bg-white hover:border-stone-300 transition active:scale-[0.98]"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">

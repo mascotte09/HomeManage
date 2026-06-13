@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { FiPlus, FiTrash2, FiZap, FiDroplet, FiUser, FiEye } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiUser, FiEye } from "react-icons/fi";
 import { supabase } from "../../supabase";
 
 import HeaderRoom from "./HeaderRoom.jsx";
@@ -42,7 +42,7 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
         <button
             onClick={() => navigate(`/invoicesRoom/${room.id}/${room.home_id}`)}
             className={`
-        w-full text-left p-4 rounded-2xl border transition active:scale-[0.98]
+        w-full text-left p-3 rounded-2xl border transition active:scale-[0.98]
         ${selected
                     ? "border-blue-400 bg-blue-50"
                     : "border-stone-200 bg-white hover:border-stone-300"}
@@ -90,17 +90,8 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
                         </div>
                     )}
                     
-                    {/* Amenities */}
-                    {amenityIcons.length > 0 && (
-                        <div className="flex gap-1 mb-2 flex-wrap">
-                            {amenityIcons.map((icon, idx) => (
-                                <span key={idx} className="text-lg" title={icon}>{icon}</span>
-                            ))}
-                        </div>
-                    )}
-
                     {/* Meter readings */}
-                    <div className="flex gap-3">
+                    {/* <div className="flex gap-3">
                         <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
                             <FiZap size={11} />
                             {(room.current_electricity_number || 0).toLocaleString("vi-VN")}
@@ -109,7 +100,7 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
                             <FiDroplet size={11} />
                             {(room.current_water_number || 0).toLocaleString("vi-VN")}
                         </span>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Actions */}

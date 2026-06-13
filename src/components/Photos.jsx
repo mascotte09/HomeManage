@@ -130,45 +130,26 @@ export default function Photos({ room, open, onClose }) {
 
   // Build room description
   function buildRoomDescription() {
-    let desc = "╔════════════════════════════════════╗\n";
-    desc += "║     THÔNG TIN CHI TIẾT PHÒNG        ║\n";
-    desc += "╚════════════════════════════════════╝\n\n";
+    let desc = "";
 
     // Home info
     if (home?.name) {
-      desc += `🏠 Nhà trọ: ${home.name}\n`;
+      desc += `🏠 Nhà trọ: ${home.name}`;
     }
     if (home?.address) {
       desc += `📍 Địa chỉ: ${home.address}\n`;
     }
 
-    desc += "\n─── THÔNG TIN PHÒNG ───\n";
-    
     // Room basic
     if (room?.room_name) {
       desc += `🚪 Phòng: ${room.room_name}\n`;
     }
-    if (room?.room_renter) {
-      desc += `👤 Người thuê: ${room.room_renter}\n`;
-    }
-    if (room?.telephone) {
-      desc += `📱 SĐT: ${room.telephone}\n`;
-    }
-
-    desc += "\n─── THÔNG TIN CHI TIẾT ───\n";
-    
     // Room details
     if (room?.area && room.area > 0) {
       desc += `📐 Diện tích: ${room.area} m²\n`;
     }
     if (room?.monthly_rent && room.monthly_rent > 0) {
       desc += `💰 Tiền thuê: ${room.monthly_rent.toLocaleString("vi-VN")} đ/tháng\n`;
-    }
-    if (room?.deposit_amount && room.deposit_amount > 0) {
-      desc += `🏦 Tiền cọc: ${room.deposit_amount.toLocaleString("vi-VN")} đ\n`;
-    }
-    if (room?.num_person && room.num_person > 0) {
-      desc += `👥 Số người: ${room.num_person} người\n`;
     }
 
     // Amenities
@@ -185,7 +166,7 @@ export default function Photos({ room, open, onClose }) {
         if (amenities.balcony) amenityList.push("🪟 Ban công");
 
         if (amenityList.length > 0) {
-          desc += `\n🎁 Tiện nghi:\n`;
+          desc += `🎁 Tiện nghi:\n`;
           amenityList.forEach(item => {
             desc += `   • ${item}\n`;
           });
@@ -194,22 +175,6 @@ export default function Photos({ room, open, onClose }) {
         // Skip if parse error
       }
     }
-
-    // Meter readings
-    desc += "\n─── CHỈ SỐ ĐIỆN NƯỚC ───\n";
-    if (room?.current_electricity_number) {
-      desc += `⚡ Điện: ${room.current_electricity_number} kWh\n`;
-    }
-    if (room?.current_water_number) {
-      desc += `💧 Nước: ${room.current_water_number} m³\n`;
-    }
-
-    // Status
-    desc += "\n─── TÌNH TRẠNG ───\n";
-    desc += `${room?.status ? "✅ Đang có người thuê" : "⚪ Phòng trống"}\n`;
-
-    desc += "\n" + "═".repeat(35) + "\n";
-    desc += `Chia sẻ lúc: ${new Date().toLocaleString('vi-VN')}\n`;
 
     return desc;
   }
@@ -233,16 +198,16 @@ export default function Photos({ room, open, onClose }) {
 
     // Create description text file
     const description = buildRoomDescription();
-    const descFile = new File(
-      [description],
-      "Mo_ta_phong.txt",
-      { type: "text/plain" }
-    );
+    // const descFile = new File(
+    //   [description],
+    //   "Mo_ta_phong.txt",
+    //   { type: "text/plain" }
+    // );
 
     const shareData = {
       title: `Phòng ${room?.room_name} - ${home?.name || 'Nhà trọ'}`,
       text: description,
-      files: [...files, descFile],
+      files: [...files],
     };
 
     if (navigator.canShare && navigator.canShare(shareData)) {
@@ -257,7 +222,8 @@ export default function Photos({ room, open, onClose }) {
       // Fallback: share only files if text is not supported
       await navigator.share({
         title: `Phòng ${room?.room_name} - ${home?.name || 'Nhà trọ'}`,
-        files: [...files, descFile],
+        text: description,
+        files: [...files],
       });
     } else {
       // Fallback: copy to clipboard and alert
