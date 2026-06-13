@@ -33,10 +33,10 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
     const amenityIcons = [];
     if (amenities.hotWater) amenityIcons.push('🚿');
     if (amenities.airConditioner) amenityIcons.push('❄️');
-    if (amenities.wifi) amenityIcons.push('📶');
-    if (amenities.parking) amenityIcons.push('🅿️');
-    if (amenities.kitchen) amenityIcons.push('🍳');
+    if (amenities.bed) amenityIcons.push('🛏️');
+    if (amenities.window) amenityIcons.push('🪟');
     if (amenities.balcony) amenityIcons.push('🪟');
+    if (amenities.kitchen) amenityIcons.push('🍳');
     
     return (
         <button

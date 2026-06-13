@@ -279,10 +279,11 @@ export default function SelectedRoom({
                 {[
                   { key: 'hotWater', label: '🚿 Nước nóng', icon: '🚿' },
                   { key: 'airConditioner', label: '❄️ Máy lạnh', icon: '❄️' },
-                  { key: 'wifi', label: '📶 WiFi', icon: '📶' },
-                  { key: 'parking', label: '🅿️ Bãi đỗ xe', icon: '🅿️' },
-                  { key: 'kitchen', label: '🍳 Bếp', icon: '🍳' },
+                  { key: 'bed', label: '🛏️ Giường', icon: '🛏️' },
+                  { key: 'window', label: '🪟 Cửa sổ', icon: '🪟' },
                   { key: 'balcony', label: '🪟 Ban công', icon: '🪟' },
+                  { key: 'kitchen', label: '🍳 Bếp', icon: '🍳' },
+                  
                 ].map((item) => (
                   <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                     <input

@@ -7,6 +7,8 @@ export default function Photos({ room, open, onClose }) {
   const [uploading, setUploading] = useState(false);
   const [home, setHome] = useState(null);
   const [showDescription, setShowDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState("");
+  const [isShareMode, setIsShareMode] = useState(false);
 
   // NEW: selected photos
   const [selectedPhotos, setSelectedPhotos] = useState([]);
@@ -134,22 +136,18 @@ export default function Photos({ room, open, onClose }) {
 
     // Home info
     if (home?.name) {
-      desc += `🏠 Nhà trọ: ${home.name}`;
+      desc += `🏠 Nhà trọ: ${home.address}.`;
     }
-    if (home?.address) {
-      desc += `📍 Địa chỉ: ${home.address}\n`;
-    }
-
     // Room basic
     if (room?.room_name) {
-      desc += `🚪 Phòng: ${room.room_name}\n`;
+      desc += ` Phòng: `;
     }
     // Room details
     if (room?.area && room.area > 0) {
-      desc += `📐 Diện tích: ${room.area} m²\n`;
+      desc += `${room.area} m².`;
     }
     if (room?.monthly_rent && room.monthly_rent > 0) {
-      desc += `💰 Tiền thuê: ${room.monthly_rent.toLocaleString("vi-VN")} đ/tháng\n`;
+      desc += ` Giá: ${room.monthly_rent.toLocaleString("vi-VN")}\n`;
     }
 
     // Amenities
@@ -158,13 +156,12 @@ export default function Photos({ room, open, onClose }) {
         const amenities = typeof room.amenities === 'string' ? JSON.parse(room.amenities) : room.amenities;
         const amenityList = [];
         
-        if (amenities.hotWater) amenityList.push("🚿 Nước nóng");
-        if (amenities.airConditioner) amenityList.push("❄️ Máy lạnh");
-        if (amenities.wifi) amenityList.push("📶 WiFi");
-        if (amenities.parking) amenityList.push("🅿️ Bãi đỗ xe");
-        if (amenities.kitchen) amenityList.push("🍳 Bếp");
-        if (amenities.balcony) amenityList.push("🪟 Ban công");
-
+        if (amenities.hotWater) amenityList.push("Nước nóng");
+        if (amenities.airConditioner) amenityList.push("Máy lạnh");
+        if (amenities.bed) amenityList.push("Giường");
+        if (amenities.kitchen) amenityList.push("Bếp");
+        if (amenities.balcony) amenityList.push("Ban công");
+        if (amenities.window) amenityList.push("Cửa sổ");
         if (amenityList.length > 0) {
           desc += `🎁 Tiện nghi:\n`;
           amenityList.forEach(item => {
@@ -196,13 +193,8 @@ export default function Photos({ room, open, onClose }) {
       })
     );
 
-    // Create description text file
-    const description = buildRoomDescription();
-    // const descFile = new File(
-    //   [description],
-    //   "Mo_ta_phong.txt",
-    //   { type: "text/plain" }
-    // );
+    // Use edited description (from state, not auto-build)
+    const description = editedDescription || buildRoomDescription();
 
     const shareData = {
       title: `Phòng ${room?.room_name} - ${home?.name || 'Nhà trọ'}`,
@@ -267,9 +259,12 @@ export default function Photos({ room, open, onClose }) {
             <div className="flex gap-3">
               {/* Preview description */}
               <button
-                onClick={() => setShowDescription(true)}
+                onClick={() => {
+                  setEditedDescription(buildRoomDescription());
+                  setShowDescription(true);
+                }}
                 className="flex flex-col items-center text-purple-600 hover:text-purple-700"
-                title="Xem mô tả chi tiết"
+                title="Xem & chỉnh sửa mô tả"
               >
                 <span className="text-2xl">📋</span>
                 <span className="text-xs mt-1">Mô tả</span>
@@ -277,7 +272,11 @@ export default function Photos({ room, open, onClose }) {
 
               {/* Share button */}
               <button
-                onClick={handleSharePhotos}
+                onClick={() => {
+                  setEditedDescription(buildRoomDescription());
+                  setIsShareMode(true);
+                  setShowDescription(true);
+                }}
                 className="flex flex-col items-center text-blue-600 hover:text-blue-700"
                 title="Chia sẻ ảnh + mô tả"
               >
@@ -293,29 +292,67 @@ export default function Photos({ room, open, onClose }) {
         {/* Description Preview Modal */}
         {showDescription && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-auto mx-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto mx-4">
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
-                <h3 className="font-semibold text-stone-800">Mô Tả Chi Tiết Phòng</h3>
+                <h3 className="font-semibold text-stone-800">
+                  {isShareMode ? "📤 Chỉnh Sửa & Chia Sẻ" : "✏️ Chỉnh Sửa Mô Tả Phòng"}
+                </h3>
                 <button
-                  onClick={() => setShowDescription(false)}
+                  onClick={() => {
+                    setShowDescription(false);
+                    setEditedDescription("");
+                    setIsShareMode(false);
+                  }}
                   className="text-stone-400 hover:text-stone-600"
                 >
                   ✕
                 </button>
               </div>
-              <div className="p-6">
-                <pre className="font-mono text-sm text-stone-700 whitespace-pre-wrap break-words">
-                  {buildRoomDescription()}
-                </pre>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(buildRoomDescription());
-                    alert("✅ Mô tả đã sao chép vào clipboard!");
-                  }}
-                  className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                  📋 Sao chép mô tả
-                </button>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    Mô tả {isShareMode ? "(sẽ chia sẻ cùng ảnh)" : "(có thể chỉnh sửa)"}:
+                  </label>
+                  <textarea
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    className="w-full h-64 p-3 border border-stone-300 rounded-lg font-mono text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    placeholder="Nhập mô tả..."
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setEditedDescription(buildRoomDescription());
+                    }}
+                    className="flex-1 px-4 py-2 bg-stone-200 text-stone-800 rounded-lg hover:bg-stone-300 transition font-medium"
+                  >
+                    🔄 Tạo lại mô tả
+                  </button>
+                  {isShareMode ? (
+                    <button
+                      onClick={async () => {
+                        await handleSharePhotos();
+                        setShowDescription(false);
+                        setEditedDescription("");
+                        setIsShareMode(false);
+                      }}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    >
+                      🔗 Chia sẻ ngay
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(editedDescription);
+                        alert("✅ Mô tả đã sao chép vào clipboard!");
+                      }}
+                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                    >
+                      📋 Sao chép
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
