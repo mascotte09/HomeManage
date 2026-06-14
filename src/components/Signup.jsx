@@ -166,195 +166,292 @@ export default function Signup({
     // ─── Render: Step 2 - Verify code ──────────────────────────────────────
     if (step === 'verify') {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <form onSubmit={handleVerify} style={{ width: '100%', maxWidth: '500px', padding: '20px' }}>
-                    <div className="control">
-                        <label htmlFor="verification-code">
-                            Mã Xác Thực
-                        </label>
-
-                        <input
-                            id="verification-code"
-                            type="text"
-                            value={inputCode}
-                            onChange={(e) =>
-                                setInputCode(e.target.value)
-                            }
-                            placeholder="Nhập mã 6 chữ số"
-                            required
-                        />
-                    </div>
-
-                    <p
-                        className="form-actions"
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: '100vh',
+                }}
+            >
+                <div
+                    style={{
+                        flex: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                >
+                    <div
                         style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}
+    width: '100%',
+    maxWidth: '600px',
+    padding: '30px',
+    background: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+  }}
                     >
-                        {/* Left */}
-                        <button
-                            type="button"
-                            className="button button-flat"
-                            onClick={onBackToLogin}
-                        >
-                            Đăng Nhập Lại
-                        </button>
+                        <form onSubmit={handleVerify}>
+                            <div className="control">
+                                <label htmlFor="verification-code">
+                                    Mã Xác Thực
+                                </label>
 
-                        {/* Right */}
-                        <span
+                                <input
+                                    id="verification-code"
+                                    type="text"
+                                    value={inputCode}
+                                    onChange={(e) =>
+                                        setInputCode(e.target.value)
+                                    }
+                                    placeholder="Nhập mã 6 chữ số"
+                                    required
+                                />
+                            </div>
+
+                            <p
+                                className="form-actions"
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className="button button-flat"
+                                    onClick={onBackToLogin}
+                                >
+                                    Đăng Nhập Lại
+                                </button>
+
+                                <span
+                                    style={{
+                                        display: 'flex',
+                                        gap: '10px',
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        className="button button-flat"
+                                        onClick={handleResendCode}
+                                        disabled={sending}
+                                    >
+                                        {sending
+                                            ? 'Đang Gửi...'
+                                            : 'Gửi Lại Mã'}
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        className="button"
+                                        disabled={verifying}
+                                    >
+                                        {verifying
+                                            ? 'Đang Xác Thực...'
+                                            : 'Xác Thực'}
+                                    </button>
+                                </span>
+                            </p>
+                        </form>
+
+                        {/* MESSAGE */}
+                        {message && (
+                            <div
+                                style={{
+                                    marginTop: '16px',
+                                    padding: '12px',
+                                    borderRadius: '10px',
+                                    textAlign: 'center',
+                                    whiteSpace: 'pre-line',
+                                    backgroundColor:
+                                        message
+                                            .toLowerCase()
+                                            .includes('thành công')
+                                            ? '#dcfce7'
+                                            : '#dbeafe',
+                                    color:
+                                        message
+                                            .toLowerCase()
+                                            .includes('thành công')
+                                            ? '#166534'
+                                            : '#1d4ed8',
+                                }}
+                            >
+                                {message}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <FooterHouse />
+            </div>
+        );
+    }
+
+    // ─── Render: Step 1 - Signup form ──────────────────────────────────────
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                minHeight: "100vh",
+            }}
+        >
+            <div
+                style={{
+                    flex: 1,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}
+            >
+                <div
+                    style={{
+                        width: "100%",
+                        maxWidth: "500px",
+                        padding: "20px",
+                    }}
+                >
+                    <form onSubmit={handleSignup}>
+                        <div className="control">
+                            <label htmlFor="email">Email</label>
+
+                            <input
+                                id="email"
+                                type="email"
+                                value={username}
+                                onChange={(e) =>
+                                    setUsername(e.target.value)
+                                }
+                                required
+                            />
+                        </div>
+
+                        <div className="control-row">
+                            <div className="control">
+                                <label htmlFor="password">
+                                    Mật Khẩu
+                                </label>
+
+                                <input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
+
+                            <div className="control">
+                                <label htmlFor="confirm-password">
+                                    Xác Nhận Mật Khẩu
+                                </label>
+
+                                <input
+                                    id="confirm-password"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) =>
+                                        setConfirmPassword(
+                                            e.target.value
+                                        )
+                                    }
+                                    required
+                                />
+
+                                <div className="control-error">
+                                    {passwordsAreNotEqual && (
+                                        <p>
+                                            Mật khẩu phải trùng khớp.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <p
+                            className="form-actions"
                             style={{
-                                display: 'flex',
-                                gap: '10px',
+                                display: "flex",
+                                justifyContent:
+                                    "space-between",
+                                alignItems: "center",
                             }}
                         >
                             <button
                                 type="button"
                                 className="button button-flat"
-                                onClick={handleResendCode}
-                                disabled={sending}
+                                onClick={onBackToLogin}
                             >
-                                {sending ? 'Đang Gửi...' : 'Gửi Lại Mã'}
+                                Đăng Nhập
                             </button>
 
-                            <button
-                                type="submit"
-                                className="button"
-                                disabled={verifying}
+                            <span
+                                style={{
+                                    display: "flex",
+                                    gap: "10px",
+                                }}
                             >
-                                {verifying ? 'Đang Xác Thực...' : 'Xác Thực'}
-                            </button>
-                        </span>
-                    </p>
+                                <button
+                                    type="button"
+                                    className="button button-flat"
+                                    onClick={() => {
+                                        setUsername("");
+                                        setPassword("");
+                                        setConfirmPassword("");
+                                        setMessage("");
+                                    }}
+                                >
+                                    Xóa
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    className="button"
+                                    disabled={sending}
+                                >
+                                    {sending
+                                        ? "Đang gửi mã..."
+                                        : "Đăng Ký"}
+                                </button>
+                            </span>
+                        </p>
                     </form>
 
-                    <p>{message}</p>
-                </div>
-                <FooterHouse />
-            </div>
-        )
-    }
-
-    // ─── Render: Step 1 - Signup form ──────────────────────────────────────
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <form onSubmit={handleSignup} style={{ width: '100%', maxWidth: '500px', padding: '20px' }}>
-                <div className="control">
-                    <label htmlFor="email">Email</label>
-
-                    <input
-                        id="email"
-                        type="email"
-                        value={username}
-                        onChange={(e) =>
-                            setUsername(e.target.value)
-                        }
-                        required
-                    />
-                </div>
-
-                <div className="control-row">
-                    <div className="control">
-                        <label htmlFor="password">
-                            Mật Khẩu
-                        </label>
-
-                        <input
-                            id="password"
-                            type="password"
-                            name="password"
-                            value={password}
-                            onChange={(e) =>
-                                setPassword(e.target.value)
-                            }
-                            required
-                            minLength={6}
-                        />
-                    </div>
-
-                    <div className="control">
-                        <label htmlFor="confirm-password">
-                            Xác Nhận Mật Khẩu
-                        </label>
-
-                        <input
-                            id="confirm-password"
-                            type="password"
-                            name="confirm-password"
-                            value={confirmPassword}
-                            onChange={(e) =>
-                                setConfirmPassword(
-                                    e.target.value
-                                )
-                            }
-                            required
-                        />
-
-                        <div className="control-error">
-                            {passwordsAreNotEqual && (
-                                <p>
-                                    Mật khẩu phải trùng khớp.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <p
-                    className="form-actions"
-                    style={{
-                        display: 'flex',
-                        justifyContent:
-                            'space-between',
-                        alignItems: 'center',
-                    }}
-                >
-                    {/* Left */}
-                    <button
-                        type="button"
-                        className="button button-flat"
-                        onClick={onBackToLogin}
-                    >
-                        Đăng Nhập
-                    </button>
-
-                    {/* Right */}
-                    <span
-                        style={{
-                            display: 'flex',
-                            gap: '10px',
-                        }}
-                    >
-                        <button
-                            type="button"
-                            className="button button-flat"
-                            onClick={() => {
-                                setUsername('')
-                                setPassword('')
-                                setConfirmPassword('')
-                                setMessage('')
+                    {/* MESSAGE DƯỚI FORM */}
+                    {message && (
+                        <div
+                            style={{
+                                marginTop: "12px",
+                                padding: "12px",
+                                borderRadius: "10px",
+                                whiteSpace: "pre-line",
+                                textAlign: "center",
+                                backgroundColor:
+                                    message
+                                        .toLowerCase()
+                                        .includes("thành công")
+                                        ? "#dcfce7"
+                                        : "#fee2e2",
+                                color:
+                                    message
+                                        .toLowerCase()
+                                        .includes("thành công")
+                                        ? "#166534"
+                                        : "#b91c1c",
                             }}
                         >
-                            Xóa
-                        </button>
-
-                        <button
-                            type="submit"
-                            className="button"
-                            disabled={sending}
-                        >
-                            {sending ? 'Đang gửi mã...' : 'Đăng Ký'}
-                        </button>
-                    </span>
-                </p>
-                </form>
-
-                <p>{message}</p>
+                            {message}
+                        </div>
+                    )}
+                </div>
             </div>
+
             <FooterHouse />
         </div>
-    )
+    );
 }
