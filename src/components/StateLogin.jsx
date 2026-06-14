@@ -1,5 +1,5 @@
-// Custom hooks
 import { useInput } from "../hooks/useInput.js";
+import { useState } from 'react'
 
 // Components
 import Input from "./Input.jsx";
@@ -11,6 +11,7 @@ import { supabase } from "../supabase.js";
 import { isEmail, isNotEmpty } from "../util/validation.js";
 
 export default function Login({ onSignupClick, onLoginSuccess }) {
+    const [message, setMessage] = useState('')
     const {
         value: emailValue,
         handleInputChange: handleEmailChange,
@@ -33,6 +34,7 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
 
     async function handleSubmit(event) {
         event.preventDefault();
+        setMessage('')
 
         const { data, error } = await supabase
             .from("users")
@@ -42,12 +44,13 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
 
         if (error) {
             console.log(error.message);
+            setMessage(error.message)
             return;
         }
 
         // User not found
         if (!data || data.length === 0) {
-            alert("Email hoặc mật khẩu không chính xác");
+            setMessage("Email hoặc mật khẩu không chính xác");
             return;
         }
 
@@ -68,76 +71,121 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
     }
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '500px', padding: '20px' }}>
-                    {/* <h2>Đăng Nhập</h2> */}
-
-                    <div className="control-row">
-                        <Input
-                            label="Email"
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={emailValue}
-                            onBlur={handleEmailBlur}
-                            onChange={handleEmailChange}
-                            error={
-                                emailHasInvalid &&
-                                "Vui lòng nhập một email hợp lệ."
-                            }
-                        />
-
-                        <Input
-                            label="Mật Khẩu"
-                            id="password"
-                            type="password"
-                            name="password"
-                            value={passwordValue}
-                            onBlur={handlePasswordBlur}
-                            onChange={handlePasswordChange}
-                            error={
-                                passwordHasInvalid &&
-                                "Vui lòng nhập mật khẩu."
-                            }
-                        />
-                    </div>
-
-                    <div
-                        className="form-actions"
+            <div
+                style={{
+                    flex: 1,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+            >
+                <div
+                    style={{
+                        width: '100%',
+                        maxWidth: '500px',
+                    }}
+                >
+                    <form
+                        onSubmit={handleSubmit}
                         style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
+                            width: '100%',
+                            padding: '20px',
                         }}
                     >
-                        {/* Left */}
-                        <button
-                            type="button"
-                            onClick={onSignupClick}
-                            className="button button-flat"
-                        >
-                            Đăng Ký
-                        </button>
+                        {/* FORM */}
 
-                        {/* Right */}
-                        <span style={{ display: "flex", gap: "10px" }}>
+                        <div className="control-row">
+                            <Input
+                                label="Email"
+                                id="email"
+                                type="email"
+                                name="email"
+                                value={emailValue}
+                                onBlur={handleEmailBlur}
+                                onChange={handleEmailChange}
+                                error={
+                                    emailHasInvalid &&
+                                    "Vui lòng nhập một email hợp lệ."
+                                }
+                            />
+
+                            <Input
+                                label="Mật Khẩu"
+                                id="password"
+                                type="password"
+                                name="password"
+                                value={passwordValue}
+                                onBlur={handlePasswordBlur}
+                                onChange={handlePasswordChange}
+                                error={
+                                    passwordHasInvalid &&
+                                    "Vui lòng nhập mật khẩu."
+                                }
+                            />
+                        </div>
+
+                        <div
+                            className="form-actions"
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                            }}
+                        >
                             <button
                                 type="button"
+                                onClick={onSignupClick}
                                 className="button button-flat"
-                                onClick={handleReset}
                             >
-                                Xóa
+                                Đăng Ký
                             </button>
 
-                            <button
-                                className="button"
-                                type="submit"
+                            <span
+                                style={{
+                                    display: "flex",
+                                    gap: "10px",
+                                }}
                             >
-                                Đăng Nhập
-                            </button>
-                        </span>
-                    </div>
-                </form>
+                                <button
+                                    type="button"
+                                    className="button button-flat"
+                                    onClick={handleReset}
+                                >
+                                    Xóa
+                                </button>
+
+                                <button
+                                    className="button"
+                                    type="submit"
+                                >
+                                    Đăng Nhập
+                                </button>
+                            </span>
+                        </div>
+                    </form>
+
+                    {/* MESSAGE DƯỚI FORM */}
+                    {message && (
+                        <div
+                            style={{
+                                marginTop: "12px",
+                                padding: "12px",
+                                borderRadius: "8px",
+                                backgroundColor:
+                                    message.toLowerCase().includes("thành công")
+                                        ? "#dcfce7"
+                                        : "#fee2e2",
+                                color:
+                                    message.toLowerCase().includes("thành công")
+                                        ? "#166534"
+                                        : "#b91c1c",
+                                textAlign: "center",
+                            }}
+                        >
+                            {message}
+                        </div>
+                    )}
+                </div>
             </div>
             <FooterHouse />
         </div>

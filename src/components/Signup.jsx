@@ -166,32 +166,26 @@ export default function Signup({
     // ─── Render: Step 2 - Verify code ──────────────────────────────────────
     if (step === 'verify') {
         return (
+           <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <div
                 style={{
+                    flex: 1,
                     display: 'flex',
-                    flexDirection: 'column',
-                    minHeight: '100vh',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                 }}
             >
                 <div
                     style={{
-                        flex: 1,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
+                        width: '100%',
+                        maxWidth: '500px',
                     }}
                 >
-                    <div
+                        <form onSubmit={handleVerify}
                         style={{
-    width: '100%',
-    maxWidth: '600px',
-    padding: '30px',
-    background: '#fff',
-    borderRadius: '16px',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-  }}
-                    >
-                        <form onSubmit={handleVerify}>
+                            width: '100%',
+                            padding: '20px',
+                        }}>
                             <div className="control">
                                 <label htmlFor="verification-code">
                                     Mã Xác Thực
@@ -291,29 +285,26 @@ export default function Signup({
 
     // ─── Render: Step 1 - Signup form ──────────────────────────────────────
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                minHeight: "100vh",
-            }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <div
                 style={{
                     flex: 1,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                 }}
             >
                 <div
                     style={{
-                        width: "100%",
-                        maxWidth: "500px",
-                        padding: "20px",
+                        width: '100%',
+                        maxWidth: '500px',
                     }}
                 >
-                    <form onSubmit={handleSignup}>
+                    <form onSubmit={handleSignup}
+                    style={{
+                            width: '100%',
+                            padding: '20px',
+                        }}>
                         <div className="control">
                             <label htmlFor="email">Email</label>
 
@@ -321,9 +312,7 @@ export default function Signup({
                                 id="email"
                                 type="email"
                                 value={username}
-                                onChange={(e) =>
-                                    setUsername(e.target.value)
-                                }
+                                onChange={(e) => setUsername(e.target.value)}
                                 required
                             />
                         </div>
@@ -338,9 +327,7 @@ export default function Signup({
                                     id="password"
                                     type="password"
                                     value={password}
-                                    onChange={(e) =>
-                                        setPassword(e.target.value)
-                                    }
+                                    onChange={(e) => setPassword(e.target.value)}
                                     required
                                     minLength={6}
                                 />
@@ -356,30 +343,26 @@ export default function Signup({
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) =>
-                                        setConfirmPassword(
-                                            e.target.value
-                                        )
+                                        setConfirmPassword(e.target.value)
                                     }
                                     required
                                 />
 
                                 <div className="control-error">
                                     {passwordsAreNotEqual && (
-                                        <p>
-                                            Mật khẩu phải trùng khớp.
-                                        </p>
+                                        <p>Mật khẩu phải trùng khớp.</p>
                                     )}
                                 </div>
                             </div>
                         </div>
 
-                        <p
+                        <div
                             className="form-actions"
                             style={{
                                 display: "flex",
-                                justifyContent:
-                                    "space-between",
+                                justifyContent: "space-between",
                                 alignItems: "center",
+                                marginTop: "20px",
                             }}
                         >
                             <button
@@ -390,7 +373,7 @@ export default function Signup({
                                 Đăng Nhập
                             </button>
 
-                            <span
+                            <div
                                 style={{
                                     display: "flex",
                                     gap: "10px",
@@ -418,19 +401,19 @@ export default function Signup({
                                         ? "Đang gửi mã..."
                                         : "Đăng Ký"}
                                 </button>
-                            </span>
-                        </p>
+                            </div>
+                        </div>
                     </form>
 
                     {/* MESSAGE DƯỚI FORM */}
                     {message && (
                         <div
                             style={{
-                                marginTop: "12px",
+                                marginTop: "16px",
                                 padding: "12px",
                                 borderRadius: "10px",
-                                whiteSpace: "pre-line",
                                 textAlign: "center",
+                                whiteSpace: "pre-line",
                                 backgroundColor:
                                     message
                                         .toLowerCase()
