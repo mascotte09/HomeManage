@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
 import { sendVerificationEmail } from '../utils/emailService'
+import FooterHouse from './House/FooterHouse.jsx'
 
 // Generate a 6-digit numeric code
 function generateCode() {
@@ -165,8 +166,9 @@ export default function Signup({
     // ─── Render: Step 2 - Verify code ──────────────────────────────────────
     if (step === 'verify') {
         return (
-            <div style={{ padding: '20px' }}>
-                <form onSubmit={handleVerify}>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <form onSubmit={handleVerify} style={{ width: '100%', maxWidth: '500px', padding: '20px' }}>
                     <div className="control">
                         <label htmlFor="verification-code">
                             Mã Xác Thực
@@ -198,7 +200,7 @@ export default function Signup({
                             className="button button-flat"
                             onClick={onBackToLogin}
                         >
-                            Quay Lại Đăng Nhập
+                            Đăng Nhập Lại
                         </button>
 
                         {/* Right */}
@@ -226,17 +228,20 @@ export default function Signup({
                             </button>
                         </span>
                     </p>
-                </form>
+                    </form>
 
-                <p>{message}</p>
+                    <p>{message}</p>
+                </div>
+                <FooterHouse />
             </div>
         )
     }
 
     // ─── Render: Step 1 - Signup form ──────────────────────────────────────
     return (
-        <div style={{ padding: '20px' }}>
-            <form onSubmit={handleSignup}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <form onSubmit={handleSignup} style={{ width: '100%', maxWidth: '500px', padding: '20px' }}>
                 <div className="control">
                     <label htmlFor="email">Email</label>
 
@@ -345,9 +350,11 @@ export default function Signup({
                         </button>
                     </span>
                 </p>
-            </form>
+                </form>
 
-            <p>{message}</p>
+                <p>{message}</p>
+            </div>
+            <FooterHouse />
         </div>
     )
 }
