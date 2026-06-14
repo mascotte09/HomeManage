@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import { supabase } from "../../supabase";
 import Input from "../InputVal.jsx";
 import InvoiceSummary from "./InvoiceSummary";
+import { FiShare, FiX } from "react-icons/fi";
 // import ElectricMeterOCR from "./ElectricMeterOCR";
 export default function InvoiceRecord({
   room,
@@ -65,8 +66,8 @@ export default function InvoiceRecord({
         room?.current_electricity_number ?? "0",
       current_water_number:
         room?.current_water_number ?? "0",
-      new_electricity_number:"",
-      new_water_number:""
+      new_electricity_number: "",
+      new_water_number: ""
     }));
   }, [room, invoice]);
 
@@ -250,7 +251,7 @@ export default function InvoiceRecord({
 
       const file = new File(
         [blob],
-        `invoice-room-${room.room_number}.png`,
+        `invoice-room-${room.room_name}.png`,
         {
           type: "image/png",
         }
@@ -266,7 +267,7 @@ export default function InvoiceRecord({
           await navigator.share({
             files: [file],
             title: "Invoice",
-            text: `Invoice Room ${room.room_number}`,
+            text: `Gởi ${room.room_renter} hóa đơn tháng ${formData.invoice_create_date?.substring(0, 7)}`,
           });
         } catch (e) {
           console.log(e);
@@ -294,20 +295,48 @@ export default function InvoiceRecord({
       Number(formData.current_electricity_number) >
       Number(formData.new_electricity_number);
 
+    const emptyElectricity =
+      formData.new_electricity_number === "";
+
     const invalidWater =
       !isWaterPerPerson &&
       Number(formData.current_water_number) >
       Number(formData.new_water_number);
 
-    const invalidRental =
-      Number(formData.rental_amount) === 0;
+    const emptyWater =
+      !isWaterPerPerson &&
+      formData.new_water_number === "";
 
-    if (
-      invalidRental ||
-      invalidElectricity ||
-      invalidWater
-    ) {
-      setValidationMessage("Nhập lại dữ liệu.");
+    const invalidRental =
+      Number(formData.rental_amount) === 0 ||
+      formData.rental_amount === "";
+
+    if (invalidRental) {
+      setValidationMessage("❌ Tiền thuê là bắt buộc.");
+      setShowValidationModal(true);
+      return;
+    }
+
+    if (emptyElectricity) {
+      setValidationMessage("❌ Số điện mới là bắt buộc.");
+      setShowValidationModal(true);
+      return;
+    }
+
+    if (invalidElectricity) {
+      setValidationMessage("❌ Số điện mới phải lớn hơn hoặc bằng số điện cũ.");
+      setShowValidationModal(true);
+      return;
+    }
+
+    if (!isWaterPerPerson && emptyWater) {
+      setValidationMessage("❌ Số nước mới là bắt buộc.");
+      setShowValidationModal(true);
+      return;
+    }
+
+    if (invalidWater) {
+      setValidationMessage("❌ Số nước mới phải lớn hơn hoặc bằng số nước cũ.");
       setShowValidationModal(true);
       return;
     }
@@ -434,7 +463,7 @@ export default function InvoiceRecord({
               newestInvoice.new_electricity_number,
             current_water_number:
               newestInvoice.new_water_number,
-            monthly_rent: 
+            monthly_rent:
               newestInvoice.rental_amount
           })
           .eq("id", room.id);
@@ -543,7 +572,7 @@ export default function InvoiceRecord({
       <div className="flex flex-col gap-2">
 
         <Input
-          label="Ngày tạo Hóa Đơn"
+          label={<span>Ngày tạo Hóa Đơn <span className="text-red-500">*</span></span>}
           type="date"
           value={formData.invoice_create_date}
           onChange={handleChange}
@@ -551,7 +580,7 @@ export default function InvoiceRecord({
         />
 
         <Input
-          label="Tiền thuê"
+          label={<span>Tiền thuê <span className="text-red-500">*</span></span>}
           type="text"
           value={Number(
             formData.rental_amount || 0
@@ -596,7 +625,7 @@ export default function InvoiceRecord({
 
           <div>
             <Input
-              label="Số Điện Mới"
+              label={<span>Số Điện Mới <span className="text-red-500">*</span></span>}
               type="number"
               name="new_electricity_number"
               value={formData.new_electricity_number}
@@ -640,7 +669,7 @@ export default function InvoiceRecord({
               )}
               <div>
                 <Input
-                  label="Số Nước Mới"
+                  label={<span>Số Nước Mới <span className="text-red-500">*</span></span>}
                   type="number"
                   name="new_water_number"
                   value={
@@ -669,7 +698,7 @@ export default function InvoiceRecord({
         </div>
 
         <Input
-          label="Wifi Amount"
+          label="Wifi "
           type="text"
           value={Number(
             formData.wifi_amount || 0
@@ -700,32 +729,44 @@ export default function InvoiceRecord({
 
 
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4">
-            <div className="flex justify-end gap-3 mt-6">
-
-              <button
-                onClick={() => {
-                  setShowSummaryModal(false);
-                  // close page too
-                  onAdd?.();
-                }}
-                className="bg-gray-300 px-4 py-2 rounded"
-              >
-                Đóng
-              </button>
+            <div className="flex justify-end items-start gap-5 mt-4">
+              
 
               <button
                 onClick={async () => {
                   await captureAndShare();
-
                   setShowSummaryModal(false);
-
                   onAdd?.();
                 }}
-                className="bg-green-600 text-white px-4 py-2 rounded"
+                className="
+      flex flex-col items-center
+      text-green-600
+      hover:text-green-700
+      transition
+    "
               >
-                Gửi Hóa Đơn
+                <FiShare size={26} />
+                <span className="text-xs mt-1">
+                  Gửi hóa đơn
+                </span>
               </button>
-
+              <button
+                onClick={() => {
+                  setShowSummaryModal(false);
+                  onAdd?.();
+                }}
+                className="
+      flex flex-col items-center
+      text-stone-600
+      hover:text-stone-800
+      transition
+    "
+              >
+                <FiX size={26} />
+                <span className="text-xs mt-1">
+                  Đóng
+                </span>
+              </button>
             </div>
             <InvoiceSummary
               summaryRef={summaryRef}
