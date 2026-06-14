@@ -1,5 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
+import { sendVerificationEmail } from '../utils/emailService'
+
+// Generate a 6-digit numeric code
+function generateCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString()
+}
 
 export default function Signup({
     onBackToLogin,
@@ -10,25 +16,93 @@ export default function Signup({
     const [confirmPassword, setConfirmPassword] = useState('')
     const [message, setMessage] = useState('')
 
+    // Verification step state
+    const [step, setStep] = useState('signup') // 'signup' | 'verify'
+    const [pendingCode, setPendingCode] = useState(null) // code held in memory until verified
+    const [inputCode, setInputCode] = useState('')
+    const [sending, setSending] = useState(false)
+    const [verifying, setVerifying] = useState(false)
+
     const passwordsAreNotEqual =
         password !== confirmPassword &&
         confirmPassword.length > 0
 
+    // ─── Step 1: Send verification code (no DB write yet) ──────────────────
     const handleSignup = async (e) => {
         e.preventDefault()
+        setMessage('')
 
         // Verify passwords
         if (password !== confirmPassword) {
-            setMessage('Passwords do not match')
+            setMessage('Mật khẩu không trùng khớp')
             return
         }
 
+        setSending(true)
+
+        // Check email is not already registered
+        const { data: existingUser, error: checkError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('username', username)
+            .maybeSingle()
+
+        if (checkError) {
+            setMessage(checkError.message)
+            setSending(false)
+            return
+        }
+
+        if (existingUser) {
+            setMessage('Email này đã được đăng ký.')
+            setSending(false)
+            return
+        }
+
+        const code = generateCode()
+
+        // Send verification email (no insert into "users" yet)
+        try {
+            await sendVerificationEmail(username, code)
+        } catch (err) {
+            setMessage('Không thể gửi email xác thực')
+            setSending(false)
+            return
+        }
+
+        setPendingCode(code)
+        setSending(false)
+        setStep('verify')
+        setMessage('Đã gởi mã xác thực đến email của bạn. \nVui lòng kiểm tra trong hộp thư đến hay thư rác và nhập mã để tiếp tục.')
+    }
+
+    // ─── Step 2: Confirm code, then create user + home ──────────────────────
+    const handleVerify = async (e) => {
+        e.preventDefault()
+        setMessage('')
+
+        if (!inputCode.trim()) {
+            setMessage('Vui lòng nhập mã xác thực')
+            return
+        }
+
+        setVerifying(true)
+
+        if (pendingCode === null || inputCode.trim() !== pendingCode) {
+            setMessage('Mã xác thực không hợp lệ')
+            setVerifying(false)
+            return
+        }
+
+        // Code is correct → create the user (already verified)
         const { data, error } = await supabase
             .from('users')
             .insert([
                 {
                     username,
                     password,
+                    verification_code: null,
+                    is_verified: true,
                 },
             ])
             .select()
@@ -36,6 +110,7 @@ export default function Signup({
 
         if (error) {
             setMessage(error.message)
+            setVerifying(false)
             return
         }
 
@@ -51,20 +126,114 @@ export default function Signup({
 
         if (homeError) {
             setMessage(homeError.message)
+            setVerifying(false)
             return
         }
 
-        setMessage('User registered + Home created successfully!')
+        setMessage('Email đã được xác thực thành công!')
+        setVerifying(false)
 
         // Clear inputs
         setUsername('')
         setPassword('')
         setConfirmPassword('')
+        setInputCode('')
+        setPendingCode(null)
 
         // Return to Login page
         onSignupSuccess()
     }
 
+    // ─── Resend code ────────────────────────────────────────────────────────
+    const handleResendCode = async () => {
+        setMessage('')
+        setSending(true)
+
+        const code = generateCode()
+
+        try {
+            await sendVerificationEmail(username, code)
+            setPendingCode(code)
+            setMessage('Mã xác thực mới đã được gửi.')
+        } catch (err) {
+            setMessage('Không thể gửi email xác thực')
+        }
+
+        setSending(false)
+    }
+
+    // ─── Render: Step 2 - Verify code ──────────────────────────────────────
+    if (step === 'verify') {
+        return (
+            <div style={{ padding: '20px' }}>
+                <form onSubmit={handleVerify}>
+                    <div className="control">
+                        <label htmlFor="verification-code">
+                            Mã Xác Thực
+                        </label>
+
+                        <input
+                            id="verification-code"
+                            type="text"
+                            value={inputCode}
+                            onChange={(e) =>
+                                setInputCode(e.target.value)
+                            }
+                            placeholder="Nhập mã 6 chữ số"
+                            required
+                        />
+                    </div>
+
+                    <p
+                        className="form-actions"
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                        }}
+                    >
+                        {/* Left */}
+                        <button
+                            type="button"
+                            className="button button-flat"
+                            onClick={onBackToLogin}
+                        >
+                            Quay Lại Đăng Nhập
+                        </button>
+
+                        {/* Right */}
+                        <span
+                            style={{
+                                display: 'flex',
+                                gap: '10px',
+                            }}
+                        >
+                            <button
+                                type="button"
+                                className="button button-flat"
+                                onClick={handleResendCode}
+                                disabled={sending}
+                            >
+                                {sending ? 'Đang Gửi...' : 'Gửi Lại Mã'}
+                            </button>
+
+                            <button
+                                type="submit"
+                                className="button"
+                                disabled={verifying}
+                            >
+                                {verifying ? 'Đang Xác Thực...' : 'Xác Thực'}
+                            </button>
+                        </span>
+                    </p>
+                </form>
+
+                <p>{message}</p>
+            </div>
+        )
+    }
+
+    // ─── Render: Step 1 - Signup form ──────────────────────────────────────
     return (
         <div style={{ padding: '20px' }}>
             <form onSubmit={handleSignup}>
@@ -85,7 +254,7 @@ export default function Signup({
                 <div className="control-row">
                     <div className="control">
                         <label htmlFor="password">
-                            Password
+                            Mật Khẩu
                         </label>
 
                         <input
@@ -103,7 +272,7 @@ export default function Signup({
 
                     <div className="control">
                         <label htmlFor="confirm-password">
-                            Confirm Password
+                            Xác Nhận Mật Khẩu
                         </label>
 
                         <input
@@ -122,7 +291,7 @@ export default function Signup({
                         <div className="control-error">
                             {passwordsAreNotEqual && (
                                 <p>
-                                    Passwords must match.
+                                    Mật khẩu phải trùng khớp.
                                 </p>
                             )}
                         </div>
@@ -144,7 +313,7 @@ export default function Signup({
                         className="button button-flat"
                         onClick={onBackToLogin}
                     >
-                        Login Again
+                        Quay Lại Đăng Nhập
                     </button>
 
                     {/* Right */}
@@ -164,14 +333,15 @@ export default function Signup({
                                 setMessage('')
                             }}
                         >
-                            Reset
+                            Xóa
                         </button>
 
                         <button
                             type="submit"
                             className="button"
+                            disabled={sending}
                         >
-                            Sign up
+                            {sending ? 'Đang gửi mã...' : 'Đăng Ký'}
                         </button>
                     </span>
                 </p>

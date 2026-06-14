@@ -46,7 +46,7 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
 
         // User not found
         if (!data || data.length === 0) {
-            alert("Invalid email or password");
+            alert("Email hoặc mật khẩu không chính xác");
             return;
         }
 
@@ -67,7 +67,7 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
     }
     return (
         <form onSubmit={handleSubmit}>
-            <h2>Login</h2>
+            {/* <h2>Đăng Nhập</h2> */}
 
             <div className="control-row">
                 <Input
@@ -80,12 +80,12 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
                     onChange={handleEmailChange}
                     error={
                         emailHasInvalid &&
-                        "Please enter a valid email."
+                        "Vui lòng nhập một email hợp lệ."
                     }
                 />
 
                 <Input
-                    label="Password"
+                    label="Mật Khẩu"
                     id="password"
                     type="password"
                     name="password"
@@ -94,7 +94,7 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
                     onChange={handlePasswordChange}
                     error={
                         passwordHasInvalid &&
-                        "Please enter a password."
+                        "Vui lòng nhập mật khẩu."
                     }
                 />
             </div>
@@ -113,7 +113,7 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
                     onClick={onSignupClick}
                     className="button button-flat"
                 >
-                    Sign Up Here
+                    Đăng Ký
                 </button>
 
                 {/* Right */}
@@ -123,14 +123,14 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
                         className="button button-flat"
                         onClick={handleReset}
                     >
-                        Reset
+                        Xóa
                     </button>
 
                     <button
                         className="button"
                         type="submit"
                     >
-                        Login
+                        Đăng Nhập
                     </button>
                 </span>
             </div>
