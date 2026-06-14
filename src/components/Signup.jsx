@@ -216,7 +216,7 @@ export default function Signup({
                                     className="button button-flat"
                                     onClick={onBackToLogin}
                                 >
-                                    Đăng Nhập Lại
+                                    Đăng Nhập
                                 </button>
 
                                 <span
