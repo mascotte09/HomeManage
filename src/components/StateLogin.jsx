@@ -3,6 +3,7 @@ import { useInput } from "../hooks/useInput.js";
 
 // Components
 import Input from "./Input.jsx";
+import FooterHouse from "./House/FooterHouse.jsx";
 
 import { supabase } from "../supabase.js";
 
@@ -66,74 +67,79 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
         resetPassword();
     }
     return (
-        <form onSubmit={handleSubmit}>
-            {/* <h2>Đăng Nhập</h2> */}
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '500px', padding: '20px' }}>
+                    {/* <h2>Đăng Nhập</h2> */}
 
-            <div className="control-row">
-                <Input
-                    label="Email"
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={emailValue}
-                    onBlur={handleEmailBlur}
-                    onChange={handleEmailChange}
-                    error={
-                        emailHasInvalid &&
-                        "Vui lòng nhập một email hợp lệ."
-                    }
-                />
+                    <div className="control-row">
+                        <Input
+                            label="Email"
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={emailValue}
+                            onBlur={handleEmailBlur}
+                            onChange={handleEmailChange}
+                            error={
+                                emailHasInvalid &&
+                                "Vui lòng nhập một email hợp lệ."
+                            }
+                        />
 
-                <Input
-                    label="Mật Khẩu"
-                    id="password"
-                    type="password"
-                    name="password"
-                    value={passwordValue}
-                    onBlur={handlePasswordBlur}
-                    onChange={handlePasswordChange}
-                    error={
-                        passwordHasInvalid &&
-                        "Vui lòng nhập mật khẩu."
-                    }
-                />
-            </div>
+                        <Input
+                            label="Mật Khẩu"
+                            id="password"
+                            type="password"
+                            name="password"
+                            value={passwordValue}
+                            onBlur={handlePasswordBlur}
+                            onChange={handlePasswordChange}
+                            error={
+                                passwordHasInvalid &&
+                                "Vui lòng nhập mật khẩu."
+                            }
+                        />
+                    </div>
 
-            <div
-                className="form-actions"
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                }}
-            >
-                {/* Left */}
-                <button
-                    type="button"
-                    onClick={onSignupClick}
-                    className="button button-flat"
-                >
-                    Đăng Ký
-                </button>
-
-                {/* Right */}
-                <span style={{ display: "flex", gap: "10px" }}>
-                    <button
-                        type="button"
-                        className="button button-flat"
-                        onClick={handleReset}
+                    <div
+                        className="form-actions"
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                        }}
                     >
-                        Xóa
-                    </button>
+                        {/* Left */}
+                        <button
+                            type="button"
+                            onClick={onSignupClick}
+                            className="button button-flat"
+                        >
+                            Đăng Ký
+                        </button>
 
-                    <button
-                        className="button"
-                        type="submit"
-                    >
-                        Đăng Nhập
-                    </button>
-                </span>
+                        {/* Right */}
+                        <span style={{ display: "flex", gap: "10px" }}>
+                            <button
+                                type="button"
+                                className="button button-flat"
+                                onClick={handleReset}
+                            >
+                                Xóa
+                            </button>
+
+                            <button
+                                className="button"
+                                type="submit"
+                            >
+                                Đăng Nhập
+                            </button>
+                        </span>
+                    </div>
+                </form>
             </div>
-        </form>
+            <FooterHouse />
+        </div>
     );
 }

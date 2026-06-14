@@ -7,14 +7,14 @@ export default function FooterHouse() {
         {/* Brand + Copyright */}
         <div className="flex items-center justify-center gap-2">
           <span className="text-sm font-semibold text-stone-700">
-            🏠 Room Management System
+            🏠 Hệ thống Quản Trọ
           </span>
         </div>
 
         {/* Made with love */}
         <div className="flex items-center justify-center gap-1 text-xs text-stone-600">
           
-          <span>📱 Contact: </span>
+          <span>📱 Tel: </span>
           <a 
             href="tel:0777107877"
             className="hover:text-blue-600 transition"
@@ -25,7 +25,7 @@ export default function FooterHouse() {
 
         {/* Copyright */}
         <div className="text-xs text-stone-400">
-          © {currentYear} Room Management. All rights reserved.
+          © {currentYear} Hệ thống Quản Trọ. All rights reserved.
         </div>        
       </div>
     </footer>
