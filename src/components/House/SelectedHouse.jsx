@@ -276,7 +276,7 @@ const isDirty = () => {
             />
           </Section>
 
-          <Section title="Thông tin thanh toán">
+          <Section title="Ngân hàng (in kèm mã thanh toán trên hóa đơn)">
             <Input
               label="Ngân hàng"
               type="text"
