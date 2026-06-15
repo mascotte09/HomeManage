@@ -2,8 +2,8 @@ import emailjs from 'emailjs-com'
 
 // Initialize EmailJS once
 let isInitialized = false
-const VITE_EMAILJS_PUBLIC_KEY = '0-PdKtP77zuafLSjd'
-const VITE_EMAILJS_SERVICE_ID = 'service_49dcxp7'
+const VITE_EMAILJS_PUBLIC_KEY = 'hBqjKVjcLf8P7kwkI'
+const VITE_EMAILJS_SERVICE_ID = 'service_1qschxw'
 const VITE_EMAILJS_TEMPLATE_ID = 'VerificationCode'
 export function initializeEmailJS() {
     if (!isInitialized) {

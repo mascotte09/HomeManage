@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../supabase'
 import { sendVerificationEmail } from '../utils/emailService'
 import FooterHouse from './House/FooterHouse.jsx'
@@ -23,6 +23,45 @@ export default function Signup({
     const [inputCode, setInputCode] = useState('')
     const [sending, setSending] = useState(false)
     const [verifying, setVerifying] = useState(false)
+    const [cooldown, setCooldown] = useState(0) // seconds remaining before resend allowed
+
+    // Ref guard chống double-submit ngay lập tức (không phụ thuộc re-render)
+    const isSubmittingRef = useRef(false)
+
+    const RESEND_COOLDOWN_SECONDS = 60
+
+    // Key cố định (KHÔNG theo email) -> đổi email khác cũng không bypass được cooldown
+    const COOLDOWN_KEY = 'signup_otp_cooldown'
+
+    // Lấy thông tin OTP đã gửi gần nhất (nếu còn trong cooldown)
+    const getStoredOtp = () => {
+        const raw = localStorage.getItem(COOLDOWN_KEY)
+        if (!raw) return null
+        try {
+            const { code, email, sentAt } = JSON.parse(raw)
+            const elapsed = (Date.now() - sentAt) / 1000
+            const remaining = Math.ceil(RESEND_COOLDOWN_SECONDS - elapsed)
+            return { code, email, remaining: remaining > 0 ? remaining : 0 }
+        } catch {
+            return null
+        }
+    }
+
+    const markCodeSent = (email, code) => {
+        localStorage.setItem(
+            COOLDOWN_KEY,
+            JSON.stringify({ code, email, sentAt: Date.now() })
+        )
+    }
+
+    // Đếm ngược cooldown để cập nhật UI
+    useEffect(() => {
+        if (cooldown <= 0) return
+        const timer = setInterval(() => {
+            setCooldown((c) => (c > 1 ? c - 1 : 0))
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [cooldown])
 
     const passwordsAreNotEqual =
         password !== confirmPassword &&
@@ -31,11 +70,32 @@ export default function Signup({
     // ─── Step 1: Send verification code (no DB write yet) ──────────────────
     const handleSignup = async (e) => {
         e.preventDefault()
+        if (isSubmittingRef.current) return
+        isSubmittingRef.current = true
         setMessage('')
 
         // Verify passwords
         if (password !== confirmPassword) {
             setMessage('Mật khẩu không trùng khớp')
+            isSubmittingRef.current = false
+            return
+        }
+
+        // Chặn gửi mail mới nếu vừa gửi gần đây - kể cả khi user đổi sang
+        // email khác để né cooldown (cooldown này KHÔNG theo email)
+        const stored = getStoredOtp()
+        if (stored && stored.remaining > 0) {
+            if (stored.email.toLowerCase() === username.toLowerCase()) {
+                // Cùng email đã gửi trước đó -> cho vào lại bước verify với mã cũ
+                setPendingCode(stored.code)
+                setCooldown(stored.remaining)
+                setStep('verify')
+                setMessage(`Mã xác thực đã được gửi trước đó. Vui lòng kiểm tra email, hoặc đợi ${stored.remaining}s để gửi lại.`)
+            } else {
+                // Email khác với lần gửi trước -> không gửi mail mới, yêu cầu đợi
+                setMessage(`Bạn vừa yêu cầu mã xác thực cho một email khác. Vui lòng đợi ${stored.remaining}s trước khi đăng ký với email khác.`)
+            }
+            isSubmittingRef.current = false
             return
         }
 
@@ -51,12 +111,14 @@ export default function Signup({
         if (checkError) {
             setMessage(checkError.message)
             setSending(false)
+            isSubmittingRef.current = false
             return
         }
 
         if (existingUser) {
             setMessage('Email này đã được đăng ký.')
             setSending(false)
+            isSubmittingRef.current = false
             return
         }
 
@@ -68,11 +130,15 @@ export default function Signup({
         } catch (err) {
             setMessage('Không thể gửi email xác thực')
             setSending(false)
+            isSubmittingRef.current = false
             return
         }
 
         setPendingCode(code)
+        markCodeSent(username, code)
+        setCooldown(RESEND_COOLDOWN_SECONDS)
         setSending(false)
+        isSubmittingRef.current = false
         setStep('verify')
         setMessage('Đã gởi mã xác thực đến email của bạn. \nVui lòng kiểm tra trong hộp thư đến hay thư rác và nhập mã để tiếp tục.')
     }
@@ -80,10 +146,13 @@ export default function Signup({
     // ─── Step 2: Confirm code, then create user + home ──────────────────────
     const handleVerify = async (e) => {
         e.preventDefault()
+        if (isSubmittingRef.current) return
+        isSubmittingRef.current = true
         setMessage('')
 
         if (!inputCode.trim()) {
             setMessage('Vui lòng nhập mã xác thực')
+            isSubmittingRef.current = false
             return
         }
 
@@ -92,6 +161,7 @@ export default function Signup({
         if (pendingCode === null || inputCode.trim() !== pendingCode) {
             setMessage('Mã xác thực không hợp lệ')
             setVerifying(false)
+            isSubmittingRef.current = false
             return
         }
 
@@ -112,6 +182,7 @@ export default function Signup({
         if (error) {
             setMessage(error.message)
             setVerifying(false)
+            isSubmittingRef.current = false
             return
         }
 
@@ -128,11 +199,13 @@ export default function Signup({
         if (homeError) {
             setMessage(homeError.message)
             setVerifying(false)
+            isSubmittingRef.current = false
             return
         }
 
         setMessage('Email đã được xác thực thành công!')
         setVerifying(false)
+        isSubmittingRef.current = false
 
         // Clear inputs
         setUsername('')
@@ -147,6 +220,7 @@ export default function Signup({
 
     // ─── Resend code ────────────────────────────────────────────────────────
     const handleResendCode = async () => {
+        if (cooldown > 0) return
         setMessage('')
         setSending(true)
 
@@ -155,6 +229,8 @@ export default function Signup({
         try {
             await sendVerificationEmail(username, code)
             setPendingCode(code)
+            markCodeSent(username, code)
+            setCooldown(RESEND_COOLDOWN_SECONDS)
             setMessage('Mã xác thực mới đã được gửi.')
         } catch (err) {
             setMessage('Không thể gửi email xác thực')
@@ -229,10 +305,12 @@ export default function Signup({
                                         type="button"
                                         className="button button-flat"
                                         onClick={handleResendCode}
-                                        disabled={sending}
+                                        disabled={sending || cooldown > 0}
                                     >
                                         {sending
                                             ? 'Đang Gửi...'
+                                            : cooldown > 0
+                                            ? `Gửi Lại Mã (${cooldown}s)`
                                             : 'Gửi Lại Mã'}
                                     </button>
 
