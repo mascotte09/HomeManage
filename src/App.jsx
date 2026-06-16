@@ -15,6 +15,9 @@ import Invoices from "./components/Invoice/Invoices";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import ListPayments from "./components/Payment/ListPayments.jsx";
 import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
+import SettingsHouse from "./components/SettingsHouse.jsx";
+
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -76,7 +79,7 @@ function App() {
                     path="/"
                     element={
                         <div className="flex flex-col h-dvh">
-                            <HeaderHouse
+                            <HeaderHouseWithNav
                                 onLogout={() => {
                                     localStorage.removeItem(
                                         "currentUser"
@@ -96,7 +99,7 @@ function App() {
                     path="/houses"
                     element={
                         <div className="flex flex-col h-dvh">
-                            <HeaderHouse
+                            <HeaderHouseWithNav
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
                                     setCurrentUser(null);
@@ -109,6 +112,14 @@ function App() {
                         </div>
                     }
                 />
+
+                <Route
+                    path="/settings"
+                    element={
+                        <SettingsHouseWithNav user={currentUser} />
+                    }
+                />
+
                 {/* RoomPage already includes HeaderRoom internally */}
                 <Route path="/rooms/:houseId"
                     element={<RoomPage />} />
@@ -191,4 +202,23 @@ function App() {
         </BrowserRouter>
     );
 }
+
+// Bọc HeaderHouse để gắn điều hướng sang trang /settings
+// (đặt trong file App.jsx vì cần useNavigate, hook chỉ dùng được bên trong BrowserRouter)
+function HeaderHouseWithNav({ onLogout }) {
+    const navigate = useNavigate();
+    return (
+        <HeaderHouse
+            onLogout={onLogout}
+            onSettings={() => navigate("/settings")}
+        />
+    );
+}
+
+// Bọc SettingsHouse để nút "Quay lại" điều hướng về trang chủ
+function SettingsHouseWithNav({ user }) {
+    const navigate = useNavigate();
+    return <SettingsHouse user={user} onBack={() => navigate("/")} />;
+}
+
 export default App;
