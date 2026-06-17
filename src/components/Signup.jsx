@@ -140,7 +140,7 @@ export default function Signup({
         setSending(false)
         isSubmittingRef.current = false
         setStep('verify')
-        setMessage('Đã gởi mã xác thực đến email của bạn. \nVui lòng kiểm tra trong hộp thư đến hay thư rác và nhập mã để tiếp tục.')
+        setMessage(`Đã gởi mã xác thực đến email của bạn: ${username}. \nVui lòng kiểm tra trong hộp thư đến hay thư rác và nhập mã để tiếp tục.`)
     }
 
     // ─── Step 2: Confirm code, then create user + home ──────────────────────

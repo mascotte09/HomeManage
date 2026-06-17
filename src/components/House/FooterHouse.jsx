@@ -14,7 +14,7 @@ export default function FooterHouse() {
         {/* Made with love */}
         <div className="flex items-center justify-center gap-1 text-xs text-stone-600">
           
-          <span>📱 Tel: </span>
+          <span>📱 Hổ trợ: </span>
           <a 
             href="tel:0777107877"
             className="hover:text-blue-600 transition"
