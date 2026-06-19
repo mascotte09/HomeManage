@@ -118,11 +118,11 @@ export default function InvoiceRecord({
       let query = supabase
         .from("invoices")
         .select(`
-        id,
-        invoice_create_date,
-        total_amount,
-        debit_amount
-      `)
+          id,
+          invoice_create_date,
+          total_amount,
+          debit_amount
+        `)
         .eq("room_id", room.id)
         .neq("debit_amount", 0)
         .order("invoice_create_date", {
@@ -235,17 +235,17 @@ export default function InvoiceRecord({
     await new Promise((resolve) =>
       setTimeout(resolve, 500)
     );
-
-    const canvas = await html2canvas(
-      summaryRef.current,
-      {
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        scale: 2,
-      }
-    );
-
+    await document.fonts.ready; // đợi font load xong
+    const canvas = await html2canvas(summaryRef.current, {
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      scale: 2,
+      scrollX: 0,
+      scrollY: -window.scrollY,   // chống lệch do trang nền đang scroll
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+    });
     canvas.toBlob(async (blob) => {
       if (!blob) return;
 
@@ -430,11 +430,11 @@ export default function InvoiceRecord({
     } = await supabase
       .from("invoices")
       .select(`
-      id,
-      new_electricity_number,
-      new_water_number,
-      rental_amount
-    `)
+        id,
+        new_electricity_number,
+        new_water_number,
+        rental_amount
+      `)
       .eq("room_id", room.id)
       .order(
         "invoice_create_date",
@@ -489,9 +489,9 @@ export default function InvoiceRecord({
       let query = supabase
         .from("invoices")
         .select(`
-        id,
-        rental_amount,
-        wifi_amount`)
+          id,
+          rental_amount,
+          wifi_amount`)
         .eq("room_id", room.id)
         .order(
           "invoice_create_date",
@@ -635,13 +635,13 @@ export default function InvoiceRecord({
             />
 
             {/* <ElectricMeterOCR
-              onDetected={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  new_electricity_number: value,
-                }))
-              }
-            /> */}
+                onDetected={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    new_electricity_number: value,
+                  }))
+                }
+              /> */}
           </div>
         </div>
 
@@ -730,20 +730,27 @@ export default function InvoiceRecord({
 
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4">
             <div className="flex justify-end items-start gap-5 mt-4">
-              
+
 
               <button
                 onClick={async () => {
+                  // Reset scroll của modal container về 0 trước khi chụp
+                  const modalEl = summaryRef.current?.closest('.overflow-y-auto');
+                  if (modalEl) modalEl.scrollTop = 0;
+
+                  // đợi 1 frame để DOM render lại đúng vị trí
+                  await new Promise((r) => requestAnimationFrame(r));
+
                   await captureAndShare();
                   setShowSummaryModal(false);
                   onAdd?.();
                 }}
                 className="
-      flex flex-col items-center
-      text-green-600
-      hover:text-green-700
-      transition
-    "
+        flex flex-col items-center
+        text-green-600
+        hover:text-green-700
+        transition
+      "
               >
                 <FiShare size={26} />
                 <span className="text-xs mt-1">
@@ -756,11 +763,11 @@ export default function InvoiceRecord({
                   onAdd?.();
                 }}
                 className="
-      flex flex-col items-center
-      text-stone-600
-      hover:text-stone-800
-      transition
-    "
+        flex flex-col items-center
+        text-stone-600
+        hover:text-stone-800
+        transition
+      "
               >
                 <FiX size={26} />
                 <span className="text-xs mt-1">

@@ -39,6 +39,7 @@ export default function InvoiceSummary({
     return (
         <div
             ref={summaryRef}
+            style={{ lineHeight: 1.5 }}
             className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden"
         >
             {/* HEADER */}
