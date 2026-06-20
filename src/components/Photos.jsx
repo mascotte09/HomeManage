@@ -224,7 +224,8 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
     // chỉ gọi share ngay trong click event
     await navigator.share({
       files: preparedFiles,
-      title: "Thông tin phòng trọ"
+      title: "Thông tin phòng trọ",
+      text: description
     });
 
   } catch (err) {
