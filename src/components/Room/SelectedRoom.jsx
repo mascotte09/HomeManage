@@ -343,7 +343,7 @@ export default function SelectedRoom({
 
       {/* ── Photos modal ── */}
       {!isNew && showPhotos && (
-        <Photos room={room} open={showPhotos} onClose={() => setShowPhotos(false)} />
+        <Photos room={room} open={showPhotos} onClose={() => setShowPhotos(false)} onRoomUpdated={refreshRooms} />
       )}
 
       {/* ── Delete modal ── */}

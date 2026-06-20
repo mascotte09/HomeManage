@@ -19,7 +19,7 @@ const VIEW = {
 function RoomCard({ room, selected, onSelect, onDelete }) {
     const isOccupied = room.status;
     const navigate = useNavigate();
-    
+
     // Parse amenities from JSON
     const amenities = (() => {
         try {
@@ -29,7 +29,7 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
             return {};
         }
     })();
-    
+
     const amenityIcons = [];
     if (amenities.hotWater) amenityIcons.push('🚿');
     if (amenities.airConditioner) amenityIcons.push('❄️');
@@ -37,7 +37,7 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
     if (amenities.window) amenityIcons.push('🪟');
     if (amenities.balcony) amenityIcons.push('🪟');
     if (amenities.kitchen) amenityIcons.push('🍳');
-    
+
     return (
         <button
             onClick={() => navigate(`/invoicesRoom/${room.id}/${room.home_id}`)}
@@ -73,7 +73,7 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
                             <span className="truncate">{room.room_renter}</span>
                         </div>
                     )}
-                    
+
                     {/* Room details */}
                     {(room.area || room.monthly_rent) && (
                         <div className="flex flex-wrap gap-2 mb-2">
@@ -89,7 +89,7 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
                             )}
                         </div>
                     )}
-                    
+
                     {/* Meter readings */}
                     {/* <div className="flex gap-3">
                         <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
@@ -184,6 +184,7 @@ export default function RoomPage() {
         );
 
         setRooms(sorted);
+        
     }, [houseId]);
 
     useEffect(() => {

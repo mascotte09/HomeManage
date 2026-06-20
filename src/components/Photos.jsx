@@ -2,16 +2,35 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../supabase";
 import { FiShare } from "react-icons/fi";
 
-export default function Photos({ room, open, onClose }) {
+export default function Photos({ room, open, onClose, onRoomUpdated }) {
   const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [home, setHome] = useState(null);
   const [showDescription, setShowDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState("");
   const [isShareMode, setIsShareMode] = useState(false);
+  const [preparedFiles, setPreparedFiles] = useState([]);
+  const [preparing, setPreparing] = useState(false);
 
   // NEW: selected photos
   const [selectedPhotos, setSelectedPhotos] = useState([]);
+
+  // Chuẩn bị files NGAY KHI MỞ dialog share, không phải lúc bấm "Chia sẻ ngay"
+  async function prepareFiles() {
+    setPreparing(true);
+    const selected = photos.filter((p) => selectedPhotos.includes(p.id));
+
+    const files = await Promise.all(
+      selected.map(async (photo, index) => {
+        const response = await fetch(photo.image_url);
+        const blob = await response.blob();
+        return new File([blob], `photo-${index + 1}.jpg`, { type: blob.type });
+      })
+    );
+
+    setPreparedFiles(files);
+    setPreparing(false);
+  }
 
   const fetchPhotos = useCallback(async () => {
     const { data, error } = await supabase
@@ -129,7 +148,17 @@ export default function Photos({ room, open, onClose }) {
       return [...prev, photoId];
     });
   }
+  async function saveDescription(description) {
+    const { error } = await supabase
+      .from("rooms")
+      .update({ description })
+      .eq("id", room.id);
 
+    if (error) {
+      console.log(error.message);
+    }
+    onRoomUpdated?.();
+  }
   // Build room description
   function buildRoomDescription() {
     let desc = "";
@@ -177,56 +206,37 @@ export default function Photos({ room, open, onClose }) {
   }
 
   async function handleSharePhotos() {
-    const selected = photos.filter((p) =>
-      selectedPhotos.includes(p.id)
-    );
+  try {
+    const description =
+      editedDescription || buildRoomDescription();
 
-    const files = await Promise.all(
-      selected.map(async (photo, index) => {
-        const response = await fetch(photo.image_url);
-        const blob = await response.blob();
-        return new File(
-          [blob],
-          `photo-${index + 1}.jpg`,
-          { type: blob.type }
-        );
-      })
-    );
+    // lưu DB nền
+    saveDescription(description);
 
-    // Use edited description (from state, not auto-build)
-    const description = editedDescription || buildRoomDescription();
+    // copy mô tả
+    await navigator.clipboard.writeText(description);
 
-    const shareData = {
-      title: `Phòng ${room?.room_name} - ${home?.name || 'Nhà trọ'}`,
-      text: description,
-      files: [...files],
-    };
+    if (preparedFiles.length === 0) {
+      alert("Vui lòng chọn ảnh");
+      return;
+    }
 
-    if (navigator.canShare && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Error sharing:', err);
-        }
-      }
-    } else if (navigator.canShare && navigator.canShare({ files })) {
-      // Fallback: share only files if text is not supported
-      await navigator.share({
-        title: `Phòng ${room?.room_name} - ${home?.name || 'Nhà trọ'}`,
-        text: description,
-        files: [...files],
-      });
-    } else {
-      // Fallback: copy to clipboard and alert
-      try {
-        await navigator.clipboard.writeText(description);
-        alert("✅ Mô tả đã sao chép vào clipboard!\n\nBạn có thể dán và chia sẻ manual.");
-      } catch {
-        alert("Thiết bị của bạn không hỗ trợ chia sẻ. Vui lòng sử dụng cách khác để chia sẻ ảnh.");
-      }
+    // chỉ gọi share ngay trong click event
+    await navigator.share({
+      files: preparedFiles,
+      title: "Thông tin phòng trọ"
+    });
+
+  } catch (err) {
+    console.log(err);
+
+    if (err.name !== "AbortError") {
+      alert(
+        "Thiết bị hoặc ứng dụng không hỗ trợ chia sẻ ảnh."
+      );
     }
   }
+}
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl">
@@ -258,9 +268,10 @@ export default function Photos({ room, open, onClose }) {
           {photos.length > 0 && (
             <button
               onClick={() => {
-                setEditedDescription(buildRoomDescription());
+                setEditedDescription(room?.description || buildRoomDescription());
                 setIsShareMode(true);
                 setShowDescription(true);
+                prepareFiles(); // bắt đầu fetch ảnh ngay, song song với việc người dùng đọc/sửa mô tả
               }}
               className="flex flex-col items-center text-blue-600 hover:text-blue-700"
             >
@@ -314,19 +325,18 @@ export default function Photos({ room, open, onClose }) {
                   </button>
                   {isShareMode ? (
                     <button
-                      onClick={async () => {
-                        await handleSharePhotos();
-                        setShowDescription(false);
-                        setEditedDescription("");
-                        setIsShareMode(false);
-                      }}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-                    >
-                      🔗 Chia sẻ ngay
-                    </button>
+  onClick={handleSharePhotos}
+  disabled={preparing}
+  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+>
+  {preparing
+    ? "Đang chuẩn bị ảnh..."
+    : "🔗 Chia sẻ ngay"}
+</button>
                   ) : (
                     <button
-                      onClick={() => {
+                      onClick={async () => {
+                        await saveDescription(editedDescription);
                         navigator.clipboard.writeText(editedDescription);
                         alert("✅ Mô tả đã sao chép vào clipboard!");
                       }}
