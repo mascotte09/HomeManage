@@ -559,10 +559,10 @@ function StatisticsDialog({ onClose }) {
 
                             <tr>
                                 <th style={headerStyle}>Ngày</th>
-                                <th style={headerStyle}>Users</th>
-                                <th style={headerStyle}>Homes</th>
-                                <th style={headerStyle}>Rooms</th>
-                                <th style={headerStyle}>Invoices</th>
+                                <th style={headerStyle}>Usr</th>
+                                <th style={headerStyle}>Ho</th>
+                                <th style={headerStyle}>Ro</th>
+                                <th style={headerStyle}>Inv</th>
                             </tr>
 
                         </thead>
