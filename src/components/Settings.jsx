@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MdArrowBack, MdPerson, MdLock, MdChevronRight, MdClose } from 'react-icons/md'
-import { supabase } from '../supabase'
+import { supabase } from '../supabase.js'
 import FooterHouse from './House/FooterHouse.jsx'
+import { MdBarChart } from 'react-icons/md'
 
 export default function Settings({ user, onBack }) {
     const [showChangePassword, setShowChangePassword] = useState(false)
     const [toast, setToast] = useState('')
 
+    const [showStatistics, setShowStatistics] = useState(false)
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <header className="bg-white border-b border-stone-200 px-4 h-20 flex items-center gap-3 flex-shrink-0">
@@ -112,6 +114,53 @@ export default function Settings({ user, onBack }) {
                             </span>
                             <MdChevronRight size={20} color="#a8a29e" />
                         </button>
+                        {user?.is_admin && (
+                            <button
+                                type="button"
+                                onClick={() => setShowStatistics(true)}
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '14px',
+                                    background: 'white',
+                                    border: 'none',
+                                    borderTop: '1px solid #e7e5e4',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                }}
+                                className="hover:bg-stone-50 transition"
+                            >
+                                <div
+                                    style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#f5f5f4',
+                                        color: '#78716c',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <MdBarChart size={18} />
+                                </div>
+
+                                <span
+                                    style={{
+                                        flex: 1,
+                                        fontSize: '15px',
+                                        fontWeight: 500,
+                                        color: '#44403c',
+                                    }}
+                                >
+                                    Thống kê
+                                </span>
+
+                                <MdChevronRight size={20} color="#a8a29e" />
+                            </button>
+                        )}
                     </div>
 
                     {toast && (
@@ -144,6 +193,14 @@ export default function Settings({ user, onBack }) {
                     }}
                 />
             )}
+
+            {
+                showStatistics && (
+                    <StatisticsDialog
+                        onClose={() => setShowStatistics(false)}
+                    />
+                )
+            }
         </div>
     )
 }
@@ -368,4 +425,173 @@ function ChangePasswordDialog({ user, onClose, onSuccess }) {
             </div>
         </div>
     )
+}
+function StatisticsDialog({ onClose }) {
+
+    const [loading, setLoading] = useState(true)
+    const [rows, setRows] = useState([])
+    const cellStyle = {
+        textAlign: "center",
+        padding: "10px",
+        border: "1px solid #e7e5e4"
+    };
+
+    const headerStyle = {
+        ...cellStyle,
+        background: "#f5f5f4",
+        fontWeight: 600
+    };
+    useEffect(() => {
+        load()
+    }, [])
+
+    async function load() {
+
+        const result = []
+
+        for (let i = 4; i >= 0; i--) {
+
+            const day = new Date()
+            day.setDate(day.getDate() - i)
+
+            const start = new Date(day)
+            start.setHours(0, 0, 0, 0)
+
+            const end = new Date(day)
+            end.setHours(23, 59, 59, 999)
+
+            const [
+                users,
+                homes,
+                rooms,
+                invoices
+            ] = await Promise.all([
+
+                supabase
+                    .from("users")
+                    .select("*", { count: "exact", head: true })
+                    .gte("created_at", start.toISOString())
+                    .lte("created_at", end.toISOString()),
+
+                supabase
+                    .from("homes")
+                    .select("*", { count: "exact", head: true })
+                    .gte("created_at", start.toISOString())
+                    .lte("created_at", end.toISOString()),
+
+                supabase
+                    .from("rooms")
+                    .select("*", { count: "exact", head: true })
+                    .gte("created_at", start.toISOString())
+                    .lte("created_at", end.toISOString()),
+
+                supabase
+                    .from("invoices")
+                    .select("*", { count: "exact", head: true })
+                    .gte("created_at", start.toISOString())
+                    .lte("created_at", end.toISOString()),
+
+            ])
+
+            result.push({
+
+                date: start.toLocaleDateString("vi-VN"),
+
+                users: users.count || 0,
+
+                homes: homes.count || 0,
+
+                rooms: rooms.count || 0,
+
+                invoices: invoices.count || 0
+
+            })
+        }
+
+        setRows(result)
+        setLoading(false)
+    }
+
+    return (
+
+        <div
+            onClick={onClose}
+            style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0,0,0,.45)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                zIndex: 100
+            }}
+        >
+
+            <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                    width: "95%",
+                    maxWidth: 700,
+                    background: "#fff",
+                    borderRadius: 16,
+                    padding: 20
+                }}
+            >
+
+                <h2 style={{ marginBottom: 20 }}>
+                    Thống kê 5 ngày gần nhất
+                </h2>
+
+                {loading ? (
+
+                    <p>Đang tải...</p>
+
+                ) : (
+
+                    <table
+                        style={{
+                            width: "100%",
+                            borderCollapse: "collapse"
+                        }}
+                    >
+
+                        <thead>
+
+                            <tr>
+                                <th style={headerStyle}>Ngày</th>
+                                <th style={headerStyle}>Users</th>
+                                <th style={headerStyle}>Homes</th>
+                                <th style={headerStyle}>Rooms</th>
+                                <th style={headerStyle}>Invoices</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {rows.map(r => (
+
+                                <tr key={r.date}>
+
+                                    <td style={cellStyle}>{r.date}</td>
+                                    <td style={cellStyle}>{r.users}</td>
+                                    <td style={cellStyle}>{r.homes}</td>
+                                    <td style={cellStyle}>{r.rooms}</td>
+                                    <td style={cellStyle}>{r.invoices}</td>
+                                </tr>
+
+                            ))}
+
+                        </tbody>
+
+                    </table>
+
+                )}
+
+            </div>
+
+        </div>
+
+    )
+
 }

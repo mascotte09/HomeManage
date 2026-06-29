@@ -15,7 +15,7 @@ import Invoices from "./components/Invoice/Invoices";
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import ListPayments from "./components/Payment/ListPayments.jsx";
 import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
-import SettingsHouse from "./components/SettingsHouse.jsx";
+import SettingsHouse from "./components/Settings.jsx";
 
 import { useNavigate } from "react-router-dom";
 
