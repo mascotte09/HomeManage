@@ -74,49 +74,62 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
   }, [open, fetchPhotos, fetchHome]);
 
   async function handleUploadPhoto(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
     setUploading(true);
 
-    const fileName = `${Date.now()}-${file.name}`;
+    try {
+      const photosToInsert = [];
 
-    // Upload image
-    const { error: uploadError } = await supabase.storage
-      .from("photos")
-      .upload(fileName, file);
+      for (const originalFile of files) {
+        // Resize image
+        const file = await resizeImage(originalFile);
 
-    if (uploadError) {
-      console.log(uploadError.message);
-      alert("Lỗi upload photo");
-      setUploading(false);
-      return;
-    }
+        const fileName = `${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}-${file.name}`;
 
-    // Public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("photos").getPublicUrl(fileName);
+        // Upload
+        const { error: uploadError } = await supabase.storage
+          .from("photos")
+          .upload(fileName, file);
 
-    // Save DB
-    const { error: insertError } = await supabase
-      .from("photos")
-      .insert([
-        {
+        if (uploadError) {
+          console.error(uploadError.message);
+          continue; // Skip this file and continue
+        }
+
+        // Get public URL
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("photos").getPublicUrl(fileName);
+
+        photosToInsert.push({
           room_id: room.id,
           image_url: publicUrl,
-        },
-      ]);
+        });
+      }
 
-    if (insertError) {
-      console.log(insertError.message);
-      alert("Failed to save photo");
+      if (photosToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from("photos")
+          .insert(photosToInsert);
+
+        if (insertError) {
+          console.error(insertError.message);
+          alert("Failed to save photos.");
+        }
+      }
+
+      await fetchPhotos();
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed.");
+    } finally {
       setUploading(false);
-      return;
+      e.target.value = ""; // Allow selecting the same files again
     }
-
-    await fetchPhotos();
-    setUploading(false);
   }
 
   async function handleDeletePhoto(photo) {
@@ -137,7 +150,55 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
 
     await fetchPhotos();
   }
+async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
 
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Không cần resize
+      if (width <= maxWidth) {
+        resolve(file);
+        URL.revokeObjectURL(img.src);
+        return;
+      }
+
+      // Resize
+      height = (height * maxWidth) / width;
+      width = maxWidth;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(img.src);
+
+          if (!blob) {
+            reject(new Error("Resize failed"));
+            return;
+          }
+
+          resolve(
+            new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
+              type: "image/jpeg",
+            })
+          );
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
   // NEW: toggle checkbox
   function handleTogglePhoto(photoId) {
     setSelectedPhotos((prev) => {
@@ -206,38 +267,38 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
   }
 
   async function handleSharePhotos() {
-  try {
-    const description =
-      editedDescription || buildRoomDescription();
+    try {
+      const description =
+        editedDescription || buildRoomDescription();
 
-    // lưu DB nền
-    saveDescription(description);
+      // lưu DB nền
+      saveDescription(description);
 
-    // copy mô tả
-    await navigator.clipboard.writeText(description);
+      // copy mô tả
+      await navigator.clipboard.writeText(description);
 
-    if (preparedFiles.length === 0) {
-      alert("Vui lòng chọn ảnh");
-      return;
-    }
+      if (preparedFiles.length === 0) {
+        alert("Vui lòng chọn ảnh");
+        return;
+      }
 
-    // chỉ gọi share ngay trong click event
-    await navigator.share({
-      files: preparedFiles,
-      title: "Thông tin phòng trọ",
-      text: description
-    });
+      // chỉ gọi share ngay trong click event
+      await navigator.share({
+        files: preparedFiles,
+        title: "Thông tin phòng trọ",
+        text: description
+      });
 
-  } catch (err) {
-    console.log(err);
+    } catch (err) {
+      console.log(err);
 
-    if (err.name !== "AbortError") {
-      alert(
-        "Thiết bị hoặc ứng dụng không hỗ trợ chia sẻ ảnh."
-      );
+      if (err.name !== "AbortError") {
+        alert(
+          "Thiết bị hoặc ứng dụng không hỗ trợ chia sẻ ảnh."
+        );
+      }
     }
   }
-}
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl">
@@ -262,8 +323,8 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
           <input
             type="file"
             accept="image/*"
+            multiple
             onChange={handleUploadPhoto}
-            className="text-sm"
           />
 
           {photos.length > 0 && (
@@ -326,14 +387,14 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
                   </button>
                   {isShareMode ? (
                     <button
-  onClick={handleSharePhotos}
-  disabled={preparing}
-  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
->
-  {preparing
-    ? "Đang chuẩn bị ảnh..."
-    : "🔗 Chia sẻ ngay"}
-</button>
+                      onClick={handleSharePhotos}
+                      disabled={preparing}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {preparing
+                        ? "Đang chuẩn bị ảnh..."
+                        : "🔗 Chia sẻ ngay"}
+                    </button>
                   ) : (
                     <button
                       onClick={async () => {
