@@ -12,6 +12,7 @@ export default function InvoiceRecord({
   onCancel,
   onAdd,
 }) {
+  const [saving, setSaving] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
 
@@ -291,186 +292,193 @@ export default function InvoiceRecord({
   // CREATE
   // =========================
   async function handleCreate() {
-    const invalidElectricity =
-      Number(formData.current_electricity_number) >
-      Number(formData.new_electricity_number);
+    if (saving) return;
 
-    const emptyElectricity =
-      formData.new_electricity_number === "";
+    setSaving(true);
+    try {
+      const invalidElectricity =
+        Number(formData.current_electricity_number) >
+        Number(formData.new_electricity_number);
 
-    const invalidWater =
-      !isWaterPerPerson &&
-      Number(formData.current_water_number) >
-      Number(formData.new_water_number);
+      const emptyElectricity =
+        formData.new_electricity_number === "";
 
-    const emptyWater =
-      !isWaterPerPerson &&
-      formData.new_water_number === "";
+      const invalidWater =
+        !isWaterPerPerson &&
+        Number(formData.current_water_number) >
+        Number(formData.new_water_number);
 
-    const invalidRental =
-      Number(formData.rental_amount) === 0 ||
-      formData.rental_amount === "";
+      const emptyWater =
+        !isWaterPerPerson &&
+        formData.new_water_number === "";
 
-    if (invalidRental) {
-      setValidationMessage("❌ Tiền thuê là bắt buộc.");
-      setShowValidationModal(true);
-      return;
-    }
+      const invalidRental =
+        Number(formData.rental_amount) === 0 ||
+        formData.rental_amount === "";
 
-    if (emptyElectricity) {
-      setValidationMessage("❌ Số điện mới là bắt buộc.");
-      setShowValidationModal(true);
-      return;
-    }
+      if (invalidRental) {
+        setValidationMessage("❌ Tiền thuê là bắt buộc.");
+        setShowValidationModal(true);
+        return;
+      }
 
-    if (invalidElectricity) {
-      setValidationMessage("❌ Số điện mới phải lớn hơn hoặc bằng số điện cũ.");
-      setShowValidationModal(true);
-      return;
-    }
+      if (emptyElectricity) {
+        setValidationMessage("❌ Số điện mới là bắt buộc.");
+        setShowValidationModal(true);
+        return;
+      }
 
-    if (!isWaterPerPerson && emptyWater) {
-      setValidationMessage("❌ Số nước mới là bắt buộc.");
-      setShowValidationModal(true);
-      return;
-    }
+      if (invalidElectricity) {
+        setValidationMessage("❌ Số điện mới phải lớn hơn hoặc bằng số điện cũ.");
+        setShowValidationModal(true);
+        return;
+      }
 
-    if (invalidWater) {
-      setValidationMessage("❌ Số nước mới phải lớn hơn hoặc bằng số nước cũ.");
-      setShowValidationModal(true);
-      return;
-    }
-    const payload = {
-      room_id: room.id,
+      if (!isWaterPerPerson && emptyWater) {
+        setValidationMessage("❌ Số nước mới là bắt buộc.");
+        setShowValidationModal(true);
+        return;
+      }
 
-      current_electricity_number:
-        Number(formData.current_electricity_number) || null,
+      if (invalidWater) {
+        setValidationMessage("❌ Số nước mới phải lớn hơn hoặc bằng số nước cũ.");
+        setShowValidationModal(true);
+        return;
+      }
+      const payload = {
+        room_id: room.id,
 
-      new_electricity_number:
-        Number(formData.new_electricity_number) || null,
+        current_electricity_number:
+          Number(formData.current_electricity_number) || null,
 
-      current_water_number:
-        Number(formData.current_water_number) || null,
+        new_electricity_number:
+          Number(formData.new_electricity_number) || null,
 
-      new_water_number:
-        Number(formData.new_water_number) || null,
+        current_water_number:
+          Number(formData.current_water_number) || null,
 
-      rental_amount:
-        Number(formData.rental_amount) || null,
+        new_water_number:
+          Number(formData.new_water_number) || null,
 
-      invoice_create_date:
-        formData.invoice_create_date || null,
+        rental_amount:
+          Number(formData.rental_amount) || null,
 
-      amount_already_pay:
-        Number(formData.amount_already_pay) || 0,
+        invoice_create_date:
+          formData.invoice_create_date || null,
 
-      note: formData.note || null,
+        amount_already_pay:
+          Number(formData.amount_already_pay) || 0,
 
-      surcharge:
-        Number(formData.surcharge) || null,
+        note: formData.note || null,
 
-      wifi_amount:
-        Number(formData.wifi_amount) || null,
+        surcharge:
+          Number(formData.surcharge) || null,
 
-      elect_amount: electAmount,
+        wifi_amount:
+          Number(formData.wifi_amount) || null,
 
-      water_amount: waterAmount,
+        elect_amount: electAmount,
 
-      total_amount: total,
+        water_amount: waterAmount,
 
-      debit_amount:
-        total -
-        (Number(formData.amount_already_pay) || 0),
-    };
+        total_amount: total,
 
-    let error = null;
-    let savedInvoice = null;
+        debit_amount:
+          total -
+          (Number(formData.amount_already_pay) || 0),
+      };
 
-    // UPDATE
-    if (invoice?.id) {
-      const result = await supabase
+      let error = null;
+      let savedInvoice = null;
+
+      // UPDATE
+      if (invoice?.id) {
+        const result = await supabase
+          .from("invoices")
+          .update(payload)
+          .eq("id", invoice.id)
+          .select()
+          .single();
+
+        error = result.error;
+        savedInvoice = result.data;
+      }
+
+      // CREATE
+      else {
+        const result = await supabase
+          .from("invoices")
+          .insert([payload])
+          .select()
+          .single();
+
+        error = result.error;
+        savedInvoice = result.data;
+      }
+
+      if (error) {
+        console.log(error.message);
+
+        alert(
+          invoice?.id
+            ? "Update failed"
+            : "Create failed"
+        );
+
+        return;
+      }
+
+      // Tìm hóa đơn mới nhất của phòng
+      const {
+        data: newestInvoice,
+        error: newestError,
+      } = await supabase
         .from("invoices")
-        .update(payload)
-        .eq("id", invoice.id)
-        .select()
-        .single();
-
-      error = result.error;
-      savedInvoice = result.data;
-    }
-
-    // CREATE
-    else {
-      const result = await supabase
-        .from("invoices")
-        .insert([payload])
-        .select()
-        .single();
-
-      error = result.error;
-      savedInvoice = result.data;
-    }
-
-    if (error) {
-      console.log(error.message);
-
-      alert(
-        invoice?.id
-          ? "Update failed"
-          : "Create failed"
-      );
-
-      return;
-    }
-
-    // Tìm hóa đơn mới nhất của phòng
-    const {
-      data: newestInvoice,
-      error: newestError,
-    } = await supabase
-      .from("invoices")
-      .select(`
+        .select(`
         id,
         new_electricity_number,
         new_water_number,
         rental_amount
       `)
-      .eq("room_id", room.id)
-      .order(
-        "invoice_create_date",
-        { ascending: false }
-      )
-      .order(
-        "created_at",
-        { ascending: false }
-      )
-      .limit(1)
-      .single();
+        .eq("room_id", room.id)
+        .order(
+          "invoice_create_date",
+          { ascending: false }
+        )
+        .order(
+          "created_at",
+          { ascending: false }
+        )
+        .limit(1)
+        .single();
 
-    if (newestError) {
-      console.log(newestError.message);
-    } else {
-      // Chỉ cập nhật chỉ số phòng nếu
-      // hóa đơn vừa lưu là hóa đơn mới nhất
-      if (
-        newestInvoice &&
-        newestInvoice.id === savedInvoice.id
-      ) {
-        await supabase
-          .from("rooms")
-          .update({
-            current_electricity_number:
-              newestInvoice.new_electricity_number,
-            current_water_number:
-              newestInvoice.new_water_number,
-            monthly_rent:
-              newestInvoice.rental_amount
-          })
-          .eq("id", room.id);
+      if (newestError) {
+        console.log(newestError.message);
+      } else {
+        // Chỉ cập nhật chỉ số phòng nếu
+        // hóa đơn vừa lưu là hóa đơn mới nhất
+        if (
+          newestInvoice &&
+          newestInvoice.id === savedInvoice.id
+        ) {
+          await supabase
+            .from("rooms")
+            .update({
+              current_electricity_number:
+                newestInvoice.new_electricity_number,
+              current_water_number:
+                newestInvoice.new_water_number,
+              monthly_rent:
+                newestInvoice.rental_amount
+            })
+            .eq("id", room.id);
+        }
       }
-    }
 
-    setShowSummaryModal(true);
+      setShowSummaryModal(true);
+    } finally {
+      setSaving(false);
+    }
   }
 
   const [hasPreviousInvoice, setHasPreviousInvoice] = useState(false);
@@ -795,13 +803,18 @@ export default function InvoiceRecord({
       <div className="flex gap-4 mt-6">
         <button
           onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          disabled={saving}
+          className={`px-4 py-2 rounded text-white ${saving
+            ? "bg-blue-400 cursor-not-allowed"
+            : "bg-blue-600 hover:bg-blue-700"
+            }`}
         >
-          Tính Tiền
+          {saving ? "Đang tính..." : "Tính tiền"}
         </button>
         <button
           onClick={onCancel}
-          className="bg-gray-300 px-4 py-2 rounded"
+          disabled={saving}
+          className="bg-gray-300 px-4 py-2 rounded disabled:opacity-50"
         >
           Close
         </button>
