@@ -2,10 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../supabase";
 import { FiShare } from "react-icons/fi";
 
-export default function Photos({ room, open, onClose, onRoomUpdated }) {
+export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
   const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [home, setHome] = useState(null);
+  const [homeData, setHomeData] = useState(home || null);
   const [showDescription, setShowDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState("");
   const [isShareMode, setIsShareMode] = useState(false);
@@ -32,12 +32,22 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
     setPreparing(false);
   }
 
+  const isRoomMode = Boolean(room);
+  const isHomeMode = Boolean(home);
+
   const fetchPhotos = useCallback(async () => {
-    const { data, error } = await supabase
+    if (!isRoomMode && !isHomeMode) return;
+
+    const query = supabase
       .from("photos")
       .select("*")
-      .eq("room_id", room.id)
       .order("created_at", { ascending: false });
+
+    const filtered = isRoomMode
+      ? query.eq("room_id", room.id)
+      : query.eq("home_id", home.id);
+
+    const { data, error } = await filtered;
 
     if (error) {
       console.log(error.message);
@@ -46,10 +56,15 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
 
     setPhotos(data || []);
     setSelectedPhotos([]);
-  }, [room.id]);
+  }, [isRoomMode, isHomeMode, room?.id, home?.id]);
 
-  // Fetch home info
+  // Fetch home info for room mode, or use provided home object.
   const fetchHome = useCallback(async () => {
+    if (isHomeMode) {
+      setHomeData(home);
+      return;
+    }
+
     if (!room?.home_id) return;
 
     const { data, error } = await supabase
@@ -63,8 +78,8 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
       return;
     }
 
-    setHome(data);
-  }, [room?.home_id]);
+    setHomeData(data);
+  }, [isHomeMode, home, room?.home_id]);
 
   useEffect(() => {
     if (open) {
@@ -105,10 +120,17 @@ export default function Photos({ room, open, onClose, onRoomUpdated }) {
           data: { publicUrl },
         } = supabase.storage.from("photos").getPublicUrl(fileName);
 
-        photosToInsert.push({
-          room_id: room.id,
+        const payload = {
           image_url: publicUrl,
-        });
+        };
+
+        if (isRoomMode) {
+          payload.room_id = room.id;
+        } else if (isHomeMode) {
+          payload.home_id = home.id;
+        }
+
+        photosToInsert.push(payload);
       }
 
       if (photosToInsert.length > 0) {
@@ -210,27 +232,42 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
     });
   }
   async function saveDescription(description) {
+    const targetTable = isRoomMode ? "rooms" : "homes";
+    const targetId = isRoomMode ? room.id : home.id;
     const { error } = await supabase
-      .from("rooms")
+      .from(targetTable)
       .update({ description })
-      .eq("id", room.id);
+      .eq("id", targetId);
 
     if (error) {
       console.log(error.message);
     }
     onRoomUpdated?.();
   }
-  // Build room description
+  // Build description
   function buildRoomDescription() {
     let desc = "";
 
-    // Home info
-    if (home?.name) {
-      desc += `🏠 Nhà trọ: ${home.address}.`;
+    if (homeData?.name) {
+      desc += `🏠 Nhà trọ: ${homeData.name}`;
+      if (homeData.address) desc += ` • ${homeData.address}`;
+      desc += ".\n";
     }
-    // Room basic
-    if (room?.room_name) {
-      desc += ` Phòng: `;
+
+    if (isRoomMode) {
+      if (room?.room_name) {
+        desc += `Phòng: ${room.room_name}`;
+      }
+      if (room?.area && room.area > 0) {
+        desc += ` • ${room.area} m²`;
+      }
+      if (room?.monthly_rent && room.monthly_rent > 0) {
+        desc += ` • Giá ${room.monthly_rent.toLocaleString("vi-VN")} đ`;
+      }
+      if (room?.room_renter) {
+        desc += ` • Người thuê: ${room.room_renter}`;
+      }
+      desc += "\n";
     }
     // Room details
     if (room?.area && room.area > 0) {
@@ -299,6 +336,9 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
       }
     }
   }
+
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl">
@@ -306,7 +346,7 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <h2 className="text-lg font-semibold text-stone-800">
-            Hình ảnh phòng
+            {isHomeMode ? "Hình ảnh nhà trọ" : "Hình ảnh phòng"}
           </h2>
 
           <button
@@ -330,7 +370,9 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
           {photos.length > 0 && (
             <button
               onClick={() => {
-                setEditedDescription(room?.description || buildRoomDescription());
+                setEditedDescription(
+                  room?.description || homeData?.description || buildRoomDescription()
+                );
                 setIsShareMode(true);
                 setShowDescription(true);
                 prepareFiles(); // bắt đầu fetch ảnh ngay, song song với việc người dùng đọc/sửa mô tả

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../supabase'
 import { sendVerificationEmail } from '../utils/emailService'
+import { normalizeUserType } from '../utils/userType'
 import FooterHouse from './House/FooterHouse.jsx'
 
 // Generate a 6-digit numeric code
@@ -15,6 +16,7 @@ export default function Signup({
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [userType, setUserType] = useState('landlord')
     const [message, setMessage] = useState('')
 
     // Verification step state
@@ -174,6 +176,7 @@ export default function Signup({
                     password,
                     verification_code: null,
                     is_verified: true,
+                    user_type: normalizeUserType(userType),
                 },
             ])
             .select()
@@ -211,6 +214,7 @@ export default function Signup({
         setUsername('')
         setPassword('')
         setConfirmPassword('')
+        setUserType('landlord')
         setInputCode('')
         setPendingCode(null)
 
@@ -242,26 +246,26 @@ export default function Signup({
     // ─── Render: Step 2 - Verify code ──────────────────────────────────────
     if (step === 'verify') {
         return (
-           <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <div
-                style={{
-                    flex: 1,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 <div
                     style={{
-                        width: '100%',
-                        maxWidth: '500px',
+                        flex: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
                     }}
                 >
-                        <form onSubmit={handleVerify}
+                    <div
                         style={{
                             width: '100%',
-                            padding: '20px',
-                        }}>
+                            maxWidth: '500px',
+                        }}
+                    >
+                        <form onSubmit={handleVerify}
+                            style={{
+                                width: '100%',
+                                padding: '20px',
+                            }}>
                             <div className="control">
                                 <label htmlFor="verification-code">
                                     Mã Xác Thực
@@ -310,8 +314,8 @@ export default function Signup({
                                         {sending
                                             ? 'Đang Gửi...'
                                             : cooldown > 0
-                                            ? `Gửi Lại Mã (${cooldown}s)`
-                                            : 'Gửi Lại Mã'}
+                                                ? `Gửi Lại Mã (${cooldown}s)`
+                                                : 'Gửi Lại Mã'}
                                     </button>
 
                                     <button
@@ -379,7 +383,7 @@ export default function Signup({
                     }}
                 >
                     <form onSubmit={handleSignup}
-                    style={{
+                        style={{
                             width: '100%',
                             padding: '20px',
                         }}>
@@ -434,6 +438,38 @@ export default function Signup({
                             </div>
                         </div>
 
+                        <fieldset className="border border-gray-500 rounded-xl p-2">
+                            <legend className="px-2 text-gray-200 font-medium">
+                                Vai trò
+                            </legend>
+
+                            <div className="flex flex-wrap gap-6 text-gray-200">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="userType"
+                                        value="landlord"
+                                        checked={userType === "landlord"}
+                                        onChange={(e) => setUserType(e.target.value)}
+                                        className="accent-blue-500"
+                                    />
+                                    <span>Chủ trọ</span>
+                                </label>
+
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="userType"
+                                        value="broker"
+                                        checked={userType === "broker"}
+                                        onChange={(e) => setUserType(e.target.value)}
+                                        className="accent-blue-500"
+                                    />
+                                    <span>Môi giới</span>
+                                </label>
+                            </div>
+                        </fieldset>
+
                         <div
                             className="form-actions"
                             style={{
@@ -464,6 +500,7 @@ export default function Signup({
                                         setUsername("");
                                         setPassword("");
                                         setConfirmPassword("");
+                                        setUserType("landlord");
                                         setMessage("");
                                     }}
                                 >

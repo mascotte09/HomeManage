@@ -3,12 +3,15 @@ import Login from "./components/StateLogin.jsx";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import RoomPage from './components/Room/RoomPage.jsx'
+import BrokerRoomPage from './components/BrokerRoom/BrokerRoomPage.jsx';
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import HeaderHouse from "./components/House/HeaderHouse";
+import HeaderBrokerHouse from "./components/BrokerHouse/HeaderBrokerHouse.jsx";
 import FooterHouse from "./components/House/FooterHouse";
 import HeaderRoom from "./components/Room/HeaderRoom";
+import BrokerHeaderRoom from "./components/BrokerRoom/HeaderBrokerRoom.jsx";
 import HousePage from "./components/House/HousePage.jsx";
 import InvoicesInMonth from "./components/Invoice/InvoicesInMonth";
 import Invoices from "./components/Invoice/Invoices";
@@ -16,6 +19,8 @@ import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import ListPayments from "./components/Payment/ListPayments.jsx";
 import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
 import SettingsHouse from "./components/Settings.jsx";
+import BrokerHousePage from "./components/BrokerHouse/BrokerHousePage.jsx";
+import { normalizeUserType } from "./utils/userType";
 
 import { useNavigate } from "react-router-dom";
 
@@ -32,9 +37,11 @@ function App() {
             localStorage.getItem("currentUser");
 
         if (savedUser) {
-            setCurrentUser(
-                JSON.parse(savedUser)
-            );
+            const parsedUser = JSON.parse(savedUser);
+            setCurrentUser({
+                ...parsedUser,
+                user_type: normalizeUserType(parsedUser.user_type),
+            });
         } else {
             setCurrentUser(null);
         }
@@ -72,6 +79,10 @@ function App() {
     }
 
     // User logged in    
+    const isBroker = normalizeUserType(currentUser?.user_type) === "broker";
+    const RoomPageView = isBroker ? BrokerRoomPage : RoomPage;
+    const RoomHeaderView = isBroker ? BrokerHeaderRoom : HeaderRoom;
+
     return (
         <BrowserRouter>
             <Routes>
@@ -87,9 +98,15 @@ function App() {
 
                                     setCurrentUser(null);
                                 }}
+                                showBrokerPage={normalizeUserType(currentUser?.user_type) === "broker"}
+                                isBroker={isBroker}
                             />
                             <div className="flex-1 overflow-y-auto">
-                                <HousePage user_id={currentUser.id} />
+                                {isBroker ? (
+                                    <BrokerHousePage user_id={currentUser.id} />
+                                ) : (
+                                    <HousePage user_id={currentUser.id} />
+                                )}
                             </div>
                             <FooterHouse />
                         </div>
@@ -104,9 +121,15 @@ function App() {
                                     await supabase.auth.signOut();
                                     setCurrentUser(null);
                                 }}
+                                showBrokerPage={normalizeUserType(currentUser?.user_type) === "broker"}
+                                isBroker={isBroker}
                             />
                             <div className="flex-1 overflow-y-auto">
-                                <HousePage user_id={currentUser.id} />
+                                {isBroker ? (
+                                    <BrokerHousePage user_id={currentUser.id} />
+                                ) : (
+                                    <HousePage user_id={currentUser.id} />
+                                )}
                             </div>
                             <FooterHouse />
                         </div>
@@ -120,14 +143,40 @@ function App() {
                     }
                 />
 
+                <Route
+                    path="/broker"
+                    element={
+                        <div className="flex flex-col h-dvh">
+                            <HeaderHouseWithNav
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    localStorage.removeItem("currentUser");
+                                    setCurrentUser(null);
+                                }}
+                                showBrokerPage={normalizeUserType(currentUser?.user_type) === "broker"}
+                                isBroker={isBroker}
+                            />
+                            <div className="flex-1 overflow-y-auto">
+                                <BrokerHousePage user_id={currentUser.id} />
+                            </div>
+                            <FooterHouse />
+                        </div>
+                    }
+                />
+
+                {/* Broker-specific room page */}
+                <Route path="/broker/rooms/:houseId"
+                    element={<BrokerRoomPage />} />
+
                 {/* RoomPage already includes HeaderRoom internally */}
                 <Route path="/rooms/:houseId"
-                    element={<RoomPage />} />
+                    element={<RoomPageView />} />
 
                 <Route path="/invoicesInMonth/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">
-                            <HeaderRoom
+                            <RoomHeaderView
+                                backPath={isBroker ? "/broker" : "/houses"}
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
                                     setCurrentUser(null);
@@ -142,7 +191,8 @@ function App() {
                 <Route path="/invoicesRoom/:roomId/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">
-                            <HeaderRoom
+                            <RoomHeaderView
+                                backPath={isBroker ? "/broker" : "/houses"}
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
                                     setCurrentUser(null);
@@ -157,7 +207,8 @@ function App() {
                 <Route path="/payment/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">
-                            <HeaderRoom
+                            <RoomHeaderView
+                                backPath={isBroker ? "/broker" : "/houses"}
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
                                     setCurrentUser(null);
@@ -172,7 +223,8 @@ function App() {
                 <Route path="/expense/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">
-                            <HeaderRoom
+                            <RoomHeaderView
+                                backPath={isBroker ? "/broker" : "/houses"}
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
                                     setCurrentUser(null);
@@ -186,7 +238,8 @@ function App() {
                 <Route path="/statistic/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">
-                            <HeaderRoom
+                            <RoomHeaderView
+                                backPath={isBroker ? "/broker" : "/houses"}
                                 onLogout={async () => {
                                     await supabase.auth.signOut();
                                     setCurrentUser(null);
@@ -205,12 +258,24 @@ function App() {
 
 // Bọc HeaderHouse để gắn điều hướng sang trang /settings
 // (đặt trong file App.jsx vì cần useNavigate, hook chỉ dùng được bên trong BrowserRouter)
-function HeaderHouseWithNav({ onLogout }) {
+function HeaderHouseWithNav({ onLogout, showBrokerPage = false, isBroker = false }) {
     const navigate = useNavigate();
+
+    if (isBroker) {
+        return (
+            <HeaderBrokerHouse
+                onLogout={onLogout}
+                onSettings={() => navigate("/settings")}
+                onBrokerPage={showBrokerPage ? () => navigate("/broker") : undefined}
+            />
+        );
+    }
+
     return (
         <HeaderHouse
             onLogout={onLogout}
             onSettings={() => navigate("/settings")}
+            onBrokerPage={showBrokerPage ? () => navigate("/broker") : undefined}
         />
     );
 }

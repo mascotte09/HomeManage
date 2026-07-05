@@ -9,6 +9,7 @@ import { supabase } from "../supabase.js";
 
 // Utils
 import { isEmail, isNotEmpty } from "../util/validation.js";
+import { normalizeUserType } from "../utils/userType";
 
 export default function Login({ onSignupClick, onLoginSuccess }) {
     const [message, setMessage] = useState('')
@@ -56,14 +57,18 @@ export default function Login({ onSignupClick, onLoginSuccess }) {
 
         // Login success
         const user = data[0];
+        const normalizedUser = {
+            ...user,
+            user_type: normalizeUserType(user.user_type),
+        };
         localStorage.setItem(
             "currentUser",
-            JSON.stringify(user)
+            JSON.stringify(normalizedUser)
         );
 
-        console.log("Login success:", user.id);
+        console.log("Login success:", normalizedUser.id);
 
-        onLoginSuccess(user);
+        onLoginSuccess(normalizedUser);
     }
     function handleReset() {
         resetEmail();
