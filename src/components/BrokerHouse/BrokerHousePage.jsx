@@ -42,20 +42,34 @@ function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
           )}
 
           <div className="flex flex-wrap gap-2 mt-3">
-            <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-              {totalRooms} phòng
-            </span>
+  {house.property_type === "whole_house" ? (
+    <>
+      <span className="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">
+        🏡 Thuê nguyên căn
+      </span>
 
-            <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-              {occupiedRooms} có người
-            </span>
+      <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+        💰 {Number(house.monthly_rent || 0).toLocaleString("vi-VN")} đ
+      </span>
+    </>
+  ) : (
+    <>
+      <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+        🏡 Thuê phòng: {totalRooms} 
+      </span>
 
-            {emptyRooms > 0 && (
-              <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">
-                {emptyRooms} trống
-              </span>
-            )}
-          </div>
+      <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+        {occupiedRooms} đã thuê
+      </span>
+
+      {emptyRooms > 0 && (
+        <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">
+          {emptyRooms} trống
+        </span>
+      )}
+    </>
+  )}
+</div>
         </div>
 
         {/* Actions */}

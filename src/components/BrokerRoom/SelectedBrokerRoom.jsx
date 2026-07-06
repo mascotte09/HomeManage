@@ -40,14 +40,8 @@ export default function SelectedRoom({
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [roomName, setRoomName] = useState("");
-  const [roomRenter, setRoomRenter] = useState("");
   const [depositAmount, setDepositAmount] = useState(0);
-  const [telephone, setTelephone] = useState("");
   const [numPerson, setNumPerson] = useState(1);
-  const [datePay, setDatePay] = useState(1);
-  const [currentElectricityNumber, setCurrentElectricityNumber] = useState(0);
-  const [currentWaterNumber, setCurrentWaterNumber] = useState(0);
-  const [rentDueDate, setRentDueDate] = useState("");
   const [status, setStatus] = useState(false);
   const [area, setArea] = useState(0);
   const [monthlyRent, setMonthlyRent] = useState(0);
@@ -63,20 +57,12 @@ export default function SelectedRoom({
   // ── Load room into form ────────────────────────────────────────────────────
   useEffect(() => {
     setRoomName(room?.room_name || "");
-    setRoomRenter(room?.room_renter || "");
     setDepositAmount(room?.deposit_amount || 0);
-    setTelephone(room?.telephone || "");
     setNumPerson(room?.num_person || 1);
-    setDatePay(room?.date_pay || 1);
-    setCurrentElectricityNumber(room?.current_electricity_number || 0);
-    setCurrentWaterNumber(room?.current_water_number || 0);
     setStatus(room?.status || false);
-    setRentDueDate(
-      room?.rent_due_date ? room.rent_due_date.substring(0, 10) : ""
-    );
     setArea(room?.area || 0);
     setMonthlyRent(room?.monthly_rent || 0);
-    
+
     // Parse amenities from JSON if it exists
     if (room?.amenities) {
       try {
@@ -100,10 +86,9 @@ export default function SelectedRoom({
   }
 
   function resetForm() {
-    setRoomName(""); setRoomRenter(""); setDepositAmount(0);
-    setTelephone(""); setNumPerson(1); setDatePay(1);
-    setCurrentElectricityNumber(0); setCurrentWaterNumber(0);
-    setRentDueDate(""); setStatus(false);
+    setRoomName(""); setDepositAmount(0);
+    setNumPerson(1);
+    setStatus(false);
     setArea(0); setMonthlyRent(0);
     setAmenities({
       hotWater: false,
@@ -124,14 +109,8 @@ export default function SelectedRoom({
       const payload = {
         home_id: homeID,
         room_name: roomName.trim(),
-        room_renter: roomRenter.trim(),
         deposit_amount: depositAmount,
-        telephone: telephone.trim(),
         num_person: numPerson,
-        date_pay: datePay,
-        current_electricity_number: currentElectricityNumber,
-        current_water_number: currentWaterNumber,
-        rent_due_date: rentDueDate || null,
         status,
         area,
         monthly_rent: monthlyRent,
@@ -252,10 +231,21 @@ export default function SelectedRoom({
               </span>
             </div>
 
-            <Input label="Số phòng" type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} />
-            <Input label="Người thuê" type="text" value={roomRenter} onChange={(e) => setRoomRenter(e.target.value)} />
-            <Input label="Số điện thoại" type="text" value={telephone} onChange={(e) => setTelephone(e.target.value)} />
-            <Input label="Số người" type="number" value={numPerson} onChange={(e) => setNumPerson(Number(e.target.value))} />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Mô tả phòng"
+                type="text"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+              />
+
+              <Input
+                label="Số người tối đa"
+                type="number"
+                value={numPerson}
+                onChange={(e) => setNumPerson(Number(e.target.value))}
+              />
+            </div>
           </Section>
 
           <Section title="Thông tin chi tiết phòng">
@@ -265,13 +255,20 @@ export default function SelectedRoom({
               value={area}
               onChange={(e) => setArea(Number(e.target.value))}
             />
+            <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Tiền thuê hàng tháng (đ)"
+              label="Tiền thuê (đ)"
               type="text"
               value={monthlyRent.toLocaleString("vi-VN")}
               onChange={(e) => setMonthlyRent(parseCurrency(e.target.value))}
             />
-            
+            <Input
+              label="Tiền cọc (đ)"
+              type="text"
+              value={depositAmount.toLocaleString("vi-VN")}
+              onChange={(e) => setDepositAmount(parseCurrency(e.target.value))}
+            />
+            </div>
             {/* Amenities */}
             <div className="pt-2">
               <p className="text-sm font-medium text-stone-700 mb-3">Tiện nghi</p>
@@ -283,7 +280,7 @@ export default function SelectedRoom({
                   { key: 'window', label: '🪟 Cửa sổ', icon: '🪟' },
                   { key: 'balcony', label: '🪟 Ban công', icon: '🪟' },
                   { key: 'kitchen', label: '🍳 Bếp', icon: '🍳' },
-                  
+
                 ].map((item) => (
                   <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -302,42 +299,6 @@ export default function SelectedRoom({
             </div>
           </Section>
 
-          <Section title="Tài chính">
-            <Input
-              label="Tiền cọc (đ)"
-              type="text"
-              value={depositAmount.toLocaleString("vi-VN")}
-              onChange={(e) => setDepositAmount(parseCurrency(e.target.value))}
-            />
-            <Input
-              label="Ngày đóng tiền hàng tháng"
-              type="number"
-              value={datePay}
-              onChange={(e) => setDatePay(Number(e.target.value))}
-            />
-            <Input
-              label="Ngày hết hạn hợp đồng"
-              type="date"
-              value={rentDueDate}
-              onChange={(e) => setRentDueDate(e.target.value)}
-            />
-          </Section>
-
-          <Section title="Chỉ số điện nước">
-            <Input
-              label="Số điện hiện tại (kWh)"
-              type="number"
-              value={currentElectricityNumber}
-              onChange={(e) => setCurrentElectricityNumber(Number(e.target.value))}
-            />
-            <Input
-              label="Số nước hiện tại (m³)"
-              type="number"
-              value={currentWaterNumber}
-              onChange={(e) => setCurrentWaterNumber(Number(e.target.value))}
-            />
-          </Section>
-
         </div>
       </div>
 
@@ -349,11 +310,11 @@ export default function SelectedRoom({
       {/* ── Delete modal ── */}
       <DeleteModal
         open={showDeleteModal}
-        title="Xóa phòng" 
-        message={ `Bạn có chắc muốn xóa phòng "${roomName}"? Thao tác này không thể hoàn tác.`
-            
+        title="Xóa phòng"
+        message={`Bạn có chắc muốn xóa phòng "${roomName}"? Thao tác này không thể hoàn tác.`
+
         }
-        onClose={() => { setShowDeleteModal(false);   }}
+        onClose={() => { setShowDeleteModal(false); }}
         onConfirm={handleConfirmDelete}
       />
     </>

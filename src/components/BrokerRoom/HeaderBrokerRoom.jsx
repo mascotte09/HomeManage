@@ -16,11 +16,11 @@ const NAV = [
     path: (id) => `/rooms/${id}`,
   },
   {
-    label: "Chốt Phòng",
+    label: "Chốt Thuê",
     icon: FiFileText,
     color: "text-green-600",
     bg: "bg-green-50",
-    path: (id) => `/invoicesInMonth/${id}`,
+    path: (id) => `/broker/invoices/${id}`,
   },
   {
     label: "Chi Phí",

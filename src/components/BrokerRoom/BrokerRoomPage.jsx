@@ -62,7 +62,7 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
                                 : "bg-stone-100 text-stone-500"
                                 }`}
                         >
-                            {isOccupied ? "Có người" : "Trống"}
+                            {isOccupied ? "Đã thuê" : "Trống"}
                         </span>
                     </div>
 
@@ -90,17 +90,6 @@ function RoomCard({ room, selected, onSelect, onDelete }) {
                         </div>
                     )}
 
-                    {/* Meter readings */}
-                    {/* <div className="flex gap-3">
-                        <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-                            <FiZap size={11} />
-                            {(room.current_electricity_number || 0).toLocaleString("vi-VN")}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                            <FiDroplet size={11} />
-                            {(room.current_water_number || 0).toLocaleString("vi-VN")}
-                        </span>
-                    </div> */}
                 </div>
 
                 {/* Actions */}
@@ -236,6 +225,27 @@ export default function RoomPage() {
     const isCreateView = view === VIEW.CREATE;
     const isDetailView = view === VIEW.DETAIL;
 
+    if (home?.property_type === "whole_house") {
+    return (
+        <div className="h-dvh bg-stone-50 flex flex-col">
+            <HeaderRoom  />
+
+            <div className="flex-1 flex items-center justify-center p-6">
+                <div className="text-center">
+                    <div className="text-5xl mb-4">🏡</div>
+
+                    <h2 className="text-lg font-semibold text-stone-700">
+                        Nhà cho thuê nguyên căn
+                    </h2>
+
+                    <p className="text-stone-500 mt-2">
+                        Loại hình này không quản lý theo từng phòng.
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
     return (
         <div className="h-dvh bg-stone-50 flex flex-col overflow-hidden">
             <HeaderRoom />
@@ -262,7 +272,7 @@ export default function RoomPage() {
 
                         {rooms.length > 0 && (
                             <span className="text-sm text-stone-500">
-                                {occupiedCount}/{rooms.length} có người
+                                {occupiedCount}/{rooms.length} có người thuê
                             </span>
                         )}
                     </div>

@@ -48,6 +48,7 @@ export default function SelectedBrokerHouse({
   const [propertyType, setPropertyType] = useState("room");
 
   const [phoneOwner, setPhoneOwner] = useState("");
+  const [monthly_rent, setMonthlyRent] = useState(0);
   const [width, setWidth] = useState(0);
   const [length, setLength] = useState(0);
   const [floors, setFloors] = useState(0);
@@ -69,6 +70,7 @@ export default function SelectedBrokerHouse({
     setPropertyType(house?.property_type || "room");
 
     setPhoneOwner(house?.phone_owner || "");
+    setMonthlyRent(house?.monthly_rent || 0);
     setWidth(house?.width || 0);
     setLength(house?.length || 0);
     setFloors(house?.floors || 0);
@@ -108,6 +110,7 @@ export default function SelectedBrokerHouse({
         is_water_per_person: isWaterPerPerson,
         property_type: propertyType,
         phone_owner: phoneOwner,
+        monthly_rent: monthly_rent,
         width,
         length,
         floors,
@@ -169,6 +172,7 @@ export default function SelectedBrokerHouse({
       propertyType: house?.property_type || "room",
       phoneOwner: house?.phone_owner || "",
 
+      monthly_rent: house?.monthly_rent || 0,
       width: house?.width || 0,
       length: house?.length || 0,
       floors: house?.floors || 0,
@@ -195,6 +199,7 @@ export default function SelectedBrokerHouse({
     setPropertyType(init.propertyType);
     setPhoneOwner(init.phoneOwner);
 
+    setMonthlyRent(init.monthly_rent);
     setWidth(init.width);
     setLength(init.length);
     setFloors(init.floors);
@@ -228,6 +233,7 @@ export default function SelectedBrokerHouse({
       propertyType !== init.propertyType ||
       phoneOwner !== init.phoneOwner ||
 
+      monthly_rent !== init.monthly_rent ||
       width !== init.width ||
       length !== init.length ||
       floors !== init.floors ||
@@ -324,7 +330,7 @@ export default function SelectedBrokerHouse({
         {/* ── Form body ── */}
         <div className="p-4">
 
-          <Section title="Thông tin cơ bản">
+          <Section >
             <Input
               label="Tên chủ nhà"
               type="text"
@@ -343,203 +349,193 @@ export default function SelectedBrokerHouse({
               onChange={(e) => setAddress(e.target.value)}
             />
           </Section>
+          <Section title="Hình thức cho thuê">
 
 
 
-          <Section title="Loại hình">
+            <div className="flex gap-6">
 
-            <fieldset className="border rounded-xl p-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  value="room"
+                  checked={propertyType === "room"}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                />
+                Phòng trọ
+              </label>
 
-              <legend className="px-2 text-sm font-medium">
-                Hình thức cho thuê
-              </legend>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  value="whole_house"
+                  checked={propertyType === "whole_house"}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                />
+                Nguyên căn
+              </label>
 
-              <div className="flex gap-6">
+            </div>
+            {propertyType === "room" && (
+              <Section title="Giá dịch vụ">
+                <Input
+                  label="Giá điện (đ/kWh)"
+                  type="text"
+                  value={electricityPrice.toLocaleString("vi-VN")}
+                  onChange={(e) => setElectricityPrice(parseCurrency(e.target.value))}
+                />
 
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    value="room"
-                    checked={propertyType === "room"}
-                    onChange={(e) => setPropertyType(e.target.value)}
+                {/* Water type */}
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-stone-400 block mb-2">
+                    Cách tính nước
+                  </label>
+                  <div className="flex gap-5">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={!isWaterPerPerson}
+                        onChange={() => setIsWaterPerPerson(false)}
+                        className="accent-blue-600"
+                      />
+                      <span className="text-sm text-stone-700">Theo khối</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={isWaterPerPerson}
+                        onChange={() => setIsWaterPerPerson(true)}
+                        className="accent-blue-600"
+                      />
+                      <span className="text-sm text-stone-700">Theo người</span>
+                    </label>
+                  </div>
+                </div>
+
+                <Input
+                  label={isWaterPerPerson ? "Giá nước (đ/người)" : "Giá nước (đ/khối)"}
+                  type="text"
+                  value={waterPrice.toLocaleString("vi-VN")}
+                  onChange={(e) => setWaterPrice(parseCurrency(e.target.value))}
+                />
+              </Section>
+            )}
+            {propertyType === "whole_house" && (
+
+              <Section title="Thông tin nhà">
+
+
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="Giá thuê (đ/tháng)"
+                    type="text"
+                    value={monthly_rent.toLocaleString("vi-VN")}
+                    onChange={(e) => setMonthlyRent(parseCurrency(e.target.value))}
                   />
-                  Phòng trọ
-                </label>
-
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    value="whole_house"
-                    checked={propertyType === "whole_house"}
-                    onChange={(e) => setPropertyType(e.target.value)}
+                  <Input
+                    label="Số tầng"
+                    value={floors}
+                    onChange={(e) => setFloors(e.target.value)}
                   />
-                  Nguyên căn
-                </label>
+                  <Input
+                    label="Chiều ngang (m)"
+                    value={width}
+                    onChange={(e) => setWidth(e.target.value)}
+                  />
 
-              </div>
+                  <Input
+                    label="Chiều dài (m)"
+                    value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                  />
 
-            </fieldset>
+                  
 
+                  <Input
+                    label="Số Phòng ngủ"
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                  />
+
+                  <Input
+                    label="Số WC"
+                    value={bathrooms}
+                    onChange={(e) => setBathrooms(e.target.value)}
+                  />
+
+                </div>
+
+                <div>
+
+                  <label>Hướng nhà</label>
+
+                  <select
+                    value={orientation}
+                    onChange={(e) => setOrientation(e.target.value)}
+                    className="w-full border rounded-lg p-2"
+                  >
+                    <option value="">Chọn</option>
+                    <option value="east">Đông</option>
+                    <option value="west">Tây</option>
+                    <option value="south">Nam</option>
+                    <option value="north">Bắc</option>
+                    <option value="northeast">Đông Bắc</option>
+                    <option value="northwest">Tây Bắc</option>
+                    <option value="southeast">Đông Nam</option>
+                    <option value="southwest">Tây Nam</option>
+                  </select>
+
+                </div>
+
+                <fieldset className="border rounded-xl p-3">
+
+                  <legend className="px-4">
+                    Vị trí
+                  </legend>
+
+                  <div className="flex gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={roadType === "frontage"}
+                        onChange={() => setRoadType("frontage")}
+                      />
+                      <span>Mặt tiền</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={roadType === "alley"}
+                        onChange={() => setRoadType("alley")}
+                      />
+                      Hẻm
+                    </label>
+
+                  </div>
+                  <div className="mt-2">
+                    {roadType === "frontage" ? (
+
+                      <Input
+                        label="Lề đường (m)"
+                        value={frontageWidth}
+                        onChange={(e) => setFrontageWidth(e.target.value)}
+                      />
+
+                    ) : (
+
+                      <Input
+                        label="Hẻm rộng (m)"
+                        value={alleyWidth}
+                        onChange={(e) => setAlleyWidth(e.target.value)}
+                      />
+                    )}
+                  </div>
+                </fieldset>
+              </Section>
+            )}
           </Section>
-          {propertyType === "room" && (
-            <Section title="Giá dịch vụ">
-              <Input
-                label="Giá điện (đ/kWh)"
-                type="text"
-                value={electricityPrice.toLocaleString("vi-VN")}
-                onChange={(e) => setElectricityPrice(parseCurrency(e.target.value))}
-              />
-
-              {/* Water type */}
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-stone-400 block mb-2">
-                  Cách tính nước
-                </label>
-                <div className="flex gap-5">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={!isWaterPerPerson}
-                      onChange={() => setIsWaterPerPerson(false)}
-                      className="accent-blue-600"
-                    />
-                    <span className="text-sm text-stone-700">Theo khối</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={isWaterPerPerson}
-                      onChange={() => setIsWaterPerPerson(true)}
-                      className="accent-blue-600"
-                    />
-                    <span className="text-sm text-stone-700">Theo người</span>
-                  </label>
-                </div>
-              </div>
-
-              <Input
-                label={isWaterPerPerson ? "Giá nước (đ/người)" : "Giá nước (đ/khối)"}
-                type="text"
-                value={waterPrice.toLocaleString("vi-VN")}
-                onChange={(e) => setWaterPrice(parseCurrency(e.target.value))}
-              />
-            </Section>
-          )}
-          {propertyType === "whole_house" && (
-
-            <Section title="Thông tin nhà">
-
-
-
-              <div className="grid grid-cols-2 gap-3">
-
-                <Input
-                  label="Chiều ngang (m)"
-                  value={width}
-                  onChange={(e) => setWidth(e.target.value)}
-                />
-
-                <Input
-                  label="Chiều dài (m)"
-                  value={length}
-                  onChange={(e) => setLength(e.target.value)}
-                />
-
-                <Input
-                  label="Số tầng"
-                  value={floors}
-                  onChange={(e) => setFloors(e.target.value)}
-                />
-
-                <Input
-                  label="Phòng ngủ"
-                  value={bedrooms}
-                  onChange={(e) => setBedrooms(e.target.value)}
-                />
-
-                <Input
-                  label="WC"
-                  value={bathrooms}
-                  onChange={(e) => setBathrooms(e.target.value)}
-                />
-
-              </div>
-
-              <div>
-
-                <label>Hướng nhà</label>
-
-                <select
-                  value={orientation}
-                  onChange={(e) => setOrientation(e.target.value)}
-                  className="w-full border rounded-lg p-2"
-                >
-                  <option value="">Chọn</option>
-                  <option value="east">Đông</option>
-                  <option value="west">Tây</option>
-                  <option value="south">Nam</option>
-                  <option value="north">Bắc</option>
-                  <option value="northeast">Đông Bắc</option>
-                  <option value="northwest">Tây Bắc</option>
-                  <option value="southeast">Đông Nam</option>
-                  <option value="southwest">Tây Nam</option>
-                </select>
-
-              </div>
-
-              <fieldset className="border rounded-xl p-4">
-
-                <legend className="px-2">
-                  Vị trí
-                </legend>
-
-                <div className="flex gap-6">
-
-                  <label>
-                    <input
-                      type="radio"
-                      checked={roadType === "frontage"}
-                      onChange={() => setRoadType("frontage")}
-                    />
-
-                    Mặt tiền
-                  </label>
-
-                  <label>
-                    <input
-                      type="radio"
-                      checked={roadType === "alley"}
-                      onChange={() => setRoadType("alley")}
-                    />
-
-                    Hẻm
-                  </label>
-
-                </div>
-
-              </fieldset>
-
-              {roadType === "frontage" ? (
-
-                <Input
-                  label="Mặt tiền (m)"
-                  value={frontageWidth}
-                  onChange={(e) => setFrontageWidth(e.target.value)}
-                />
-
-              ) : (
-
-                <Input
-                  label="Hẻm rộng (m)"
-                  value={alleyWidth}
-                  onChange={(e) => setAlleyWidth(e.target.value)}
-                />
-
-              )}
-
-            </Section>
-
-          )}
         </div>
       </div>
 
