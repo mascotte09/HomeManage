@@ -198,7 +198,7 @@ export default function BrokerHousePage({ user_id }) {
       {isListView && (
         <div className="p-4">
           <h2 className="text-lg font-bold text-stone-800 mb-4">
-            Nhà trọ của bạn
+            Danh sách Nhà
           </h2>
 
           {houses.length === 0 ? (
