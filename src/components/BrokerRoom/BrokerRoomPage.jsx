@@ -7,6 +7,7 @@ import HeaderRoom from "./HeaderBrokerRoom.jsx";
 import NoRoomSelected from "./NoRoomSelected.jsx";
 import SelectedRoom from "./SelectedBrokerRoom.jsx";
 import DeleteModal from "../DeleteModal.jsx";
+import BrokerInvoices from "../BrokerInvoice/BrokerInvoices.jsx";
 import { useNavigate } from "react-router-dom";
 
 const VIEW = {
@@ -173,7 +174,7 @@ export default function RoomPage() {
         );
 
         setRooms(sorted);
-        
+
     }, [houseId]);
 
     useEffect(() => {
@@ -226,26 +227,15 @@ export default function RoomPage() {
     const isDetailView = view === VIEW.DETAIL;
 
     if (home?.property_type === "whole_house") {
-    return (
-        <div className="h-dvh bg-stone-50 flex flex-col">
-            <HeaderRoom  />
-
-            <div className="flex-1 flex items-center justify-center p-6">
-                <div className="text-center">
-                    <div className="text-5xl mb-4">🏡</div>
-
-                    <h2 className="text-lg font-semibold text-stone-700">
-                        Nhà cho thuê nguyên căn
-                    </h2>
-
-                    <p className="text-stone-500 mt-2">
-                        Loại hình này không quản lý theo từng phòng.
-                    </p>
+        return (
+            <div className="h-dvh bg-stone-50 flex flex-col overflow-hidden">
+                <HeaderRoom />
+                <div className="flex-1 overflow-y-auto">
+                    <BrokerInvoices homeId={home?.id} homeName={home?.name} />
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
     return (
         <div className="h-dvh bg-stone-50 flex flex-col overflow-hidden">
             <HeaderRoom />
