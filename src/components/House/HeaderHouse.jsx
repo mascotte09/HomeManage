@@ -2,7 +2,7 @@ import { MdLogout, MdSettings, MdStorefront } from "react-icons/md";
 export default function Header({ onLogout, onSettings, onBrokerPage }) {
     return (
         <header className="bg-white border-b border-stone-200 px-4 h-20 flex justify-between items-center flex-shrink-0">
-            <h1 className="text-left text-2xl font-bold uppercase text-stone-500">
+            <h1 className="text-left text-xl font-bold uppercase text-stone-500">
                 🏠 Quản Trọ
             </h1>
 
