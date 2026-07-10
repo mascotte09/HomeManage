@@ -31,12 +31,12 @@ function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-stone-800 truncate text-xs sm:text-base leading-tight">
+          <p className="font-semibold text-stone-800 truncate text-sm sm:text-base leading-tight">
             🏠 {house.name}
           </p>
 
           {house.address && (
-            <p className="text-[11px] sm:text-sm text-stone-500 mt-0.5 truncate leading-tight">
+            <p className="text-[12px] sm:text-sm text-stone-500 mt-0.5 truncate leading-tight">
               📍 {house.address}
             </p>
           )}
@@ -45,28 +45,28 @@ function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
   {house.property_type === "whole_house" ? (
     <>
       
-      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-green-100 text-green-700 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-green-100 text-green-700 text-[12px] sm:text-xs font-medium whitespace-nowrap">
         💰 {Number(house.monthly_rent || 0).toLocaleString("vi-VN")} đ
       </span>
 
       {isWholeHouseVacant ? (
-        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[10px] sm:text-xs font-medium whitespace-nowrap">
-          Trống
+        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[12px] sm:text-xs font-medium whitespace-nowrap">
+          Còn Trống
         </span>
       ) : (
-        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-stone-100 text-stone-600 text-[12px] sm:text-xs font-medium whitespace-nowrap">
           Đã thuê
         </span>
       )}
     </>
   ) : (
     <>
-      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-blue-100 text-blue-700 text-[12px] sm:text-xs font-medium whitespace-nowrap">
         🏡 {totalRooms} phòng
       </span>
 
       {emptyRooms > 0 && (
-        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[12px] sm:text-xs font-medium whitespace-nowrap">
           {emptyRooms} trống
         </span>
       )}
@@ -234,7 +234,7 @@ export default function BrokerHousePage({ user_id }) {
             <div className="grid grid-cols-2 gap-1.5 sm:gap-4 max-w-[420px] sm:max-w-2xl mx-auto">
               {/* Cột 1: Nhà nguyên căn */}
               <div className="min-w-0">
-                <h3 className="text-[11px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
+                <h3 className="text-[12px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
                   Nguyên căn ({wholeHouses.length})
                 </h3>
                 {wholeHouses.length === 0 ? (
@@ -258,7 +258,7 @@ export default function BrokerHousePage({ user_id }) {
 
               {/* Cột 2: Cho thuê phòng */}
               <div className="min-w-0">
-                <h3 className="text-[11px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
+                <h3 className="text-[12px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
                   Thuê phòng ({roomHouses.length})
                 </h3>
                 {roomHouses.length === 0 ? (
