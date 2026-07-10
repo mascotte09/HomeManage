@@ -15,13 +15,13 @@ const VIEW = {
 function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
   const totalRooms = house.rooms?.length || 0;
   const emptyRooms = house.rooms?.filter((r) => !r.status).length || 0;
-  const occupiedRooms = totalRooms - emptyRooms;
+  const isWholeHouseVacant = house.property_type === "whole_house" && !house.status;
   const navigate = useNavigate();
   return (
     <button
       onClick={() => navigate(`/rooms/${house.id}`)}
       className={`
-    w-full text-left p-3 rounded-2xl border transition active:scale-[0.98]
+    w-full text-left p-2 sm:p-3 rounded-xl sm:rounded-2xl border transition active:scale-[0.98]
     ${selected
           ? "border-blue-400 bg-blue-50"
           : "border-stone-200 bg-white hover:border-stone-300"}
@@ -31,39 +31,42 @@ function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-stone-800 truncate">
+          <p className="font-semibold text-stone-800 truncate text-xs sm:text-base leading-tight">
             🏠 {house.name}
           </p>
 
           {house.address && (
-            <p className="text-sm text-stone-500 mt-0.5 truncate">
+            <p className="text-[11px] sm:text-sm text-stone-500 mt-0.5 truncate leading-tight">
               📍 {house.address}
             </p>
           )}
 
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-1 sm:gap-2 mt-1.5 sm:mt-3">
   {house.property_type === "whole_house" ? (
     <>
-      <span className="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">
-        🏡 Thuê nguyên căn
-      </span>
-
-      <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+      
+      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-green-100 text-green-700 text-[10px] sm:text-xs font-medium whitespace-nowrap">
         💰 {Number(house.monthly_rent || 0).toLocaleString("vi-VN")} đ
       </span>
+
+      {isWholeHouseVacant ? (
+        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+          Trống
+        </span>
+      ) : (
+        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+          Đã thuê
+        </span>
+      )}
     </>
   ) : (
     <>
-      <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-        🏡 Thuê phòng: {totalRooms} 
-      </span>
-
-      <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-        {occupiedRooms} đã thuê
+      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] sm:text-xs font-medium whitespace-nowrap">
+        🏡 {totalRooms} phòng
       </span>
 
       {emptyRooms > 0 && (
-        <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-600 text-xs font-medium">
+        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[10px] sm:text-xs font-medium whitespace-nowrap">
           {emptyRooms} trống
         </span>
       )}
@@ -73,7 +76,7 @@ function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
 
           {/* View rooms */}
           <button
@@ -81,9 +84,10 @@ function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
               e.stopPropagation();
               onSelect(house.id);
             }}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition"
+            className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition"
           >
-            <FiEye size={17} />
+            <FiEye size={14} className="sm:hidden" />
+            <FiEye size={17} className="hidden sm:block" />
           </button>
 
           {/* Delete */}
@@ -92,10 +96,11 @@ function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
               e.stopPropagation();
               onDelete(house);
             }}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition"
+            className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition"
             title="Xóa nhà trọ"
           >
-            <FiTrash2 size={17} />
+            <FiTrash2 size={14} className="sm:hidden" />
+            <FiTrash2 size={17} className="hidden sm:block" />
           </button>
 
         </div>
@@ -139,6 +144,28 @@ export default function BrokerHousePage({ user_id }) {
     () => houses.find((h) => h.id === selectedHomeId) || null,
     [houses, selectedHomeId]
   );
+
+  // Split into whole-house rentals and room rentals, each sorted by vacancy priority
+  const { wholeHouses, roomHouses } = useMemo(() => {
+    const whole = houses.filter((h) => h.property_type === "whole_house");
+    const rooms = houses.filter((h) => h.property_type !== "whole_house");
+
+    // Whole house: vacant houses (no active tenant) first
+    const sortedWhole = [...whole].sort((a, b) => {
+      const aVacant = !a.status ? 0 : 1;
+      const bVacant = !b.status ? 0 : 1;
+      return aVacant - bVacant;
+    });
+
+    // Room rentals: houses with the most empty rooms first
+    const sortedRooms = [...rooms].sort((a, b) => {
+      const aEmpty = a.rooms?.filter((r) => !r.status).length || 0;
+      const bEmpty = b.rooms?.filter((r) => !r.status).length || 0;
+      return bEmpty - aEmpty;
+    });
+
+    return { wholeHouses: sortedWhole, roomHouses: sortedRooms };
+  }, [houses]);
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   const goToList = useCallback(() => {
@@ -204,16 +231,54 @@ export default function BrokerHousePage({ user_id }) {
           {houses.length === 0 ? (
             <NoBrokerHouseSelected onStartAddHouse={goToCreate} />
           ) : (
-            <div className="space-y-3">
-              {houses.map((house) => (
-                <BrokerHouseCard
-                  key={house.id}
-                  house={house}
-                  selected={selectedHomeId === house.id}
-                  onSelect={goToDetail}
-                  onDelete={openDeleteModal}
-                />
-              ))}
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-4 max-w-[420px] sm:max-w-2xl mx-auto">
+              {/* Cột 1: Nhà nguyên căn */}
+              <div className="min-w-0">
+                <h3 className="text-[11px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
+                  Nguyên căn ({wholeHouses.length})
+                </h3>
+                {wholeHouses.length === 0 ? (
+                  <p className="text-xs sm:text-sm text-stone-400 px-0.5 sm:px-1">
+                    Chưa có nhà nào.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 sm:space-y-3">
+                    {wholeHouses.map((house) => (
+                      <BrokerHouseCard
+                        key={house.id}
+                        house={house}
+                        selected={selectedHomeId === house.id}
+                        onSelect={goToDetail}
+                        onDelete={openDeleteModal}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cột 2: Cho thuê phòng */}
+              <div className="min-w-0">
+                <h3 className="text-[11px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
+                  Thuê phòng ({roomHouses.length})
+                </h3>
+                {roomHouses.length === 0 ? (
+                  <p className="text-xs sm:text-sm text-stone-400 px-0.5 sm:px-1">
+                    Chưa có nhà nào.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 sm:space-y-3">
+                    {roomHouses.map((house) => (
+                      <BrokerHouseCard
+                        key={house.id}
+                        house={house}
+                        selected={selectedHomeId === house.id}
+                        onSelect={goToDetail}
+                        onDelete={openDeleteModal}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
