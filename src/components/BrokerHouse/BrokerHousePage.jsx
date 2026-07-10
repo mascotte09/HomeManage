@@ -1,113 +1,15 @@
 import { useEffect, useMemo, useCallback, useState } from "react";
-import { FiPlus, FiTrash2, FiEye } from "react-icons/fi";
+import { FiPlus, } from "react-icons/fi";
 import { supabase } from "../../supabase.js";
 import NoBrokerHouseSelected from "./NoBrokerHouseSelected.jsx";
 import SelectedBrokerHouse from "./SelectedBrokerHouse.jsx";
+import BrokerHouseCard from "./BrokerHouseCard.jsx";
 import DeleteModal from "../DeleteModal.jsx";
-import { useNavigate } from "react-router-dom";
 const VIEW = {
   LIST: "list",
   CREATE: "create",
   DETAIL: "detail",
 };
-
-// ─── Broker house card ─────────────────────────────────────────────────────
-function BrokerHouseCard({ house, selected, onSelect, onDelete }) {
-  const totalRooms = house.rooms?.length || 0;
-  const emptyRooms = house.rooms?.filter((r) => !r.status).length || 0;
-  const isWholeHouseVacant = house.property_type === "whole_house" && !house.status;
-  const navigate = useNavigate();
-  return (
-    <button
-      onClick={() => navigate(`/rooms/${house.id}`)}
-      className={`
-    w-full text-left p-2 sm:p-3 rounded-xl sm:rounded-2xl border transition active:scale-[0.98]
-    ${selected
-          ? "border-blue-400 bg-blue-50"
-          : "border-stone-200 bg-white hover:border-stone-300"}
-  `}
-    >
-      <div className="flex items-start justify-between gap-2">
-
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-stone-800 truncate text-sm sm:text-base leading-tight">
-            🏠 {house.name}
-          </p>
-
-          {house.address && (
-            <p className="text-[12px] sm:text-sm text-stone-500 mt-0.5 truncate leading-tight">
-              📍 {house.address}
-            </p>
-          )}
-
-          <div className="flex flex-wrap gap-1 sm:gap-2 mt-1.5 sm:mt-3">
-  {house.property_type === "whole_house" ? (
-    <>
-      
-      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-green-100 text-green-700 text-[12px] sm:text-xs font-medium whitespace-nowrap">
-        💰 {Number(house.monthly_rent || 0).toLocaleString("vi-VN")} đ
-      </span>
-
-      {isWholeHouseVacant ? (
-        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[12px] sm:text-xs font-medium whitespace-nowrap">
-          Còn Trống
-        </span>
-      ) : (
-        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-stone-100 text-stone-600 text-[12px] sm:text-xs font-medium whitespace-nowrap">
-          Đã thuê
-        </span>
-      )}
-    </>
-  ) : (
-    <>
-      <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-blue-100 text-blue-700 text-[12px] sm:text-xs font-medium whitespace-nowrap">
-        🏡 {totalRooms} phòng
-      </span>
-
-      {emptyRooms > 0 && (
-        <span className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-red-100 text-red-600 text-[12px] sm:text-xs font-medium whitespace-nowrap">
-          {emptyRooms} trống
-        </span>
-      )}
-    </>
-  )}
-</div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-
-          {/* View rooms */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect(house.id);
-            }}
-            className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition"
-          >
-            <FiEye size={14} className="sm:hidden" />
-            <FiEye size={17} className="hidden sm:block" />
-          </button>
-
-          {/* Delete */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(house);
-            }}
-            className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition"
-            title="Xóa nhà trọ"
-          >
-            <FiTrash2 size={14} className="sm:hidden" />
-            <FiTrash2 size={17} className="hidden sm:block" />
-          </button>
-
-        </div>
-      </div>
-    </button>
-  );
-}
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function BrokerHousePage({ user_id }) {
