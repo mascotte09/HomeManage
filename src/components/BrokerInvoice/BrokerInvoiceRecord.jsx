@@ -10,17 +10,12 @@ export default function InvoiceRecord({
 }) {
   const [saving, setSaving] = useState(false);
   const [home, setHome] = useState(null);
-
-
   const [formData, setFormData] = useState({
     invoice_create_date:
       new Date()
         .toISOString()
         .substring(0, 10),
-
     rental_amount: "",
-
-
     note: "",
   });
   // =========================
@@ -32,7 +27,6 @@ export default function InvoiceRecord({
     setFormData((prev) => ({
       ...prev,
       rental_amount: room?.monthly_rent ?? "",
-
     }));
   }, [room, invoice]);
 
@@ -42,51 +36,12 @@ export default function InvoiceRecord({
     setFormData({
       invoice_create_date:
         invoice.invoice_create_date?.substring(0, 10) ?? "",
-
       rental_amount:
         invoice.rental_amount ?? "",
-
       note:
         invoice.note ?? "",
     });
   }, [invoice]);
-
-  // useEffect(() => {
-  //   async function fetchInvoiceBalances() {
-  //     if (!room?.id) {
-  //       return;
-  //     }
-
-  //     let query = supabase
-  //       .from("invoices")
-  //       .select(`
-  //         id,
-  //         invoice_create_date,
-  //         total_amount,
-  //         debit_amount
-  //       `)
-  //       .eq("room_id", room.id)
-  //       .neq("debit_amount", 0)
-  //       .order("invoice_create_date", {
-  //         ascending: true,
-  //       });
-
-  //     // if (invoice?.id) {
-  //     //   query = query.neq("id", invoice.id);
-  //     // }
-
-  //     // const { data, error } = await query;
-
-  //     // if (error) {
-  //     //   console.log(error.message);
-  //     //   return;
-  //     // }
-
-  //   }
-
-  //   fetchInvoiceBalances();
-  // }, [room?.id, invoice?.id]);
-
 
   useEffect(() => {
     async function fetchHome() {
@@ -103,17 +58,12 @@ export default function InvoiceRecord({
           .single();
 
       if (error) {
-
         console.log(error.message);
-
         return;
       }
-
       setHome(data);
     }
-
     fetchHome();
-
   }, [homeID]);
 
   // =========================
@@ -131,134 +81,97 @@ export default function InvoiceRecord({
   // =========================
   // CREATE
   // =========================
-  async function handleCreate() {
-    if (saving) return;
+ async function handleCreate() {
+  if (saving) return;
 
-    setSaving(true);
-    try {
+  setSaving(true);
 
-      const invalidRental =
-        Number(formData.rental_amount) === 0 ||
-        formData.rental_amount === "";
+  try {
+    const invalidRental =
+      Number(formData.rental_amount) === 0 ||
+      formData.rental_amount === "";
 
-      if (invalidRental) {
-        alert("Vui lòng nhập tiền thuê hợp lệ");
-        return;
-      }
+    if (invalidRental) {
+      alert("Vui lòng nhập tiền thuê hợp lệ");
+      return;
+    }
 
-      const payload = {
-        room_id: room.id,
+    const payload = {
+      room_id: room.id,
+      rental_amount: Number(formData.rental_amount),
+      invoice_create_date: formData.invoice_create_date,
+      note: formData.note || null,
+    };
 
+    let savedInvoice = null;
+    let error = null;
 
-        rental_amount:
-          Number(formData.rental_amount) || null,
-
-        invoice_create_date:
-          formData.invoice_create_date || null,
-
-        note: formData.note || null,
-
-      };
-
-      let error = null;
-      let savedInvoice = null;
-
-      // UPDATE
-      if (invoice?.id) {
-        const result = await supabase
-          .from("invoices")
-          .update(payload)
-          .eq("id", invoice.id)
-          .select()
-          .single();
-
-        error = result.error;
-        savedInvoice = result.data;
-      }
-
-      // CREATE
-      else {
-        const result = await supabase
-          .from("invoices")
-          .insert([payload])
-          .select()
-          .single();
-
-        error = result.error;
-        savedInvoice = result.data;
-      }
-
-      if (error) {
-        console.log(error.message);
-
-        alert(
-          invoice?.id
-            ? "Update failed"
-            : "Create failed"
-        );
-
-        return;
-      }
-
-      // Tìm hóa đơn mới nhất của phòng
-      const {
-        data: newestInvoice,
-        error: newestError,
-      } = await supabase
+    // UPDATE
+    if (invoice?.id) {
+      const result = await supabase
         .from("invoices")
-        .select(`
-        id,
-        new_electricity_number,
-        new_water_number,
-        rental_amount
-      `)
-        .eq("room_id", room.id)
-        .order(
-          "invoice_create_date",
-          { ascending: false }
-        )
-        .order(
-          "created_at",
-          { ascending: false }
-        )
-        .limit(1)
+        .update(payload)
+        .eq("id", invoice.id)
+        .select()
         .single();
 
-      if (newestError) {
-        console.log(newestError.message);
-      } else {
-        // Chỉ cập nhật chỉ số phòng nếu
-        // hóa đơn vừa lưu là hóa đơn mới nhất
-        if (
-          newestInvoice &&
-          newestInvoice.id === savedInvoice.id
-        ) {
-          await supabase
-            .from("rooms")
-            .update({
-              current_electricity_number:
-                newestInvoice.new_electricity_number,
-              current_water_number:
-                newestInvoice.new_water_number,
-              monthly_rent:
-                newestInvoice.rental_amount
-            })
-            .eq("id", room.id);
-        }
-      }
-
-    } finally {
-      setSaving(false);
+      savedInvoice = result.data;
+      error = result.error;
     }
+    // CREATE
+    else {
+      const result = await supabase
+        .from("invoices")
+        .insert(payload)
+        .select()
+        .single();
+
+      savedInvoice = result.data;
+      error = result.error;
+    }
+
+    if (error) {
+      console.log(error.message);
+      alert(invoice ? "Cập nhật thất bại" : "Tạo hóa đơn thất bại");
+      return;
+    }
+
+    // ==================================================
+    // Chỉ đánh dấu đã thuê khi TẠO hóa đơn lần đầu
+    // ==================================================
+    if (!invoice?.id) {
+console.log({
+  invoice,
+  home,
+  homeID,
+  room,
+});
+      if (home.property_type === "whole_house") {
+        await supabase
+          .from("homes")
+          .update({ status: true })
+          .eq("id", homeID);
+      } else {
+        // cập nhật phòng
+        await supabase
+          .from("rooms")
+          .update({ status: true })
+          .eq("id", room.id);      
+      }
+    }
+
+    onAdd?.(savedInvoice);
+    onCancel?.();
+
+  } finally {
+    setSaving(false);
   }
+}
 
   useEffect(() => {
 
     async function checkPreviousInvoice() {
-
       if (!room?.id) {
-
-
         return;
       }
 
@@ -276,7 +189,6 @@ export default function InvoiceRecord({
 
       // exclude current invoice
       if (invoice?.id) {
-
         query = query.neq(
           "id",
           invoice.id
@@ -287,25 +199,20 @@ export default function InvoiceRecord({
         await query.limit(1);
 
       if (error) {
-
         console.log(error.message);
-
         return;
       }
 
       const latestInvoice =
         data?.[0];
-
       const hasInvoice =
         !!latestInvoice;
-
 
       // CREATE NEW INVOICE
       if (
         hasInvoice &&
         !invoice
       ) {
-
         setFormData((prev) => ({
           ...prev,
 

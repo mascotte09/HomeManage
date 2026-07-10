@@ -58,6 +58,7 @@ export default function SelectedBrokerHouse({
   const [frontageWidth, setFrontageWidth] = useState("");
   const [alleyWidth, setAlleyWidth] = useState("");
   const [orientation, setOrientation] = useState("");
+  const [status, setStatus] = useState(false);
   // Load house data into state
   useEffect(() => {
     setName(house?.name || "");
@@ -68,7 +69,7 @@ export default function SelectedBrokerHouse({
     setWaterPrice(house?.water_price || 100000);
     setIsWaterPerPerson(house?.is_water_per_person || false);
     setPropertyType(house?.property_type || "room");
-
+    setStatus(house?.status || false);
     setPhoneOwner(house?.phone_owner || "");
     setMonthlyRent(house?.monthly_rent || 0);
     setWidth(house?.width || 0);
@@ -120,6 +121,7 @@ export default function SelectedBrokerHouse({
         frontage_width: frontageWidth,
         alley_width: alleyWidth,
         orientation,
+        status,
       };
 
       if (isNew) {
@@ -166,6 +168,7 @@ export default function SelectedBrokerHouse({
 
   useEffect(() => {
     const init = {
+      status: house?.status || 0,
       name: house?.name || "",
       address: house?.address || "",
 
@@ -195,7 +198,7 @@ export default function SelectedBrokerHouse({
 
     setName(init.name);
     setAddress(init.address);
-
+    setStatus(init.status);
     setPropertyType(init.propertyType);
     setPhoneOwner(init.phoneOwner);
 
@@ -227,6 +230,7 @@ export default function SelectedBrokerHouse({
     if (!init) return false;
 
     return (
+      status !== init.status ||
       name !== init.name ||
       address !== init.address ||
 
@@ -329,7 +333,27 @@ export default function SelectedBrokerHouse({
 
         {/* ── Form body ── */}
         <div className="p-4">
-
+<div className="flex items-center justify-between py-1">
+              <span className="text-sm font-medium text-stone-700">Tình trạng</span>
+              <button
+                onClick={() => setStatus((s) => !s)}
+                className={`
+                  relative inline-flex h-6 w-11 items-center rounded-full transition
+                  ${status ? "bg-blue-600" : "bg-stone-200"}
+                `}
+                aria-label="Toggle trạng thái phòng"
+              >
+                <span
+                  className={`
+                    inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
+                    ${status ? "translate-x-6" : "translate-x-1"}
+                  `}
+                />
+              </button>
+              <span className={`text-xs font-medium ${status ? "text-green-600" : "text-stone-400"}`}>
+                {status ? "Đang có người thuê" : "Phòng trống"}
+              </span>
+            </div>
           <Section >
             <Input
               label="Tên chủ nhà"
@@ -450,7 +474,7 @@ export default function SelectedBrokerHouse({
                     onChange={(e) => setLength(e.target.value)}
                   />
 
-                  
+
 
                   <Input
                     label="Số Phòng ngủ"

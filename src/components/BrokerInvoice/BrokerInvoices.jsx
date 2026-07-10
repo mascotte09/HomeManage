@@ -197,6 +197,20 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
         ? await supabase.from("room_rentals").update(payload).eq("id", selectedRental.id)
         : await supabase.from("room_rentals").insert([payload]);
 
+      if (!selectedRental?.id) {
+        if (home.property_type === "whole_house") {
+          await supabase
+            .from("homes")
+            .update({ status: true })
+            .eq("id", home?.id);
+        } else {
+          // cập nhật phòng
+          await supabase
+            .from("rooms")
+            .update({ status: true })
+            .eq("id", room.id);
+        }
+      }
       if (error) throw error;
 
       await fetchData();

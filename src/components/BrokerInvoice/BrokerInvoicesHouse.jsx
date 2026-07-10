@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { FiArrowLeft, FiCheckCircle, FiClock, FiChevronRight } from "react-icons/fi";
 import { supabase } from "../../supabase.js";
 
-import InvoiceRecord from "./BrokerInvoiceRecord.jsx";
 import NoInvoiceSelected from "./NoInvoiceSelected.jsx";
 
 // ─── Room invoice card ────────────────────────────────────────────────────────
@@ -77,7 +76,6 @@ export default function InvoicesInMonth() {
 
   const [view, setView] = useState("list"); // "list" | "record"
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
@@ -139,14 +137,12 @@ export default function InvoicesInMonth() {
   // ── Navigation ──────────────────────────────────────────────────────────────
   function handleSelectRoom(room, invoice) {
     setSelectedRoom(room);
-    setSelectedInvoice(invoice || null);
     setView("record");
   }
 
   function goToList() {
     setView("list");
     setSelectedRoom(null);
-    setSelectedInvoice(null);
   }
 
   const allRooms = [...state.noInvRooms, ...state.invRooms].sort((a, b) =>
@@ -176,18 +172,7 @@ export default function InvoicesInMonth() {
           </p>
         </div>
 
-        <div className="flex-1 p-4">
-          <InvoiceRecord
-            room={selectedRoom}
-            homeID={houseId}
-            invoice={selectedInvoice}
-            onCancel={goToList}
-            onAdd={() => {
-              goToList();
-              fetchRooms();
-            }}
-          />
-        </div>
+        
       </div>
     );
   }
