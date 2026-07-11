@@ -131,6 +131,7 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
     setForm({
       ...emptyForm,
       broker_fee: defaultRent ?? "",
+      monthly_rent: defaultRent ?? "",
     });
   }
 
@@ -145,6 +146,8 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
       monthly_rent: rental.monthly_rent ?? "",
       deposit: rental.deposit ?? "",
       broker_fee: rental.broker_fee ?? "",
+      broker_fee_paid: rental.broker_fee_paid,
+      broker_fee_paid_at: rental.broker_fee_paid_at?.slice(0, 10) || "",
       note: rental.note || "",
     });
   }
@@ -166,6 +169,7 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
       // Tiền môi giới mặc định = tiền thuê
       if (name === "monthly_rent") {
         next.broker_fee = value;
+        next.monthly_rent = value;
       }
 
       return next;
@@ -190,6 +194,8 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
         monthly_rent: Number(form.monthly_rent) || 0,
         deposit: Number(form.deposit) || 0,
         broker_fee: Number(form.broker_fee) || 0,
+        broker_fee_paid: form.broker_fee_paid,
+        broker_fee_paid_at: form.broker_fee_paid_at || null,
         note: form.note.trim(),
       };
 
@@ -295,7 +301,7 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
 
         <div className="flex-1 overflow-y-auto p-4 pb-8">
           <Section title="Thông tin khách">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3">
               <Input
                 label="Tên khách"
                 type="text"
@@ -312,19 +318,115 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
           </Section>
 
           <Section title="Thời gian & giá">
-            <div className="grid gap-3 md:grid-cols-2">
+            {/* Ngày nhận + Ngày trả */}
+            <div className="grid grid-cols-2 gap-3">
               <Input
                 label="Ngày nhận"
                 type="date"
                 value={form.move_in_date}
-                onChange={(e) => handleFieldChange({ target: { name: "move_in_date", value: e.target.value } })}
+                onChange={(e) =>
+                  handleFieldChange({
+                    target: {
+                      name: "move_in_date",
+                      value: e.target.value,
+                    },
+                  })
+                }
               />
+
               <Input
                 label="Ngày trả"
                 type="date"
                 value={form.move_out_date}
-                onChange={(e) => handleFieldChange({ target: { name: "move_out_date", value: e.target.value } })}
+                onChange={(e) =>
+                  handleFieldChange({
+                    target: {
+                      name: "move_out_date",
+                      value: e.target.value,
+                    },
+                  })
+                }
               />
+            </div>
+
+            {/* Giá chốt thuê */}
+            <div className="mt-3">
+              <Input
+                label="Giá chốt thuê"
+                type="text"
+                value={Number(form.monthly_rent || 0).toLocaleString("vi-VN")}
+                onChange={(e) =>
+                  handleFieldChange({
+                    target: {
+                      name: "monthly_rent",
+                      value: e.target.value.replace(/\D/g, ""),
+                    },
+                  })
+                }
+              />
+            </div>
+          </Section>
+          <Section title="Môi giới">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div className="flex items-center justify-between py-1">
+                <span className="text-sm font-medium text-stone-700">
+                  Thanh toán phí
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const paid = !form.broker_fee_paid;
+
+                    handleFieldChange({
+                      target: {
+                        name: "broker_fee_paid",
+                        value: paid,
+                      },
+                    });
+
+                    handleFieldChange({
+                      target: {
+                        name: "broker_fee_paid_at",
+                        value: paid
+                          ? new Date().toISOString().slice(0, 10)
+                          : "",
+                      },
+                    });
+                  }}
+                  className={`
+                            relative inline-flex h-6 w-11 items-center rounded-full transition
+                            ${form.broker_fee_paid
+                      ? "bg-emerald-600"
+                      : "bg-stone-300"
+                    }
+                          `}
+                  aria-label="Toggle trạng thái thanh toán"
+                >
+                  <span
+                    className={`
+                              inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
+                              ${form.broker_fee_paid
+                        ? "translate-x-6"
+                        : "translate-x-1"
+                      }
+                            `}
+                  />
+                </button>
+
+                <span
+                  className={`text-xs font-medium ${form.broker_fee_paid
+                    ? "text-emerald-600"
+                    : "text-amber-600"
+                    }`}
+                >
+                  {form.broker_fee_paid
+                    ? "Đã thanh toán"
+                    : "Chưa thanh toán"}
+                </span>
+              </div>
+
               <Input
                 label="Tiền môi giới"
                 type="text"
@@ -338,9 +440,24 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
                   })
                 }
               />
+
+              {form.broker_fee_paid && (<Input
+                label="Ngày thanh toán"
+                type="date"
+                name="broker_fee_paid_at"
+                value={form.broker_fee_paid_at || ""}
+                onChange={(e) =>
+                  handleFieldChange({
+                    target: {
+                      name: "broker_fee_paid_at",
+                      value: e.target.value,
+                    },
+                  })
+                }
+              />)}
+
             </div>
           </Section>
-
           <Section title="Ghi chú">
             <textarea
               name="note"
@@ -416,12 +533,14 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
                           {rental.renter_name || "Khách chưa cập nhật"}
                         </span>
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${isActive
-                            ? "bg-blue-50 text-blue-700"
-                            : "bg-stone-100 text-stone-500"
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${rental.broker_fee_paid
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
                             }`}
                         >
-                          {isActive ? "Đang thuê" : "Đã trả"}
+                          {rental.broker_fee_paid
+                            ? "Đã nhận phí"
+                            : "Chưa nhận phí"}
                         </span>
                       </div>
 
@@ -448,7 +567,7 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
                         <div className="flex items-center gap-2">
                           <FiPhone size={14} className="text-stone-400 flex-shrink-0" />
                           <span>
-                            Môi giới:{" "}
+                            Phí:{" "}
                             <span className="font-mono tabular-nums font-medium text-stone-700">
                               {formatMoney(rental.broker_fee)} đ
                             </span>

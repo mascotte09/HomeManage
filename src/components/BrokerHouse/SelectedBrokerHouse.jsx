@@ -333,27 +333,27 @@ export default function SelectedBrokerHouse({
 
         {/* ── Form body ── */}
         <div className="p-4">
-<div className="flex items-center justify-between py-1">
-              <span className="text-sm font-medium text-stone-700">Tình trạng</span>
-              <button
-                onClick={() => setStatus((s) => !s)}
-                className={`
+          <div className="flex items-center justify-between py-1">
+            <span className="text-sm font-medium text-stone-700">Tình trạng</span>
+            <button
+              onClick={() => setStatus((s) => !s)}
+              className={`
                   relative inline-flex h-6 w-11 items-center rounded-full transition
                   ${status ? "bg-blue-600" : "bg-stone-200"}
                 `}
-                aria-label="Toggle trạng thái phòng"
-              >
-                <span
-                  className={`
+              aria-label="Toggle trạng thái phòng"
+            >
+              <span
+                className={`
                     inline-block h-4 w-4 rounded-full bg-white shadow transition-transform
                     ${status ? "translate-x-6" : "translate-x-1"}
                   `}
-                />
-              </button>
-              <span className={`text-xs font-medium ${status ? "text-green-600" : "text-stone-400"}`}>
-                {status ? "Đang có người thuê" : "Phòng trống"}
-              </span>
-            </div>
+              />
+            </button>
+            <span className={`text-xs font-medium ${status ? "text-green-600" : "text-stone-400"}`}>
+              {status ? "Đang có người thuê" : "Phòng trống"}
+            </span>
+          </div>
           <Section >
             <Input
               label="Tên chủ nhà"
