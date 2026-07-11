@@ -6,7 +6,7 @@ import {
   FiCamera,
 } from "react-icons/fi";
 import Input from "../InputVal.jsx";
-import Photos from "../Photos.jsx";
+import Photos from "../Photos/Photos.jsx";
 import DeleteModal from "../DeleteModal.jsx";
 
 // ─── Reusable section wrapper ────────────────────────────────────────────────

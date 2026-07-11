@@ -3,7 +3,7 @@ import { supabase } from "../../supabase";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiSave, FiGrid, FiCamera } from "react-icons/fi";
 import Input from "../InputVal.jsx";
-import Photos from "../Photos.jsx";
+import Photos from "../Photos/Photos.jsx";
 import DeleteModal from "../DeleteModal.jsx";
 
 // ─── Section wrapper ────────────────────────────────────────────────────────

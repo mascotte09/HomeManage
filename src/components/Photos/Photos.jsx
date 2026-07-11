@@ -1,21 +1,30 @@
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "../supabase";
+import { supabase } from "../../supabase";
 import { FiShare } from "react-icons/fi";
 
 export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
   const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [homeData, setHomeData] = useState(home || null);
+  const [roomData, setRoomData] = useState(room || null);
   const [showDescription, setShowDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState("");
   const [isShareMode, setIsShareMode] = useState(false);
   const [preparedFiles, setPreparedFiles] = useState([]);
   const [preparing, setPreparing] = useState(false);
+  const orientationLabels = {
+    east: "Đông",
+    west: "Tây",
+    south: "Nam",
+    north: "Bắc",
+    northeast: "Đông Bắc",
+    northwest: "Tây Bắc",
+    southeast: "Đông Nam",
+    southwest: "Tây Nam",
+  };
 
-  // NEW: selected photos
   const [selectedPhotos, setSelectedPhotos] = useState([]);
 
-  // Chuẩn bị files NGAY KHI MỞ dialog share, không phải lúc bấm "Chia sẻ ngay"
   async function prepareFiles() {
     setPreparing(true);
     const selected = photos.filter((p) => selectedPhotos.includes(p.id));
@@ -58,19 +67,15 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
     setSelectedPhotos([]);
   }, [isRoomMode, isHomeMode, room?.id, home?.id]);
 
-  // Fetch home info for room mode, or use provided home object.
   const fetchHome = useCallback(async () => {
-    if (isHomeMode) {
-      setHomeData(home);
-      return;
-    }
+    const homeId = isHomeMode ? home?.id : room?.home_id;
 
-    if (!room?.home_id) return;
+    if (!homeId) return;
 
     const { data, error } = await supabase
       .from("homes")
       .select("*")
-      .eq("id", room.home_id)
+      .eq("id", homeId)
       .single();
 
     if (error) {
@@ -79,14 +84,33 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
     }
 
     setHomeData(data);
-  }, [isHomeMode, home, room?.home_id]);
+  }, [isHomeMode, home?.id, room?.home_id]);
+
+  // Luôn lấy dữ liệu room mới nhất (bao gồm amenities), tránh dùng prop room bị cũ
+  const fetchRoom = useCallback(async () => {
+    if (!isRoomMode || !room?.id) return;
+
+    const { data, error } = await supabase
+      .from("rooms")
+      .select("*")
+      .eq("id", room.id)
+      .single();
+
+    if (error) {
+      console.log(error.message);
+      return;
+    }
+
+    setRoomData(data);
+  }, [isRoomMode, room?.id]);
 
   useEffect(() => {
     if (open) {
       fetchPhotos();
       fetchHome();
+      fetchRoom();
     }
-  }, [open, fetchPhotos, fetchHome]);
+  }, [open, fetchPhotos, fetchHome, fetchRoom]);
 
   async function handleUploadPhoto(e) {
     const files = Array.from(e.target.files);
@@ -98,24 +122,21 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
       const photosToInsert = [];
 
       for (const originalFile of files) {
-        // Resize image
         const file = await resizeImage(originalFile);
 
         const fileName = `${Date.now()}-${Math.random()
           .toString(36)
           .slice(2)}-${file.name}`;
 
-        // Upload
         const { error: uploadError } = await supabase.storage
           .from("photos")
           .upload(fileName, file);
 
         if (uploadError) {
           console.error(uploadError.message);
-          continue; // Skip this file and continue
+          continue;
         }
 
-        // Get public URL
         const {
           data: { publicUrl },
         } = supabase.storage.from("photos").getPublicUrl(fileName);
@@ -150,7 +171,7 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
       alert("Upload failed.");
     } finally {
       setUploading(false);
-      e.target.value = ""; // Allow selecting the same files again
+      e.target.value = "";
     }
   }
 
@@ -172,56 +193,53 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
 
     await fetchPhotos();
   }
-async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
+  async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
 
-    img.onload = () => {
-      let { width, height } = img;
+      img.onload = () => {
+        let { width, height } = img;
 
-      // Không cần resize
-      if (width <= maxWidth) {
-        resolve(file);
-        URL.revokeObjectURL(img.src);
-        return;
-      }
-
-      // Resize
-      height = (height * maxWidth) / width;
-      width = maxWidth;
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
+        if (width <= maxWidth) {
+          resolve(file);
           URL.revokeObjectURL(img.src);
+          return;
+        }
 
-          if (!blob) {
-            reject(new Error("Resize failed"));
-            return;
-          }
+        height = (height * maxWidth) / width;
+        width = maxWidth;
 
-          resolve(
-            new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
-              type: "image/jpeg",
-            })
-          );
-        },
-        "image/jpeg",
-        quality
-      );
-    };
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
 
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-}
-  // NEW: toggle checkbox
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(img.src);
+
+            if (!blob) {
+              reject(new Error("Resize failed"));
+              return;
+            }
+
+            resolve(
+              new File([blob], file.name.replace(/\.\w+$/, ".jpg"), {
+                type: "image/jpeg",
+              })
+            );
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
   function handleTogglePhoto(photoId) {
     setSelectedPhotos((prev) => {
       if (prev.includes(photoId)) {
@@ -242,45 +260,39 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
     if (error) {
       console.log(error.message);
     }
+    if (isRoomMode) {
+      setRoomData((prev) => ({
+        ...prev,
+        description,
+      }));
+    } else {
+      setHomeData((prev) => ({
+        ...prev,
+        description,
+      }));
+    }
     onRoomUpdated?.();
   }
-  // Build description
   function buildRoomDescription() {
     let desc = "";
+    const r = roomData || room; // luôn dùng dữ liệu room mới nhất, không dùng prop cũ
 
     if (homeData?.name) {
       desc += `🏠 Nhà trọ: ${homeData.name}`;
       if (homeData.address) desc += ` • ${homeData.address}`;
       desc += ".\n";
     }
-
-    if (isRoomMode) {
-      if (room?.room_name) {
-        desc += `Phòng: ${room.room_name}`;
-      }
-      if (room?.area && room.area > 0) {
-        desc += ` • ${room.area} m²`;
-      }
-      if (room?.monthly_rent && room.monthly_rent > 0) {
-        desc += ` • Giá ${room.monthly_rent.toLocaleString("vi-VN")} đ`;
-      }
-      if (room?.room_renter) {
-        desc += ` • Người thuê: ${room.room_renter}`;
-      }
-      desc += "\n";
+    
+    if (r?.area && r.area > 0) {
+      desc += `${r.area} m².`;
     }
-    // Room details
-    if (room?.area && room.area > 0) {
-      desc += `${room.area} m².`;
-    }
-    if (room?.monthly_rent && room.monthly_rent > 0) {
-      desc += ` Giá: ${room.monthly_rent.toLocaleString("vi-VN")}\n`;
+    if (r?.monthly_rent && r.monthly_rent > 0) {
+      desc += ` Giá: ${r.monthly_rent.toLocaleString("vi-VN")}\n`;
     }
 
-    // Amenities
-    if (room?.amenities) {
+    if (r?.amenities) {
       try {
-        const amenities = typeof room.amenities === 'string' ? JSON.parse(room.amenities) : room.amenities;
+        const amenities = typeof r.amenities === 'string' ? JSON.parse(r.amenities) : r.amenities;
         const amenityList = [];
 
         if (amenities.hotWater) amenityList.push("Nước nóng");
@@ -303,15 +315,34 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
     return desc;
   }
 
+  function buildHomeDescription() {
+    const h = homeData || home; // luôn dùng dữ liệu mới nhất (đã fetch/cập nhật), không dùng prop cũ
+    return `
+    🏡 Cho thuê nhà: ${h.address}
+   • Giá: ${Number(h.monthly_rent || 0).toLocaleString("vi-VN")}/tháng
+   ${h.road_type === "frontage"
+        ? `• Mặt tiền${h.frontage_width ? `: Lề đường ${h.frontage_width} m` : ""}`
+        : h.road_type === "alley"
+          ? `• Hẻm${h.alley_width ? `: Hẻm rộng ${h.alley_width} m` : ""}`
+          : ""
+      }
+   • Diện tích: ${h.width || 0}m × ${h.length || 0}m. Số tầng: ${h.floors || 1}
+    - Phòng ngủ: ${h.bedrooms || 0}
+    - WC: ${h.bathrooms || 0}
+    ${h.orientation ? `- Hướng: ${orientationLabels[h.orientation]}\n` : ""}
+    `.trim();
+  }
+
   async function handleSharePhotos() {
     try {
-      const description =
-        editedDescription || buildRoomDescription();
+      const description = editedDescription
+        ? editedDescription
+        : (homeData || home).property_type === "whole_house"
+          ? buildHomeDescription()
+          : buildRoomDescription();
 
-      // lưu DB nền
       saveDescription(description);
 
-      // copy mô tả
       await navigator.clipboard.writeText(description);
 
       if (preparedFiles.length === 0) {
@@ -319,7 +350,6 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
         return;
       }
 
-      // chỉ gọi share ngay trong click event
       await navigator.share({
         files: preparedFiles,
         title: "Thông tin phòng trọ",
@@ -343,7 +373,6 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl">
 
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b">
           <h2 className="text-lg font-semibold text-stone-800">
             {isHomeMode ? "Hình ảnh nhà trọ" : "Hình ảnh phòng"}
@@ -357,7 +386,6 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
           </button>
         </div>
 
-        {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b">
 
           <input
@@ -370,12 +398,18 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
           {photos.length > 0 && (
             <button
               onClick={() => {
-                setEditedDescription(
-                  room?.description || homeData?.description || buildRoomDescription()
-                );
+                if ((homeData || home)?.property_type === "whole_house") {
+                  setEditedDescription(
+                    homeData?.description || buildHomeDescription()
+                  );
+                } else {
+                  setEditedDescription(
+                    roomData?.description || buildRoomDescription()
+                  );
+                }
                 setIsShareMode(true);
                 setShowDescription(true);
-                prepareFiles(); // bắt đầu fetch ảnh ngay, song song với việc người dùng đọc/sửa mô tả
+                prepareFiles();
               }}
               className="flex flex-col items-center text-blue-600 hover:text-blue-700"
             >
@@ -387,7 +421,6 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
           )}
         </div>
 
-        {/* Description Preview Modal */}
         {showDescription && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
             <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto mx-4">
@@ -421,7 +454,12 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
                 <div className="flex gap-3">
                   <button
                     onClick={() => {
-                      setEditedDescription(buildRoomDescription());
+                      const description =
+                        (homeData || home).property_type === "whole_house"
+                          ? buildHomeDescription()
+                          : buildRoomDescription();
+
+                      setEditedDescription(description);
                     }}
                     className="flex-1 px-4 py-2 bg-stone-200 text-stone-800 rounded-lg hover:bg-stone-300 transition font-medium"
                   >
@@ -455,14 +493,12 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
           </div>
         )}
 
-        {/* Loading */}
         {uploading && (
           <div className="px-5 py-3 text-sm text-stone-500">
             Đang tải ảnh...
           </div>
         )}
 
-        {/* Empty */}
         {photos.length === 0 ? (
           <div className="py-16 text-center text-stone-400">
             Chưa có hình ảnh nào
@@ -485,14 +521,12 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
                       : "border-stone-200"}
               `}
                 >
-                  {/* Image */}
                   <img
                     src={photo.image_url}
                     alt="Room"
                     className="w-full h-44 object-cover"
                   />
 
-                  {/* Checkbox */}
                   <label className="absolute top-2 left-2 bg-white/90 rounded-md p-1 shadow">
                     <input
                       type="checkbox"
@@ -503,7 +537,6 @@ async function resizeImage(file, maxWidth = 1600, quality = 0.8) {
                     />
                   </label>
 
-                  {/* Delete */}
                   <button
                     onClick={() =>
                       handleDeletePhoto(photo)

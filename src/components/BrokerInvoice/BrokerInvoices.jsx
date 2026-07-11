@@ -321,7 +321,7 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
             {/* Ngày nhận + Ngày trả */}
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Ngày nhận"
+                label="Ngày ở"
                 type="date"
                 value={form.move_in_date}
                 onChange={(e) =>
@@ -547,7 +547,7 @@ export default function BrokerInvoices({ homeId: homeIdProp, homeName: homeNameP
                       <div className="mt-2.5 space-y-1.5 text-sm text-stone-600">
                         <div className="flex items-center gap-2">
                           <FiCalendar size={14} className="text-stone-400 flex-shrink-0" />
-                          <span>Ngày nhận: {formatDate(rental.move_in_date)}</span>
+                          <span>Ngày ở: {formatDate(rental.move_in_date)}</span>
                         </div>
                         {rental.move_out_date && (
                           <div className="flex items-center gap-2">
