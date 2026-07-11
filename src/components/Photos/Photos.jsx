@@ -282,7 +282,7 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
       if (homeData.address) desc += ` • ${homeData.address}`;
       desc += ".\n";
     }
-    
+
     if (r?.area && r.area > 0) {
       desc += `${r.area} m².`;
     }
@@ -311,7 +311,14 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
         // Skip if parse error
       }
     }
-
+    desc += `💡 Phí:\n`;
+    desc += `   • Điện: ${Number(homeData.electricity_price || 0).toLocaleString("vi-VN")} đ/kWh\n`;
+    desc += `   • Nước: ${homeData.is_water_per_person
+              ? `${Number(homeData.water_price || 0).toLocaleString("vi-VN")} đ/người`
+              : `${Number(homeData.water_price || 0).toLocaleString("vi-VN")} đ/khối`
+            }\n`;
+    desc += `   • Dịch vụ (wifi, rác...): ${Number(homeData.service_amount || 0).toLocaleString("vi-VN")} đ/phòng\n`;
+    
     return desc;
   }
 

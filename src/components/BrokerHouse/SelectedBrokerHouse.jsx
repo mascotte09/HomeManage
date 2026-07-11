@@ -43,6 +43,7 @@ export default function SelectedBrokerHouse({
   const [bankAccount, setBankAccount] = useState("");
   const [electricityPrice, setElectricityPrice] = useState(3500);
   const [waterPrice, setWaterPrice] = useState(100000);
+  const [service_amount, setServiceAmount] = useState(100000);
   const [isWaterPerPerson, setIsWaterPerPerson] = useState(false);
 
   const [propertyType, setPropertyType] = useState("room");
@@ -66,6 +67,7 @@ export default function SelectedBrokerHouse({
     setBankID(house?.bank_id || "");
     setBankAccount(house?.bank_account || "");
     setElectricityPrice(house?.electricity_price || 3500);
+    setServiceAmount(house?.service_amount || 100000);
     setWaterPrice(house?.water_price || 100000);
     setIsWaterPerPerson(house?.is_water_per_person || false);
     setPropertyType(house?.property_type || "room");
@@ -109,6 +111,7 @@ export default function SelectedBrokerHouse({
         electricity_price: electricityPrice,
         water_price: waterPrice,
         is_water_per_person: isWaterPerPerson,
+        service_amount: service_amount,
         property_type: propertyType,
         phone_owner: phoneOwner,
         monthly_rent: monthly_rent,
@@ -194,6 +197,7 @@ export default function SelectedBrokerHouse({
       electricityPrice: house?.electricity_price || 3500,
       waterPrice: house?.water_price || 100000,
       isWaterPerPerson: house?.is_water_per_person || false,
+      service_amount: house?.service_amount || 100000,
     };
 
     setName(init.name);
@@ -219,6 +223,7 @@ export default function SelectedBrokerHouse({
     setBankAccount(init.bankAccount);
 
     setElectricityPrice(init.electricityPrice);
+    setServiceAmount(init.service_amount);
     setWaterPrice(init.waterPrice);
     setIsWaterPerPerson(init.isWaterPerPerson);
 
@@ -255,6 +260,7 @@ export default function SelectedBrokerHouse({
 
       electricityPrice !== init.electricityPrice ||
       waterPrice !== init.waterPrice ||
+      service_amount !== init.service_amount ||
       isWaterPerPerson !== init.isWaterPerPerson
     );
   };
@@ -374,11 +380,7 @@ export default function SelectedBrokerHouse({
             />
           </Section>
           <Section title="Hình thức cho thuê">
-
-
-
             <div className="flex gap-6">
-
               <label className="flex items-center gap-2">
                 <input
                   type="radio"
@@ -441,6 +443,12 @@ export default function SelectedBrokerHouse({
                   type="text"
                   value={waterPrice.toLocaleString("vi-VN")}
                   onChange={(e) => setWaterPrice(parseCurrency(e.target.value))}
+                />
+                <Input
+                  label="Wifi"
+                  type="text"
+                  value={service_amount.toLocaleString("vi-VN")}
+                  onChange={(e) => setServiceAmount(parseCurrency(e.target.value))}
                 />
               </Section>
             )}
