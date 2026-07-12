@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { supabase } from "../../supabase";
 import html2canvas from "html2canvas";
@@ -13,6 +14,8 @@ import {
 } from "react-icons/fi";
 
 export default function BrokerMonthlyStatistic() {
+    const navigate = useNavigate();
+    const location = useLocation();
     const [userId, setUserId] = useState(null);
 
     useEffect(() => {
@@ -33,12 +36,33 @@ export default function BrokerMonthlyStatistic() {
     const reportRef = useRef(null);
     const [sending, setSending] = useState(false);
 
-    const [selectedMonth, setSelectedMonth] = useState(() => {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    function getDefaultMonth() {
         const d = new Date();
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, "0");
         return `${y}-${m}`;
-    });
+    }
+
+    // Nguồn sự thật là query string (?month=YYYY-MM), không phải state cục bộ,
+    // để khi điều hướng đi/về (ví dụ mở chi tiết 1 khoản hoa hồng rồi quay lại)
+    // vẫn giữ đúng tháng đang xem.
+    const selectedMonth = searchParams.get("month") || getDefaultMonth();
+
+    function setSelectedMonth(month) {
+        const next = new URLSearchParams(searchParams);
+        next.set("month", month);
+        setSearchParams(next, { replace: true });
+    }
+
+    // Nếu URL chưa có ?month, gán mặc định ngay lần đầu để URL luôn phản ánh đúng tháng đang xem
+    useEffect(() => {
+        if (!searchParams.get("month")) {
+            setSelectedMonth(getDefaultMonth());
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const [expenses, setExpenses] = useState([]);
     const [rentals, setRentals] = useState([]);
@@ -96,6 +120,9 @@ export default function BrokerMonthlyStatistic() {
                 broker_fee,
                 broker_fee_paid,
                 deal_date,
+                rooms (
+                    room_name
+                ),
                 homes!inner (
                     userID,
                     name,
@@ -430,17 +457,28 @@ export default function BrokerMonthlyStatistic() {
                                 return list.map((r) => (
                                     <div
                                         key={r.id}
-                                        className={`flex justify-between items-start gap-2 text-sm border-l-4 rounded-md px-2.5 py-2 mb-1.5 last:mb-0 ${
+                                        onClick={() =>
+                                            navigate(`/broker/rentals/${r.id}`, {
+                                                state: { from: location.pathname + location.search },
+                                            })
+                                        }
+                                        role="button"
+                                        tabIndex={0}
+                                        className={`flex justify-between items-start gap-2 text-sm border-l-4 rounded-md px-2.5 py-2 mb-1.5 last:mb-0 cursor-pointer active:scale-[0.98] transition ${
                                             r.broker_fee_paid
-                                                ? "border-l-emerald-400 bg-emerald-50/50"
-                                                : "border-l-red-400 bg-red-50/50"
+                                                ? "border-l-emerald-400 bg-emerald-50/50 hover:bg-emerald-50"
+                                                : "border-l-red-400 bg-red-50/50 hover:bg-red-50"
                                         }`}
                                     >
                                         <div className="min-w-0">
                                             <div className="text-stone-800 font-medium truncate">
-                                                {r.homes?.name
-                                                    ? `${r.homes.name} • ${r.homes?.address || "Không rõ địa chỉ"}`
-                                                    : r.homes?.address || "Không rõ địa chỉ"}
+                                                {[
+                                                    r.rooms?.room_name && `Phòng ${r.rooms.room_name}`,
+                                                    r.homes?.name,
+                                                    r.homes?.address,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(" • ") || "Không rõ địa chỉ"}
                                             </div>
                                             <div className="text-[11px] text-stone-400 mt-0.5">
                                                 {new Date(r.deal_date).toLocaleDateString("vi-VN")}
@@ -481,13 +519,11 @@ export default function BrokerMonthlyStatistic() {
                                     >
                                         <div className="min-w-0">
                                             <div className="text-stone-800 font-medium truncate">
-                                                {e.homes?.name
-                                                    ? `${e.homes.name} • ${e.expenses_type?.type_name || "Khác"}`
-                                                    : e.expenses_type?.type_name || "Khác"}
+                                                {e.expenses_type?.type_name || "Khác"}
                                             </div>
                                             {e.homes?.address && (
                                                 <div className="text-stone-400 text-[11px] truncate">
-                                                    {e.homes.address}
+                                                    {e.homes.name} • {e.homes.address}
                                                 </div>
                                             )}
                                             {e.notes && (

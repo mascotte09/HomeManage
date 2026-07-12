@@ -23,6 +23,7 @@ import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
 import BrokerMonthlyStatistic from "./components/Report/BrokerMonthlyStatistic.jsx";
 import SettingsHouse from "./components/Settings.jsx";
 import BrokerHousePage from "./components/BrokerHouse/BrokerHousePage.jsx";
+import BrokerRentalForm from "./components/BrokerInvoice/BrokerRentalForm.jsx";
 import { normalizeUserType } from "./utils/userType";
 
 import { useNavigate } from "react-router-dom";
@@ -188,6 +189,23 @@ function App() {
                     }
                 />
 
+                <Route path="/broker/rentals/:rentalId" element={
+                    <div className="flex flex-col h-dvh">
+                        <RoomHeaderView
+                            backPath={isBroker ? "/broker" : "/houses"}
+                            onLogout={async () => {
+                                await supabase.auth.signOut();
+                                setCurrentUser(null);
+                            }}
+                        />
+                        <div className="flex-1 overflow-y-auto">
+                            <BrokerRentalForm />
+                        </div>
+                    </div>
+
+                }
+
+                />
                 {/* RoomPage already includes HeaderRoom internally */}
                 <Route path="/rooms/:houseId"
                     element={<RoomPageView />} />
@@ -223,7 +241,7 @@ function App() {
                             </div>
                         </div>
                     } />
-                    
+
                 <Route path="/payment/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">
@@ -270,7 +288,7 @@ function App() {
                             </div>
                         </div>
                     } />
-                    <Route path="/broker_statistic/:houseId"
+                <Route path="/broker_statistic/:houseId"
                     element={
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
@@ -285,6 +303,7 @@ function App() {
                             </div>
                         </div>
                     } />
+
             </Routes>
 
         </BrowserRouter>
