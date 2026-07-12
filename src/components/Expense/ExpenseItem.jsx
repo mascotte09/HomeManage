@@ -30,21 +30,31 @@ export default function ExpenseItem({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [typeCode, setTypeCode]       = useState("");
-  const [expense, setExpense]         = useState(0);
-  const [expenseDate, setExpenseDate] = useState("");
+  const [typeCode, setTypeCode] = useState("");
+  const [expense, setExpense] = useState(0);
+  const [expenseDate, setExpenseDate] = useState(
+    new Date().toISOString().substring(0, 10)
+  );
   const [expenseNote, setExpenseNote] = useState("");
   const [expenseTypes, setExpenseTypes] = useState([]);
 
   // ── Load selected expense ───────────────────────────────────────────────────
   useEffect(() => {
-    setTypeCode(expenseItem?.type_code || "");
-    setExpenseNote(expenseItem?.notes || "");
-    setExpense(expenseItem?.expense || 0);
+    if (!expenseItem) {
+      setTypeCode("");
+      setExpense(0);
+      setExpenseNote("");
+      setExpenseDate(new Date().toISOString().substring(0, 10));
+      return;
+    }
+
+    setTypeCode(expenseItem.type_code || "");
+    setExpenseNote(expenseItem.notes || "");
+    setExpense(expenseItem.expense || 0);
     setExpenseDate(
-      expenseItem?.expense_date
+      expenseItem.expense_date
         ? expenseItem.expense_date.substring(0, 10)
-        : ""
+        : new Date().toISOString().substring(0, 10)
     );
   }, [expenseItem]);
 
@@ -62,7 +72,7 @@ export default function ExpenseItem({
   function resetForm() {
     setTypeCode("");
     setExpense(0);
-    setExpenseDate("");
+     setExpenseDate(new Date().toISOString().substring(0, 10));
     setExpenseNote("");
   }
 

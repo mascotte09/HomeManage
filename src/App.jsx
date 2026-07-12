@@ -20,6 +20,7 @@ import BrokerInvoicesHouse from "./components/BrokerInvoice/BrokerInvoicesHouse"
 import ListExpenses from "./components/Expense/ListExpenses.jsx";
 import ListPayments from "./components/Payment/ListPayments.jsx";
 import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
+import BrokerMonthlyStatistic from "./components/Report/BrokerMonthlyStatistic.jsx";
 import SettingsHouse from "./components/Settings.jsx";
 import BrokerHousePage from "./components/BrokerHouse/BrokerHousePage.jsx";
 import { normalizeUserType } from "./utils/userType";
@@ -266,6 +267,21 @@ function App() {
                             />
                             <div className="flex-1 overflow-y-auto">
                                 <MonthlyStatistic />
+                            </div>
+                        </div>
+                    } />
+                    <Route path="/broker_statistic/:houseId"
+                    element={
+                        <div className="flex flex-col h-dvh">
+                            <RoomHeaderView
+                                backPath={isBroker ? "/broker" : "/houses"}
+                                onLogout={async () => {
+                                    await supabase.auth.signOut();
+                                    setCurrentUser(null);
+                                }}
+                            />
+                            <div className="flex-1 overflow-y-auto">
+                                <BrokerMonthlyStatistic />
                             </div>
                         </div>
                     } />

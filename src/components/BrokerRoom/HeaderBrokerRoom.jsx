@@ -26,7 +26,7 @@ const NAV = [
     icon: FiBarChart2,
     color: "text-amber-500",
     bg: "bg-amber-50",
-    path: (id) => `/statistic/${id}`,
+    path: (id) => `/broker_statistic/${id}`,
   },
 ];
 
