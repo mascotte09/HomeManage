@@ -74,7 +74,7 @@ export default function BrokerMonthlyStatistic() {
             .select(`
                 *,
                 expenses_type(type_name),
-                homes!inner(userID)
+                homes!inner(userID, name, address)
             `)
             .eq("homes.userID", userId)
             .gte("expense_date", startDate)
@@ -98,6 +98,7 @@ export default function BrokerMonthlyStatistic() {
                 deal_date,
                 homes!inner (
                     userID,
+                    name,
                     address
                 )
             `)
@@ -217,6 +218,7 @@ export default function BrokerMonthlyStatistic() {
 
         const expenseSheet = XLSX.utils.json_to_sheet(
             expenses.map((e) => ({
+                "Tên nhà": e.homes?.name || "",
                 "Loại chi phí": e.expenses_type?.type_name || "",
                 "Ghi chú": e.notes || "",
                 "Ngày": new Date(e.expense_date).toLocaleDateString("vi-VN"),
@@ -436,7 +438,9 @@ export default function BrokerMonthlyStatistic() {
                                     >
                                         <div className="min-w-0">
                                             <div className="text-stone-800 font-medium truncate">
-                                                {r.homes?.address || "Không rõ địa chỉ"}
+                                                {r.homes?.name
+                                                    ? `${r.homes.name} • ${r.homes?.address || "Không rõ địa chỉ"}`
+                                                    : r.homes?.address || "Không rõ địa chỉ"}
                                             </div>
                                             <div className="text-[11px] text-stone-400 mt-0.5">
                                                 {new Date(r.deal_date).toLocaleDateString("vi-VN")}
@@ -477,8 +481,15 @@ export default function BrokerMonthlyStatistic() {
                                     >
                                         <div className="min-w-0">
                                             <div className="text-stone-800 font-medium truncate">
-                                                {e.expenses_type?.type_name || "Khác"}
+                                                {e.homes?.name
+                                                    ? `${e.homes.name} • ${e.expenses_type?.type_name || "Khác"}`
+                                                    : e.expenses_type?.type_name || "Khác"}
                                             </div>
+                                            {e.homes?.address && (
+                                                <div className="text-stone-400 text-[11px] truncate">
+                                                    {e.homes.address}
+                                                </div>
+                                            )}
                                             {e.notes && (
                                                 <div className="text-stone-500 text-xs truncate">
                                                     {e.notes}
