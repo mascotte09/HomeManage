@@ -4,13 +4,7 @@ export default function FooterHouse() {
   return (
     <footer className="bg-gradient-to-r from-stone-100 to-stone-50 border-t border-stone-200 px-4 py-4 flex-shrink-0 text-center">
       <div className="space-y-2">
-        {/* Brand + Copyright */}
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-sm font-semibold text-stone-700">
-            🏠 Hệ thống Quản Trọ
-          </span>
-        </div>
-
+        
         {/* Made with love */}
         <div className="flex items-center justify-center gap-1 text-xs text-stone-600">
           

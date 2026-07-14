@@ -22,12 +22,12 @@ import ListPayments from "./components/Payment/ListPayments.jsx";
 import MonthlyStatistic from "./components/Report/HouseMonthlyStatistic.jsx";
 import BrokerMonthlyStatistic from "./components/Report/BrokerMonthlyStatistic.jsx";
 import SettingsHouse from "./components/Settings.jsx";
+import Help from "./components/Help.jsx";
 import BrokerHousePage from "./components/BrokerHouse/BrokerHousePage.jsx";
 import BrokerRentalForm from "./components/BrokerInvoice/BrokerRentalForm.jsx";
 import { normalizeUserType } from "./utils/userType";
 
 import { useNavigate } from "react-router-dom";
-
 
 
 function App() {
@@ -50,6 +50,11 @@ function App() {
             setCurrentUser(null);
         }
     }, []);
+const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem("currentUser");
+    setCurrentUser(null);
+};
 
     function handleSignupSuccess() {
         setShowSignup(false);
@@ -95,13 +100,7 @@ function App() {
                     element={
                         <div className="flex flex-col h-dvh">
                             <HeaderHouseWithNav
-                                onLogout={() => {
-                                    localStorage.removeItem(
-                                        "currentUser"
-                                    );
-
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                                 showBrokerPage={normalizeUserType(currentUser?.user_type) === "broker"}
                                 isBroker={isBroker}
                             />
@@ -121,10 +120,7 @@ function App() {
                     element={
                         <div className="flex flex-col h-dvh">
                             <HeaderHouseWithNav
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                                 showBrokerPage={normalizeUserType(currentUser?.user_type) === "broker"}
                                 isBroker={isBroker}
                             />
@@ -146,17 +142,18 @@ function App() {
                         <SettingsHouseWithNav user={currentUser} />
                     }
                 />
-
+                <Route
+                    path="/help"
+                    element={
+                        <HelpHouseWithNav user={currentUser} />
+                    }
+                />
                 <Route
                     path="/broker"
                     element={
                         <div className="flex flex-col h-dvh">
                             <HeaderHouseWithNav
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    localStorage.removeItem("currentUser");
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                                 showBrokerPage={normalizeUserType(currentUser?.user_type) === "broker"}
                                 isBroker={isBroker}
                             />
@@ -177,10 +174,7 @@ function App() {
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
                                 backPath={isBroker ? "/broker" : "/houses"}
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                             />
                             <div className="flex-1 overflow-y-auto">
                                 <BrokerInvoicesHouse />
@@ -193,10 +187,7 @@ function App() {
                     <div className="flex flex-col h-dvh">
                         <RoomHeaderView
                             backPath={isBroker ? "/broker" : "/houses"}
-                            onLogout={async () => {
-                                await supabase.auth.signOut();
-                                setCurrentUser(null);
-                            }}
+                            onLogout={handleLogout}
                         />
                         <div className="flex-1 overflow-y-auto">
                             <BrokerRentalForm />
@@ -215,10 +206,7 @@ function App() {
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
                                 backPath={isBroker ? "/broker" : "/houses"}
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                             />
                             <div className="flex-1 overflow-y-auto">
                                 <InvoicesInMonth />
@@ -231,10 +219,7 @@ function App() {
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
                                 backPath={isBroker ? "/broker" : "/houses"}
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                             />
                             <div className="flex-1 overflow-y-auto">
                                 {isBroker ? <BrokerInvoices /> : <Invoices />}
@@ -247,10 +232,7 @@ function App() {
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
                                 backPath={isBroker ? "/broker" : "/houses"}
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                             />
                             <div className="flex-1 overflow-y-auto">
                                 <ListPayments />
@@ -263,10 +245,7 @@ function App() {
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
                                 backPath={isBroker ? "/broker" : "/houses"}
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                             />
                             <div className="flex-1 overflow-y-auto">
                                 <ListExpenses />
@@ -278,10 +257,7 @@ function App() {
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
                                 backPath={isBroker ? "/broker" : "/houses"}
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                             />
                             <div className="flex-1 overflow-y-auto">
                                 <MonthlyStatistic />
@@ -293,10 +269,7 @@ function App() {
                         <div className="flex flex-col h-dvh">
                             <RoomHeaderView
                                 backPath={isBroker ? "/broker" : "/houses"}
-                                onLogout={async () => {
-                                    await supabase.auth.signOut();
-                                    setCurrentUser(null);
-                                }}
+                                onLogout={handleLogout}
                             />
                             <div className="flex-1 overflow-y-auto">
                                 <BrokerMonthlyStatistic />
@@ -320,7 +293,7 @@ function HeaderHouseWithNav({ onLogout, showBrokerPage = false, isBroker = false
             <HeaderBrokerHouse
                 onLogout={onLogout}
                 onSettings={() => navigate("/settings")}
-                onBrokerPage={showBrokerPage ? () => navigate("/broker") : undefined}
+                onHelp={() => navigate("/help")}
             />
         );
     }
@@ -329,15 +302,48 @@ function HeaderHouseWithNav({ onLogout, showBrokerPage = false, isBroker = false
         <HeaderHouse
             onLogout={onLogout}
             onSettings={() => navigate("/settings")}
-            onBrokerPage={showBrokerPage ? () => navigate("/broker") : undefined}
+            onHelp={() => navigate("/help")}
         />
     );
 }
 
 // Bọc SettingsHouse để nút "Quay lại" điều hướng về trang chủ
-function SettingsHouseWithNav({ user }) {
+function SettingsHouseWithNav({ user, onLogout, isBroker = false }) {
     const navigate = useNavigate();
-    return <SettingsHouse user={user} onBack={() => navigate("/")} />;
+    return (
+        <div className="flex flex-col h-dvh">
+            {/* <HeaderHouseWithNav
+                onLogout={onLogout}
+                isBroker={isBroker}
+            /> */}
+            <div className="flex-1 overflow-y-auto">
+                <SettingsHouse
+                    user={user}
+                    onBack={() => navigate("/")}
+                />
+            </div>
+            <FooterHouse />
+        </div>
+    );
+}
+
+function HelpHouseWithNav({ user, onLogout, isBroker }) {
+    const navigate = useNavigate();
+    return (
+        <div className="flex flex-col h-dvh">
+            {/* <HeaderHouseWithNav
+                onLogout={onLogout}
+                isBroker={isBroker}
+            /> */}
+            <div className="flex-1 overflow-y-auto">
+                <Help
+                    user={user}
+                    onBack={() => navigate("/")}
+                />
+            </div>
+            <FooterHouse />
+        </div>
+    );
 }
 
 export default App;

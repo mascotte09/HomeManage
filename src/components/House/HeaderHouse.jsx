@@ -1,5 +1,5 @@
-import { MdLogout, MdSettings, MdStorefront } from "react-icons/md";
-export default function Header({ onLogout, onSettings, onBrokerPage }) {
+import { MdLogout, MdSettings, MdHelpOutline, MdStorefront } from "react-icons/md";
+export default function Header({ onLogout, onSettings, onHelp, onBrokerPage }) {
     return (
         <header className="bg-white border-b border-stone-200 px-4 h-20 flex justify-between items-center flex-shrink-0">
             <h1 className="text-left text-xl font-bold uppercase text-stone-500">
@@ -16,7 +16,13 @@ export default function Header({ onLogout, onSettings, onBrokerPage }) {
                         <MdStorefront size={20} />
                     </button>
                 )}
-
+                <button
+                    onClick={onHelp}
+                    className="w-9 h-9 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center hover:bg-stone-200 transition active:scale-95"
+                    title="Trợ giúp"
+                >
+                    <MdHelpOutline size={20} />
+                </button>
                 <button
                     onClick={onSettings}
                     className="w-9 h-9 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center hover:bg-stone-200 transition active:scale-95"
