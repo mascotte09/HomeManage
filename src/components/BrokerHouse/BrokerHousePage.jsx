@@ -11,6 +11,11 @@ const VIEW = {
   DETAIL: "detail",
 };
 
+const TAB = {
+  WHOLE: "whole",
+  ROOM: "room",
+};
+
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function BrokerHousePage({ user_id }) {
   const [houses, setHouses] = useState([]);
@@ -18,6 +23,7 @@ export default function BrokerHousePage({ user_id }) {
   const [selectedHomeId, setSelectedHomeId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [houseToDelete, setHouseToDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState(TAB.WHOLE);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchUserHomes = useCallback(async () => {
@@ -68,6 +74,8 @@ export default function BrokerHousePage({ user_id }) {
 
     return { wholeHouses: sortedWhole, roomHouses: sortedRooms };
   }, [houses]);
+
+  const activeList = activeTab === TAB.WHOLE ? wholeHouses : roomHouses;
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   const goToList = useCallback(() => {
@@ -133,54 +141,51 @@ export default function BrokerHousePage({ user_id }) {
           {houses.length === 0 ? (
             <NoBrokerHouseSelected onStartAddHouse={goToCreate} />
           ) : (
-            <div className="grid grid-cols-2 gap-1.5 sm:gap-4 max-w-[420px] sm:max-w-2xl mx-auto">
-              {/* Cột 1: Nhà nguyên căn */}
-              <div className="min-w-0">
-                <h3 className="text-[12px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
+            <div className="max-w-[420px] sm:max-w-2xl mx-auto">
+              {/* Tabs */}
+              <div className="flex border-b border-stone-200 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(TAB.WHOLE)}
+                  className={`flex-1 py-2.5 text-sm font-semibold transition border-b-2 ${
+                    activeTab === TAB.WHOLE
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-stone-400 hover:text-stone-600"
+                  }`}
+                >
                   Nguyên căn ({wholeHouses.length})
-                </h3>
-                {wholeHouses.length === 0 ? (
-                  <p className="text-xs sm:text-sm text-stone-400 px-0.5 sm:px-1">
-                    Chưa có nhà nào.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 sm:space-y-3">
-                    {wholeHouses.map((house) => (
-                      <BrokerHouseCard
-                        key={house.id}
-                        house={house}
-                        selected={selectedHomeId === house.id}
-                        onSelect={goToDetail}
-                        onDelete={openDeleteModal}
-                      />
-                    ))}
-                  </div>
-                )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(TAB.ROOM)}
+                  className={`flex-1 py-2.5 text-sm font-semibold transition border-b-2 ${
+                    activeTab === TAB.ROOM
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-stone-400 hover:text-stone-600"
+                  }`}
+                >
+                  Thuê phòng ({roomHouses.length})
+                </button>
               </div>
 
-              {/* Cột 2: Cho thuê phòng */}
-              <div className="min-w-0">
-                <h3 className="text-[12px] sm:text-sm font-semibold text-stone-500 uppercase tracking-wide mb-1.5 sm:mb-2 px-0.5 sm:px-1 truncate">
-                  Thuê phòng ({roomHouses.length})
-                </h3>
-                {roomHouses.length === 0 ? (
-                  <p className="text-xs sm:text-sm text-stone-400 px-0.5 sm:px-1">
-                    Chưa có nhà nào.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 sm:space-y-3">
-                    {roomHouses.map((house) => (
-                      <BrokerHouseCard
-                        key={house.id}
-                        house={house}
-                        selected={selectedHomeId === house.id}
-                        onSelect={goToDetail}
-                        onDelete={openDeleteModal}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Active tab content */}
+              {activeList.length === 0 ? (
+                <p className="text-sm text-stone-400 px-1 py-6 text-center">
+                  Chưa có nhà nào.
+                </p>
+              ) : (
+                <div className="space-y-2 sm:space-y-3">
+                  {activeList.map((house) => (
+                    <BrokerHouseCard
+                      key={house.id}
+                      house={house}
+                      selected={selectedHomeId === house.id}
+                      onSelect={goToDetail}
+                      onDelete={openDeleteModal}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
