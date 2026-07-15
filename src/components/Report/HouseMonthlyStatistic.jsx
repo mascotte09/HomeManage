@@ -294,19 +294,14 @@ export default function MonthlyStatistic() {
                 </div>
             </div>
 
-            {/* KPI */}
-            <div className="grid grid-cols-2 gap-2">
-                <Kpi title="Doanh Thu" value={stats.grandTotal} color="blue" />
-
-
-                <Kpi title="Công Nợ" value={stats.unpaidAmount} color="orange" />
-            </div>
-
             {/* BODY */}
             <div className="grid grid-cols-2 gap-2">
 
                 <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
-                    <h3 className="font-bold text-blue-600 mb-1">Doanh thu</h3>
+                    <div className="flex justify-between items-center mb-1">
+                        <h3 className="font-bold text-blue-600">Doanh thu</h3>
+                        <span className="font-bold text-blue-600">{stats.grandTotal.toLocaleString("vi-VN")}</span>
+                    </div>
                     <Row label="Tiền phòng" value={stats.rentalTotal} sub={`${stats.totalInvoice} hóa đơn`} />
                     <Row label="Tiền điện" value={stats.electricityTotal} sub={`${stats.electricityUsed} kWh`} />
                     <Row label="Tiền nước" value={stats.waterTotal} sub={`${stats.waterUsed} m³`} />
@@ -314,7 +309,10 @@ export default function MonthlyStatistic() {
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
-                    <h3 className="font-bold text-orange-600 mb-1">Công nợ</h3>
+                    <div className="flex justify-between items-center mb-1">
+                        <h3 className="font-bold text-orange-600">Công nợ</h3>
+                        <span className="font-bold text-orange-600">{stats.unpaidAmount.toLocaleString("vi-VN")}</span>
+                    </div>
                     <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount + stats.paidDemiInvoiceCount} hóa đơn`} />
                     <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`} />
                     <Row label="% Thu" value={`${debtRate}%`} />
@@ -362,25 +360,6 @@ export default function MonthlyStatistic() {
 // =========================
 // COMPONENTS
 // =========================
-
-const KPI_COLORS = {
-    blue: { border: "border-blue-500", text: "text-blue-600" },
-    green: { border: "border-emerald-500", text: "text-emerald-600" },
-    orange: { border: "border-orange-500", text: "text-orange-600" },
-    red: { border: "border-rose-500", text: "text-rose-600" },
-};
-
-function Kpi({ title, value, color = "blue" }) {
-    const c = KPI_COLORS[color] || KPI_COLORS.blue;
-    return (
-        <div className={`bg-white border-l-4 ${c.border} border-y border-r border-slate-200 rounded-xl p-2.5 shadow-sm`}>
-            <div className="text-slate-500 text-xs mb-1">{title}</div>
-            <div className={`font-bold text-sm ${c.text}`}>
-                {Number(value).toLocaleString("vi-VN")}
-            </div>
-        </div>
-    );
-}
 
 function Row({ label, value, sub }) {
     return (
