@@ -297,27 +297,31 @@ export default function MonthlyStatistic() {
             {/* BODY */}
             <div className="grid grid-cols-2 gap-2">
 
-                <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
-                    <div className="flex justify-between items-center mb-1">
-                        <h3 className="font-bold text-blue-600">Doanh thu</h3>
-                        <span className="font-bold text-blue-600">{stats.grandTotal.toLocaleString("vi-VN")}</span>
-                    </div>
-                    <Row label="Tiền phòng" value={stats.rentalTotal} sub={`${stats.totalInvoice} hóa đơn`} />
-                    <Row label="Tiền điện" value={stats.electricityTotal} sub={`${stats.electricityUsed} kWh`} />
-                    <Row label="Tiền nước" value={stats.waterTotal} sub={`${stats.waterUsed} m³`} />
-                    <Row label="Wifi" value={stats.wifiTotal} />
-                </div>
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-blue-50 text-center py-2.5 border-b border-blue-100">
+            <h3 className="font-bold text-blue-600 text-sm">Doanh thu</h3>
+            <div className="font-extrabold text-blue-600 text-lg">{stats.grandTotal.toLocaleString("vi-VN")}</div>
+        </div>
+        <div className="px-2 py-2">
+            <Row label="Tiền phòng" value={stats.rentalTotal} sub={`${stats.totalInvoice} hóa đơn`} />
+            <Row label="Tiền điện" value={stats.electricityTotal} sub={`${stats.electricityUsed} kWh`} />
+            <Row label="Tiền nước" value={stats.waterTotal} sub={`${stats.waterUsed} m³`} />
+            <Row label="Wifi" value={stats.wifiTotal} />
+        </div>
+    </div>
 
-                <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
-                    <div className="flex justify-between items-center mb-1">
-                        <h3 className="font-bold text-orange-600">Công nợ</h3>
-                        <span className="font-bold text-orange-600">{stats.unpaidAmount.toLocaleString("vi-VN")}</span>
-                    </div>
-                    <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount + stats.paidDemiInvoiceCount} hóa đơn`} />
-                    <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`} />
-                    <Row label="% Thu" value={`${debtRate}%`} />
-                </div>
-            </div>
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-orange-50 text-center py-2.5 border-b border-orange-100">
+            <h3 className="font-bold text-orange-600 text-sm">Công nợ</h3>
+            <div className="font-extrabold text-orange-600 text-lg">{stats.unpaidAmount.toLocaleString("vi-VN")}</div>
+        </div>
+        <div className="px-2 py-2">
+            <Row label="Đã thu" value={stats.paidAmount} sub={`${stats.paidInvoiceCount + stats.paidDemiInvoiceCount} hóa đơn`} />
+            <Row label="Còn nợ" value={stats.unpaidAmount} sub={`${stats.unpaidInvoiceCount} hóa đơn`} />
+            <Row label="% Thu" value={`${debtRate}%`} />
+        </div>
+    </div>
+</div>
 
             {/* EXPENSE */}
             <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
@@ -363,12 +367,14 @@ export default function MonthlyStatistic() {
 
 function Row({ label, value, sub }) {
     return (
-        <div className="text-slate-800 flex justify-between py-1.5 text-sm border-b border-slate-100 last:border-none">
-            <div>
-                <div>{label}</div>
-                {sub && <div className="text-xs text-slate-400">{sub}</div>}
+        <div className="text-slate-800 flex justify-between items-start gap-1 py-1.5 text-sm border-b border-slate-100 last:border-none">
+            <div className="min-w-0">
+                <div className="truncate">{label}</div>
+                {sub && <div className="text-xs text-slate-400 truncate">{sub}</div>}
             </div>
-            <div className="font-medium">{typeof value === "number" ? value.toLocaleString("vi-VN") : value}</div>
+            <div className="font-medium whitespace-nowrap flex-shrink-0">
+                {typeof value === "number" ? value.toLocaleString("vi-VN") : value}
+            </div>
         </div>
     );
 }
