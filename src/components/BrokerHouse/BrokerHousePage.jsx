@@ -23,7 +23,7 @@ export default function BrokerHousePage({ user_id }) {
   const [selectedHomeId, setSelectedHomeId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [houseToDelete, setHouseToDelete] = useState(null);
-  const [activeTab, setActiveTab] = useState(TAB.WHOLE);
+  const [activeTab, setActiveTab] = useState(TAB.ROOM);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchUserHomes = useCallback(async () => {
@@ -143,18 +143,7 @@ export default function BrokerHousePage({ user_id }) {
           ) : (
             <div className="max-w-[420px] sm:max-w-2xl mx-auto">
               {/* Tabs */}
-              <div className="flex border-b border-stone-200 mb-3">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab(TAB.WHOLE)}
-                  className={`flex-1 py-2.5 text-sm font-semibold transition border-b-2 ${
-                    activeTab === TAB.WHOLE
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-stone-400 hover:text-stone-600"
-                  }`}
-                >
-                  Nguyên căn ({wholeHouses.length})
-                </button>
+              <div className="flex border-b border-stone-200 mb-3">                
                 <button
                   type="button"
                   onClick={() => setActiveTab(TAB.ROOM)}
@@ -165,6 +154,17 @@ export default function BrokerHousePage({ user_id }) {
                   }`}
                 >
                   Thuê phòng ({roomHouses.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(TAB.WHOLE)}
+                  className={`flex-1 py-2.5 text-sm font-semibold transition border-b-2 ${
+                    activeTab === TAB.WHOLE
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-stone-400 hover:text-stone-600"
+                  }`}
+                >
+                  Nguyên căn ({wholeHouses.length})
                 </button>
               </div>
 

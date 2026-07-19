@@ -168,7 +168,7 @@ export default function Signup({
         }
 
         // Code is correct → create the user (already verified)
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('users')
             .insert([
                 {
