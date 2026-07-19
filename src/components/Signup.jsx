@@ -190,21 +190,21 @@ export default function Signup({
         }
 
         // Create Home using username
-        const { error: homeError } = await supabase
-            .from('homes')
-            .insert([
-                {
-                    name: username,
-                    userID: data.id,
-                },
-            ])
+        // const { error: homeError } = await supabase
+        //     .from('homes')
+        //     .insert([
+        //         {
+        //             name: username,
+        //             userID: data.id,
+        //         },
+        //     ])
 
-        if (homeError) {
-            setMessage(homeError.message)
-            setVerifying(false)
-            isSubmittingRef.current = false
-            return
-        }
+        // if (homeError) {
+        //     setMessage(homeError.message)
+        //     setVerifying(false)
+        //     isSubmittingRef.current = false
+        //     return
+        // }
 
         setMessage('Email đã được xác thực thành công!')
         setVerifying(false)
