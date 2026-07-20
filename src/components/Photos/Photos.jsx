@@ -280,14 +280,13 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
     if (homeData?.name) {
       desc += `🏠 Phòng trọ: ${homeData.name}`;
       if (homeData.address) desc += ` • ${homeData.address}, ${r.room_name}`;
-      desc += ".\n";
     }
 
     if (r?.area && r.area > 0) {
-      desc += `${r.area} m².`;
+      desc += `, ${r.area} m²`;
     }
     if (r?.monthly_rent && r.monthly_rent > 0) {
-      desc += ` Giá: ${r.monthly_rent.toLocaleString("vi-VN")}\n`;
+      desc += `. Giá: ${r.monthly_rent.toLocaleString("vi-VN")}\n`;
     }
 
     if (r?.amenities) {
