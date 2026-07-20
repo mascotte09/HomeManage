@@ -103,7 +103,7 @@ export default function SelectedRoom({
   // ── Save ───────────────────────────────────────────────────────────────────
   async function handleSave() {
     if (saving) return;
-    if (!roomName.trim()) { alert("Vui lòng nhập số phòng"); return; }
+    if (!roomName.trim()) { alert("Vui lòng nhập mô tả phòng"); return; }
     setSaving(true);
     try {
       const payload = {

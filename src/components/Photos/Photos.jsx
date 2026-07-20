@@ -278,8 +278,8 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
     const r = roomData || room; // luôn dùng dữ liệu room mới nhất, không dùng prop cũ
 
     if (homeData?.name) {
-      desc += `🏠 Nhà trọ: ${homeData.name}`;
-      if (homeData.address) desc += ` • ${homeData.address}`;
+      desc += `🏠 Phòng trọ: ${homeData.name}`;
+      if (homeData.address) desc += ` • ${homeData.address}, ${r.room_name}`;
       desc += ".\n";
     }
 
@@ -314,11 +314,11 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
     desc += `💡 Phí:\n`;
     desc += `   • Điện: ${Number(homeData.electricity_price || 0).toLocaleString("vi-VN")} đ/kWh\n`;
     desc += `   • Nước: ${homeData.is_water_per_person
-              ? `${Number(homeData.water_price || 0).toLocaleString("vi-VN")} đ/người`
-              : `${Number(homeData.water_price || 0).toLocaleString("vi-VN")} đ/khối`
-            }\n`;
+      ? `${Number(homeData.water_price || 0).toLocaleString("vi-VN")} đ/người`
+      : `${Number(homeData.water_price || 0).toLocaleString("vi-VN")} đ/khối`
+      }\n`;
     desc += `   • Dịch vụ (wifi, rác...): ${Number(homeData.service_amount || 0).toLocaleString("vi-VN")} đ/phòng\n`;
-    
+
     return desc;
   }
 
@@ -348,7 +348,7 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
           ? buildHomeDescription()
           : buildRoomDescription();
 
-      saveDescription(description);
+      await saveDescription(description);
 
       await navigator.clipboard.writeText(description);
 
@@ -360,16 +360,22 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
       await navigator.share({
         files: preparedFiles,
         title: "Thông tin phòng trọ",
-        text: description
+        text: description,
       });
+
+      // Đóng dialog sau khi chia sẻ thành công
+      setShowDescription(false);
+      setEditedDescription("");
+      setIsShareMode(false);
+
+      // đóng luôn Photos dialog
+       onClose?.();
 
     } catch (err) {
       console.log(err);
 
       if (err.name !== "AbortError") {
-        alert(
-          "Thiết bị hoặc ứng dụng không hỗ trợ chia sẻ ảnh."
-        );
+        alert("Thiết bị hoặc ứng dụng không hỗ trợ chia sẻ ảnh.");
       }
     }
   }
