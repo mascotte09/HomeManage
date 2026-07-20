@@ -274,14 +274,13 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
     onRoomUpdated?.();
   }
   function buildRoomDescription() {
-    let desc = "";
+    let desc = "🏠 Phòng trọ: ";
     const r = roomData || room; // luôn dùng dữ liệu room mới nhất, không dùng prop cũ
 
     if (homeData?.name) {
-      desc += `🏠 Phòng trọ: ${homeData.name}`;
-      if (homeData.address) desc += ` • ${homeData.address}, ${r.room_name}`;
+      desc += `${homeData.name}\n`;
     }
-
+    if (homeData.address) desc += `   • ${homeData.address}, ${r.room_name}`;
     if (r?.area && r.area > 0) {
       desc += `, ${r.area} m²`;
     }
@@ -301,10 +300,7 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
         if (amenities.balcony) amenityList.push("Ban công");
         if (amenities.window) amenityList.push("Cửa sổ");
         if (amenityList.length > 0) {
-          desc += `🎁 Tiện nghi:\n`;
-          amenityList.forEach(item => {
-            desc += `   • ${item}\n`;
-          });
+          desc += `🎁 Tiện nghi: ${amenityList.join(", ")}.\n`;
         }
       } catch (e) {
         // Skip if parse error
@@ -363,12 +359,16 @@ export default function Photos({ room, home, open, onClose, onRoomUpdated }) {
       });
 
       // Đóng dialog sau khi chia sẻ thành công
-      setShowDescription(false);
-      setEditedDescription("");
-      setIsShareMode(false);
+      const handleFocus = () => {
+        setShowDescription(false);
+        setEditedDescription("");
+        setIsShareMode(false);
+        onClose?.();
 
-      // đóng luôn Photos dialog
-       onClose?.();
+        window.removeEventListener("focus", handleFocus);
+      };
+
+      window.addEventListener("focus", handleFocus);
 
     } catch (err) {
       console.log(err);
