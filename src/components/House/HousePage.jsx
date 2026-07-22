@@ -227,7 +227,7 @@ export default function HousePage({ user_id }) {
       {isListView && (
         <button
           onClick={goToCreate}
-          className="fixed bottom-6 right-5 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-700 active:scale-95 transition"
+          className="fixed bottom-3 right-5 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-700 active:scale-95 transition"
           aria-label="Tạo nhà trọ mới"
         >
           <FiPlus size={26} />
