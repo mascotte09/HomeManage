@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { FiPlus, FiTrash2, FiUser, FiEye } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiUser, FiEye, FiShare2 } from "react-icons/fi";
 import { supabase } from "../../supabase";
 
 import HeaderRoom from "./HeaderRoom.jsx";
@@ -8,7 +8,7 @@ import NoRoomSelected from "./NoRoomSelected.jsx";
 import SelectedRoom from "./SelectedRoom.jsx";
 import DeleteModal from "../DeleteModal.jsx";
 import { useNavigate } from "react-router-dom";
-
+import QRDialog from "../BrokerRoom/QRDialog.jsx";
 const VIEW = {
     LIST: "list",
     CREATE: "create",
@@ -161,6 +161,7 @@ export default function RoomPage() {
     const [selectedRoomId, setSelectedRoomId] = useState(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [roomToDelete, setRoomToDelete] = useState(null);
+    const [qrDialogOpen, setQrDialogOpen] = useState(false);
 
     // ── Fetch ────────────────────────────────────────────────────────────────
     const fetchRooms = useCallback(async () => {
@@ -184,7 +185,7 @@ export default function RoomPage() {
         );
 
         setRooms(sorted);
-        
+
     }, [houseId]);
 
     useEffect(() => {
@@ -246,9 +247,6 @@ export default function RoomPage() {
                     {/* Summary row */}
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-stone-800">
-                                Danh sách phòng
-                            </h2>
 
                             {home && (
                                 <>
@@ -261,9 +259,13 @@ export default function RoomPage() {
                         </div>
 
                         {rooms.length > 0 && (
-                            <span className="text-sm text-stone-500">
-                                {occupiedCount}/{rooms.length} có người
-                            </span>
+                            <button
+                                onClick={() => setQrDialogOpen(true)}
+                                className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition"
+                            >
+                                <FiShare2 size={15} />
+                                Chia sẻ phòng trống ({rooms.length - occupiedCount})
+                            </button>
                         )}
                     </div>
 
@@ -323,6 +325,13 @@ export default function RoomPage() {
                 onClose={closeDeleteModal}
                 onConfirm={handleConfirmDelete}
             />
+            {qrDialogOpen && (
+                <QRDialog
+                    url={`${window.location.origin}/vacantRooms/${houseId}`}
+                    onClose={() => setQrDialogOpen(false)}
+                />
+            )}
+
         </div>
     );
 }
