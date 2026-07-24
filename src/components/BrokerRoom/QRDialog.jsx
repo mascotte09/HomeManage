@@ -68,7 +68,7 @@ export default function QRDialog({ url, onClose }) {
                 await navigator.share({
                     files: [file],
                     title: "Danh sách phòng trống",
-                    text: url,
+                    text: "Quét QR để xem danh sách phòng trống",
                 });
             } else {
                 // Fallback: tải ảnh về máy nếu trình duyệt không hỗ trợ share file
