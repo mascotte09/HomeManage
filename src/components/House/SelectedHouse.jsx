@@ -42,7 +42,55 @@ export default function SelectedHouse({
   const [electricityPrice, setElectricityPrice] = useState(3500);
   const [waterPrice, setWaterPrice] = useState(100000);
   const [isWaterPerPerson, setIsWaterPerPerson] = useState(false);
-
+  const banks = [
+    { code: "ABBANK", name: "ABBank" },
+    { code: "ACB", name: "ACB" },
+    { code: "AGRIBANK", name: "Agribank" },
+    { code: "BACABANK", name: "Bac A Bank" },
+    { code: "BAOVIETBANK", name: "BaoViet Bank" },
+    { code: "BIDV", name: "BIDV" },
+    { code: "BVBANK", name: "BVBank" },
+    { code: "CAKE", name: "Cake by VPBank" },
+    { code: "CIMB", name: "CIMB Bank" },
+    { code: "COOPBANK", name: "Co-opBank" },
+    { code: "DBS", name: "DBS Bank" },
+    { code: "EXIMBANK", name: "Eximbank" },
+    { code: "GPBANK", name: "GPBank" },
+    { code: "HDBANK", name: "HDBank" },
+    { code: "HONGLEONG", name: "Hong Leong Bank" },
+    { code: "HSBC", name: "HSBC Việt Nam" },
+    { code: "INDOVINA", name: "Indovina Bank (IVB)" },
+    { code: "KBANK", name: "KBank" },
+    { code: "KIENLONGBANK", name: "KienlongBank" },
+    { code: "LPBANK", name: "LPBank" },
+    { code: "MBBANK", name: "MB Bank" },
+    { code: "MSB", name: "MSB" },
+    { code: "NAMABANK", name: "Nam A Bank" },
+    { code: "NCB", name: "NCB" },
+    { code: "OCEANBANK", name: "OceanBank" },
+    { code: "OCB", name: "OCB" },
+    { code: "PGBANK", name: "PGBank" },
+    { code: "PUBLICBANK", name: "Public Bank Việt Nam" },
+    { code: "PVCOMBANK", name: "PVcomBank" },
+    { code: "SACOMBANK", name: "Sacombank" },
+    { code: "SAIGONBANK", name: "Saigonbank" },
+    { code: "SEABANK", name: "SeABank" },
+    { code: "SHB", name: "SHB" },
+    { code: "SHINHAN", name: "Shinhan Bank" },
+    { code: "STANDARDCHARTERED", name: "Standard Chartered" },
+    { code: "TCB", name: "Techcombank" },
+    { code: "TIMO", name: "Timo by BVBank" },
+    { code: "TPBANK", name: "TPBank" },
+    { code: "UBANK", name: "Ubank by VPBank" },
+    { code: "UOB", name: "UOB Việt Nam" },
+    { code: "VIB", name: "VIB" },
+    { code: "VIETBANK", name: "VietBank" },
+    { code: "VCB", name: "Vietcombank" },
+    { code: "CTG", name: "VietinBank" },
+    { code: "VPBANK", name: "VPBank" },
+    { code: "VRB", name: "VRB" },
+    { code: "WOORI", name: "Woori Bank" },
+  ];
   // Load house data into state
   useEffect(() => {
     setName(house?.name || "");
@@ -122,44 +170,44 @@ export default function SelectedHouse({
     setShowDeleteModal(false);
     onBack();
   }
-const initialRef = useRef(null);
+  const initialRef = useRef(null);
 
-useEffect(() => {
-  const init = {
-    name: house?.name || "",
-    address: house?.address || "",
-    bankID: house?.bank_id || "",
-    bankAccount: house?.bank_account || "",
-    electricityPrice: house?.electricity_price || 3500,
-    waterPrice: house?.water_price || 100000,
-    isWaterPerPerson: house?.is_water_per_person || false,
+  useEffect(() => {
+    const init = {
+      name: house?.name || "",
+      address: house?.address || "",
+      bankID: house?.bank_id || "",
+      bankAccount: house?.bank_account || "",
+      electricityPrice: house?.electricity_price || 3500,
+      waterPrice: house?.water_price || 100000,
+      isWaterPerPerson: house?.is_water_per_person || false,
+    };
+
+    setName(init.name);
+    setAddress(init.address);
+    setBankID(init.bankID);
+    setBankAccount(init.bankAccount);
+    setElectricityPrice(init.electricityPrice);
+    setWaterPrice(init.waterPrice);
+    setIsWaterPerPerson(init.isWaterPerPerson);
+
+    initialRef.current = init;
+  }, [house]);
+
+  const isDirty = () => {
+    const init = initialRef.current;
+    if (!init) return false;
+
+    return (
+      name !== init.name ||
+      address !== init.address ||
+      bankID !== init.bankID ||
+      bankAccount !== init.bankAccount ||
+      electricityPrice !== init.electricityPrice ||
+      waterPrice !== init.waterPrice ||
+      isWaterPerPerson !== init.isWaterPerPerson
+    );
   };
-
-  setName(init.name);
-  setAddress(init.address);
-  setBankID(init.bankID);
-  setBankAccount(init.bankAccount);
-  setElectricityPrice(init.electricityPrice);
-  setWaterPrice(init.waterPrice);
-  setIsWaterPerPerson(init.isWaterPerPerson);
-
-  initialRef.current = init;
-}, [house]);
-
-const isDirty = () => {
-  const init = initialRef.current;
-  if (!init) return false;
-
-  return (
-    name !== init.name ||
-    address !== init.address ||
-    bankID !== init.bankID ||
-    bankAccount !== init.bankAccount ||
-    electricityPrice !== init.electricityPrice ||
-    waterPrice !== init.waterPrice ||
-    isWaterPerPerson !== init.isWaterPerPerson
-  );
-};
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -277,12 +325,26 @@ const isDirty = () => {
           </Section>
 
           <Section title="Ngân hàng (in kèm mã thanh toán trên hóa đơn)">
-            <Input
-              label="Ngân hàng"
-              type="text"
-              value={bankID}
-              onChange={(e) => setBankID(e.target.value)}
-            />
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-stone-400 block mb-2">
+                Ngân hàng
+              </label>
+
+              <select
+                value={bankID}
+                onChange={(e) => setBankID(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="">-- Chọn ngân hàng --</option>
+
+                {banks.map((bank) => (
+                  <option key={bank.code} value={bank.code}>
+                    {bank.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Input
               label="Số tài khoản"
               type="text"
