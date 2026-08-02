@@ -430,6 +430,7 @@ function StatisticsDialog({ onClose }) {
     const [loading, setLoading] = useState(true)
     const [rows, setRows] = useState([])
     const [invoiceByMonth, setInvoiceByMonth] = useState([]);
+    const [activeTab, setActiveTab] = useState("daily");
     const cellStyle = {
         textAlign: "center",
         padding: "10px",
@@ -567,85 +568,121 @@ function StatisticsDialog({ onClose }) {
                     padding: 20
                 }}
             >
+                <div
+                    style={{
+                        display: "flex",
+                        gap: 8,
+                        marginBottom: 20,
+                        borderBottom: "1px solid #e7e5e4"
+                    }}
+                >
+                    <button
+                        onClick={() => setActiveTab("daily")}
+                        style={{
+                            padding: "10px 16px",
+                            border: "none",
+                            background: activeTab === "daily" ? "#57534e" : "transparent",
+                            color: activeTab === "daily" ? "#fff" : "#57534e",
+                            borderRadius: "8px 8px 0 0",
+                            cursor: "pointer",
+                            fontWeight: 600
+                        }}
+                    >
+                        5 ngày
+                    </button>
 
-                <h2 style={{ marginBottom: 20 }}>
-                    Thống kê 5 ngày gần nhất
-                </h2>
+                    <button
+                        onClick={() => setActiveTab("monthly")}
+                        style={{
+                            padding: "10px 16px",
+                            border: "none",
+                            background: activeTab === "monthly" ? "#57534e" : "transparent",
+                            color: activeTab === "monthly" ? "#fff" : "#57534e",
+                            borderRadius: "8px 8px 0 0",
+                            cursor: "pointer",
+                            fontWeight: 600
+                        }}
+                    >
+                        Theo tháng
+                    </button>
+                </div>
 
+                
                 {loading ? (
 
                     <p>Đang tải...</p>
 
                 ) : (
+                    activeTab === "daily" && (
+                        <table
+                            style={{
+                                width: "100%",
+                                borderCollapse: "collapse"
+                            }}
+                        >
 
-                    <table
-                        style={{
-                            width: "100%",
-                            borderCollapse: "collapse"
-                        }}
-                    >
+                            <thead>
 
-                        <thead>
-
-                            <tr>
-                                <th style={headerStyle}>Ngày</th>
-                                <th style={headerStyle}>Usr</th>
-                                <th style={headerStyle}>Ho</th>
-                                <th style={headerStyle}>Ro</th>
-                                <th style={headerStyle}>Inv</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            {rows.map(r => (
-
-                                <tr key={r.date}>
-
-                                    <td style={cellStyle}>{r.date}</td>
-                                    <td style={cellStyle}>{r.users}</td>
-                                    <td style={cellStyle}>{r.homes}</td>
-                                    <td style={cellStyle}>{r.rooms}</td>
-                                    <td style={cellStyle}>{r.invoices}</td>
+                                <tr>
+                                    <th style={headerStyle}>Ngày</th>
+                                    <th style={headerStyle}>Usr</th>
+                                    <th style={headerStyle}>Ho</th>
+                                    <th style={headerStyle}>Ro</th>
+                                    <th style={headerStyle}>Inv</th>
                                 </tr>
 
-                            ))}
+                            </thead>
 
-                        </tbody>
+                            <tbody>
 
-                    </table>
+                                {rows.map(r => (
 
+                                    <tr key={r.date}>
+
+                                        <td style={cellStyle}>{r.date}</td>
+                                        <td style={cellStyle}>{r.users}</td>
+                                        <td style={cellStyle}>{r.homes}</td>
+                                        <td style={cellStyle}>{r.rooms}</td>
+                                        <td style={cellStyle}>{r.invoices}</td>
+                                    </tr>
+
+                                ))}
+
+                            </tbody>
+
+                        </table>
+                    )
                 )}
-                <h2 style={{ marginTop: 30, marginBottom: 15 }}>
-                    Số hóa đơn theo tháng
-                </h2>
+                {activeTab === "monthly" && (
+                    <div>
+                       
 
-                <table
-                    style={{
-                        width: "100%",
-                        borderCollapse: "collapse"
-                    }}
-                >
-                    <thead>
-                        <tr>
-                            <th style={headerStyle}>Tháng</th>
-                            <th style={headerStyle}>Số hóa đơn</th>
-                        </tr>
-                    </thead>
+                        <table
+                            style={{
+                                width: "100%",
+                                borderCollapse: "collapse"
+                            }}
+                        >
+                            <thead>
+                                <tr>
+                                    <th style={headerStyle}>Tháng</th>
+                                    <th style={headerStyle}>Số hóa đơn</th>
+                                </tr>
+                            </thead>
 
-                    <tbody>
-                        {invoiceByMonth.map(item => (
-                            <tr key={item.month}>
-                                <td style={cellStyle}>{item.month}</td>
-                                <td style={cellStyle}>{item.count}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                            <tbody>
+                                {invoiceByMonth.map(item => (
+                                    <tr key={item.month}>
+                                        <td style={cellStyle}>{item.month}</td>
+                                        <td style={cellStyle}>{item.count}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+
+                    </div>
+                )}
             </div>
         </div>
-
     )
-
 }
