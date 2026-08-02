@@ -7,7 +7,6 @@ import { MdBarChart } from 'react-icons/md'
 export default function Settings({ user, onBack }) {
     const [showChangePassword, setShowChangePassword] = useState(false)
     const [toast, setToast] = useState('')
-
     const [showStatistics, setShowStatistics] = useState(false)
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -430,6 +429,7 @@ function StatisticsDialog({ onClose }) {
 
     const [loading, setLoading] = useState(true)
     const [rows, setRows] = useState([])
+    const [invoiceByMonth, setInvoiceByMonth] = useState([]);
     const cellStyle = {
         textAlign: "center",
         padding: "10px",
@@ -515,6 +515,31 @@ function StatisticsDialog({ onClose }) {
 
         setRows(result)
         setLoading(false)
+        const { data: monthlyInvoices, error } = await supabase
+            .from("invoices")
+            .select("invoice_create_date, rooms!inner(homes!inner(users!inner(is_admin)))")
+            .eq("rooms.homes.users.is_admin", false);
+
+        if (!error) {
+            const grouped = {};
+
+            monthlyInvoices.forEach(item => {
+                if (!item.invoice_create_date) return;
+
+                const month = item.invoice_create_date.slice(0, 7); // YYYY-MM
+
+                grouped[month] = (grouped[month] || 0) + 1;
+            });
+
+            const rows = Object.entries(grouped)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([month, count]) => ({
+                    month,
+                    count
+                }));
+
+            setInvoiceByMonth(rows);
+        }
     }
 
     return (
@@ -592,9 +617,33 @@ function StatisticsDialog({ onClose }) {
                     </table>
 
                 )}
+                <h2 style={{ marginTop: 30, marginBottom: 15 }}>
+                    Số hóa đơn theo tháng
+                </h2>
 
+                <table
+                    style={{
+                        width: "100%",
+                        borderCollapse: "collapse"
+                    }}
+                >
+                    <thead>
+                        <tr>
+                            <th style={headerStyle}>Tháng</th>
+                            <th style={headerStyle}>Số hóa đơn</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {invoiceByMonth.map(item => (
+                            <tr key={item.month}>
+                                <td style={cellStyle}>{item.month}</td>
+                                <td style={cellStyle}>{item.count}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
-
         </div>
 
     )
