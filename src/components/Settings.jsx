@@ -470,6 +470,7 @@ function StatisticsDialog({ onClose }) {
                 supabase
                     .from("users")
                     .select("*", { count: "exact", head: true })
+                    .eq("is_admin", false)
                     .gte("created_at", start.toISOString())
                     .lte("created_at", end.toISOString()),
 
