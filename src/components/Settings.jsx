@@ -470,25 +470,29 @@ function StatisticsDialog({ onClose }) {
                 supabase
                     .from("users")
                     .select("*", { count: "exact", head: true })
-                    .eq("is_admin", false)
                     .gte("created_at", start.toISOString())
                     .lte("created_at", end.toISOString()),
 
                 supabase
                     .from("homes")
-                    .select("*", { count: "exact", head: true })
+                    .select("*, users!inner(is_admin)", { count: "exact", head: true })
+                    .eq("users.is_admin", false)
                     .gte("created_at", start.toISOString())
                     .lte("created_at", end.toISOString()),
 
+                // rooms -> homes -> users
                 supabase
                     .from("rooms")
-                    .select("*", { count: "exact", head: true })
+                    .select("*, homes!inner(users!inner(is_admin))", { count: "exact", head: true })
+                    .eq("homes.users.is_admin", false)
                     .gte("created_at", start.toISOString())
                     .lte("created_at", end.toISOString()),
 
+                // invoices -> rooms -> homes -> users
                 supabase
                     .from("invoices")
-                    .select("*", { count: "exact", head: true })
+                    .select("*, rooms!inner(homes!inner(users!inner(is_admin)))", { count: "exact", head: true })
+                    .eq("rooms.homes.users.is_admin", false)
                     .gte("created_at", start.toISOString())
                     .lte("created_at", end.toISOString()),
 
