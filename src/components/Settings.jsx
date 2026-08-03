@@ -429,7 +429,7 @@ function StatisticsDialog({ onClose }) {
 
     const [loading, setLoading] = useState(true)
     const [rows, setRows] = useState([])
-    const [invoiceByMonth, setInvoiceByMonth] = useState([]);
+    // const [invoiceByMonth, setInvoiceByMonth] = useState([]);
     const cellStyle = {
         textAlign: "center",
         padding: "10px",
@@ -449,8 +449,7 @@ function StatisticsDialog({ onClose }) {
 
         const result = []
 
-        for (let i = 4; i >= 0; i--) {
-
+        for (let i = 2; i >= 0; i--) {
             const day = new Date()
             day.setDate(day.getDate() - i)
 
@@ -459,87 +458,23 @@ function StatisticsDialog({ onClose }) {
 
             const end = new Date(day)
             end.setHours(23, 59, 59, 999)
+            const { data, error } = await supabase.rpc("get_dashboard_stats", {
+                start_date: start.toISOString(),
+                end_date: end.toISOString(),
+            });
 
-            const [
-                users,
-                homes,
-                rooms,
-                invoices
-            ] = await Promise.all([
-
-                supabase
-                    .from("users")
-                    .select("*", { count: "exact", head: true })
-                    .gte("created_at", start.toISOString())
-                    .lte("created_at", end.toISOString()),
-
-                supabase
-                    .from("homes")
-                    .select("*, users!inner(is_admin)", { count: "exact", head: true })
-                    .eq("users.is_admin", false)
-                    .gte("created_at", start.toISOString())
-                    .lte("created_at", end.toISOString()),
-
-                // rooms -> homes -> users
-                supabase
-                    .from("rooms")
-                    .select("*, homes!inner(users!inner(is_admin))", { count: "exact", head: true })
-                    .eq("homes.users.is_admin", false)
-                    .gte("created_at", start.toISOString())
-                    .lte("created_at", end.toISOString()),
-
-                // invoices -> rooms -> homes -> users
-                supabase
-                    .from("invoices")
-                    .select("*, rooms!inner(homes!inner(users!inner(is_admin)))", { count: "exact", head: true })
-                    .eq("rooms.homes.users.is_admin", false)
-                    .gte("created_at", start.toISOString())
-                    .lte("created_at", end.toISOString()),
-
-            ])
-
+            const { users_count, homes_count, rooms_count, invoices_count } = data[0];
             result.push({
-
                 date: start.toLocaleDateString("vi-VN"),
-
-                users: users.count || 0,
-
-                homes: homes.count || 0,
-
-                rooms: rooms.count || 0,
-
-                invoices: invoices.count || 0
-
+                users: users_count || 0,
+                homes: homes_count || 0,
+                rooms: rooms_count || 0,
+                invoices: invoices_count || 0
             })
         }
 
         setRows(result)
         setLoading(false)
-        const { data: monthlyInvoices, error } = await supabase
-            .from("invoices")
-            .select("invoice_create_date, rooms!inner(homes!inner(users!inner(is_admin)))")
-            .eq("rooms.homes.users.is_admin", false);
-
-        if (!error) {
-            const grouped = {};
-
-            monthlyInvoices.forEach(item => {
-                if (!item.invoice_create_date) return;
-
-                const month = item.invoice_create_date.slice(0, 7); // YYYY-MM
-
-                grouped[month] = (grouped[month] || 0) + 1;
-            });
-
-            const rows = Object.entries(grouped)
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .map(([month, count]) => ({
-                    month,
-                    count
-                }));
-
-            setInvoiceByMonth(rows);
-        }
     }
 
     return (
@@ -617,7 +552,7 @@ function StatisticsDialog({ onClose }) {
                     </table>
 
                 )}
-                <h2 style={{ marginTop: 30, marginBottom: 15 }}>
+                {/* <h2 style={{ marginTop: 30, marginBottom: 15 }}>
                     Số hóa đơn theo tháng
                 </h2>
 
@@ -642,7 +577,7 @@ function StatisticsDialog({ onClose }) {
                             </tr>
                         ))}
                     </tbody>
-                </table>
+                </table> */}
             </div>
         </div>
 
