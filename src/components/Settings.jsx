@@ -458,7 +458,7 @@ function StatisticsDialog({ onClose }) {
 
             const end = new Date(day)
             end.setHours(23, 59, 59, 999)
-            const { data, error } = await supabase.rpc("get_dashboard_stats", {
+            const { data } = await supabase.rpc("get_dashboard_stats", {
                 start_date: start.toISOString(),
                 end_date: end.toISOString(),
             });
