@@ -213,7 +213,7 @@ export default function Settings({ user, onBack }) {
                     continue
                 }
 
-                const { data: insertedInvoices, error: insertInvoiceError } = await supabase
+                const { error: insertInvoiceError } = await supabase
                     .from('invoices')
                     .insert([normalizedInvoice])
                     .select()
@@ -232,7 +232,7 @@ export default function Settings({ user, onBack }) {
                     continue
                 }
 
-                const { data: insertedExpenses, error: insertExpenseError } = await supabase
+                const { error: insertExpenseError } = await supabase
                     .from('expenses')
                     .insert([normalizedExpense])
                     .select()
