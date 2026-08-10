@@ -389,7 +389,7 @@ export default function Settings({ user, onBack }) {
                                 <MdDownload size={18} />
                             </div>
                             <span style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#44403c' }}>
-                                {isExporting ? 'Đang xuất...' : 'Xuất dữ liệu'}
+                                {isExporting ? 'Đang sao lưu...' : 'Sao lưu dữ liệu'}
                             </span>
                             <MdChevronRight size={20} color="#a8a29e" />
                         </button>
@@ -428,7 +428,7 @@ export default function Settings({ user, onBack }) {
                                 <MdUpload size={18} />
                             </div>
                             <span style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#44403c' }}>
-                                {isImporting ? 'Đang nhập...' : 'Nhập dữ liệu'}
+                                {isImporting ? 'Đang khôi phục...' : 'Khôi phục dữ liệu'}
                             </span>
                             <MdChevronRight size={20} color="#a8a29e" />
                         </button>
