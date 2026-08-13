@@ -3,7 +3,7 @@ import { MdArrowBack, MdPerson, MdLock, MdChevronRight, MdClose, MdDownload, MdU
 import { supabase } from '../supabase.js'
 import FooterHouse from './House/FooterHouse.jsx'
 import { MdBarChart } from 'react-icons/md'
-
+import { db } from "../db/db.js";
 export default function Settings({ user, onBack }) {
     const [showChangePassword, setShowChangePassword] = useState(false)
     const [toast, setToast] = useState('')
@@ -130,125 +130,684 @@ export default function Settings({ user, onBack }) {
         }
     }
 
-    const handleImportUserData = async (event) => {
-        const file = event.target.files?.[0]
-        if (!file) return
+   const handleImportUserData = async (event) => {
 
-        if (!user?.id) {
-            setToast('Không tìm thấy thông tin người dùng đang đăng nhập.')
-            return
-        }
+    const file = event.target.files?.[0];
 
-        setIsImporting(true)
-        try {
-            const text = await file.text()
-            const payload = JSON.parse(text)
+    if (!file) return;
 
-            if (!payload || !Array.isArray(payload.homes)) {
-                throw new Error('File không đúng định dạng dữ liệu.')
-            }
-
-            const homeIdMap = new Map()
-            const createdHomes = []
-            for (const home of payload.homes || []) {
-                const homeKey = getRecordValue(home, ['id', 'home_id', 'homeID'])
-                if (!homeKey) continue
-
-                const normalizedHome = sanitizeRecord(home, { userID: user.id })
-                const existingHome = await findExistingRecord('homes', 'name', normalizedHome.name, { userID: user.id })
-
-                if (existingHome) {
-                    homeIdMap.set(homeKey, existingHome.id)
-                    continue
-                }
-
-                const { data: insertedHomes, error: insertHomeError } = await supabase
-                    .from('homes')
-                    .insert([normalizedHome])
-                    .select()
-
-                if (insertHomeError) throw insertHomeError
-                const insertedHome = insertedHomes?.[0]
-                if (!insertedHome) continue
-                homeIdMap.set(homeKey, insertedHome.id)
-                createdHomes.push(insertedHome)
-            }
-
-            const roomIdMap = new Map()
-            for (const room of payload.rooms || []) {
-                const roomHomeKey = getRecordValue(room, ['home_id', 'homeID'])
-                const homeId = homeIdMap.get(roomHomeKey)
-                if (!homeId) continue
-
-                const normalizedRoom = sanitizeRecord(room, { home_id: homeId })
-                const existingRoom = await findExistingRecord('rooms', 'room_name', normalizedRoom.room_name, { home_id: homeId })
-
-                if (existingRoom) {
-                    const roomKey = getRecordValue(room, ['id', 'room_id', 'roomID'])
-                    if (roomKey) roomIdMap.set(roomKey, existingRoom.id)
-                    continue
-                }
-
-                const { data: insertedRooms, error: insertRoomError } = await supabase
-                    .from('rooms')
-                    .insert([normalizedRoom])
-                    .select()
-
-                if (insertRoomError) throw insertRoomError
-                const insertedRoom = insertedRooms?.[0]
-                if (!insertedRoom) continue
-                const roomKey = getRecordValue(room, ['id', 'room_id', 'roomID'])
-                if (roomKey) roomIdMap.set(roomKey, insertedRoom.id)
-            }
-
-            for (const invoice of payload.invoices || []) {
-                const invoiceRoomKey = getRecordValue(invoice, ['room_id', 'roomID'])
-                const roomId = roomIdMap.get(invoiceRoomKey)
-                if (!roomId) continue
-
-                const normalizedInvoice = sanitizeRecord(invoice, { room_id: roomId })
-                const existingInvoice = await findExistingRecord('invoices', 'invoice_create_date', normalizedInvoice.invoice_create_date, { room_id: roomId })
-
-                if (existingInvoice) {
-                    continue
-                }
-
-                const { error: insertInvoiceError } = await supabase
-                    .from('invoices')
-                    .insert([normalizedInvoice])
-                    .select()
-
-                if (insertInvoiceError) throw insertInvoiceError
-            }
-
-            for (const expense of payload.expenses || []) {
-                const homeId = homeIdMap.get(expense.home_id)
-                if (!homeId) continue
-
-                const normalizedExpense = sanitizeRecord(expense, { home_id: homeId })
-                const existingExpense = await findExistingRecord('expenses', 'description', normalizedExpense.description)
-
-                if (existingExpense) {
-                    continue
-                }
-
-                const { error: insertExpenseError } = await supabase
-                    .from('expenses')
-                    .insert([normalizedExpense])
-                    .select()
-
-                if (insertExpenseError) throw insertExpenseError
-            }
-
-            setToast(`Đã nhập dữ liệu thành công cho ${createdHomes.length} nhà.`)
-        } catch (error) {
-            console.error(error)
-            setToast(error.message || 'Không thể nhập dữ liệu.')
-        } finally {
-            setIsImporting(false)
-            event.target.value = ''
-        }
+    if (!user?.id) {
+        setToast(
+            "Không tìm thấy thông tin người dùng đang đăng nhập."
+        );
+        return;
     }
+
+    setIsImporting(true);
+
+    try {
+
+        // ═══════════════════════════════════════
+        // ĐỌC FILE
+        // ═══════════════════════════════════════
+
+        const text = await file.text();
+
+        const payload = JSON.parse(text);
+
+        if (
+            !payload ||
+            !Array.isArray(payload.homes)
+        ) {
+            throw new Error(
+                "File không đúng định dạng dữ liệu."
+            );
+        }
+
+        console.log(
+            "📦 IMPORT DATA:",
+            {
+                homes: payload.homes?.length || 0,
+                rooms: payload.rooms?.length || 0,
+                invoices: payload.invoices?.length || 0,
+                expenses: payload.expenses?.length || 0,
+            }
+        );
+
+
+        // ═══════════════════════════════════════
+        // KIỂM TRA DATABASE LOCAL
+        // ═══════════════════════════════════════
+
+        console.log(
+            "📚 Dexie tables:",
+            db.tables.map(
+                table => table.name
+            )
+        );
+
+
+        // ═══════════════════════════════════════
+        // MAP ID
+        // ═══════════════════════════════════════
+
+        const homeIdMap = new Map();
+
+        const roomIdMap = new Map();
+
+
+        let importedHomes = 0;
+        let importedRooms = 0;
+        let importedInvoices = 0;
+        let importedExpenses = 0;
+
+
+        // ═══════════════════════════════════════
+        // IMPORT THEO TRANSACTION
+        // ═══════════════════════════════════════
+
+        await db.transaction(
+            "rw",
+            db.homes,
+            db.rooms,
+            db.invoices,
+            db.expenses,
+            db.sync_queue,            
+            async () => {
+
+
+                // ═══════════════════════════════
+                // 1. HOMES
+                // ═══════════════════════════════
+
+                for (
+                    const home
+                    of payload.homes
+                ) {
+
+                    const homeKey =
+                        getRecordValue(
+                            home,
+                            [
+                                "id",
+                                "home_id",
+                                "homeID",
+                            ]
+                        );
+
+                    if (!homeKey) {
+                        console.warn(
+                            "⚠️ Home không có ID:",
+                            home
+                        );
+                        continue;
+                    }
+
+
+                    const normalizedHome =
+                        sanitizeRecord(
+                            home,
+                            {
+                                userID: user.id,
+                                retired: false,
+                            }
+                        );
+
+
+                    // ─────────────────────────
+                    // TÌM NHÀ ĐÃ CÓ LOCAL
+                    // Dựa theo name + userID
+                    // ─────────────────────────
+
+                    const existingHomes =
+                        await db.homes
+                            .filter(
+                                h =>
+                                    h.userID ===
+                                        user.id &&
+                                    h.name ===
+                                        normalizedHome.name &&
+                                    h.retired !== true
+                            )
+                            .toArray();
+
+
+                    // ═════════════════════════
+                    // NHÀ ĐÃ CÓ
+                    // XÓA TOÀN BỘ DỮ LIỆU CŨ
+                    // ═════════════════════════
+
+                    for (
+                        const existingHome
+                        of existingHomes
+                    ) {
+
+                        const oldHomeId =
+                            existingHome.id;
+
+
+                        console.log(
+                            "🔄 Thay thế nhà:",
+                            oldHomeId,
+                            existingHome.name
+                        );
+
+
+                        // ─────────────────────
+                        // Lấy ROOM cũ
+                        // ─────────────────────
+
+                        const oldRooms =
+                            await db.rooms
+                                .filter(
+                                    r =>
+                                        r.home_id ===
+                                        oldHomeId
+                                )
+                                .toArray();
+
+
+                        const oldRoomIds =
+                            oldRooms.map(
+                                r => r.id
+                            );
+
+
+                        // ─────────────────────
+                        // XÓA INVOICES CŨ
+                        // ─────────────────────
+
+                        if (
+                            oldRoomIds.length
+                        ) {
+
+                            const oldInvoices =
+                                await db.invoices
+                                    .filter(
+                                        invoice =>
+                                            oldRoomIds.includes(
+                                                invoice.room_id
+                                            )
+                                    )
+                                    .toArray();
+
+
+                            for (
+                                const invoice
+                                of oldInvoices
+                            ) {
+
+                                await db.invoices.delete(
+                                    invoice.id
+                                );
+
+                                await db.sync_queue
+                                    .where("record_id")
+                                    .equals(invoice.id)
+                                    .delete();
+                            }
+                        }
+
+
+                        // ─────────────────────
+                        // XÓA ROOMS CŨ
+                        // ─────────────────────
+
+                        for (
+                            const room
+                            of oldRooms
+                        ) {
+
+                            await db.rooms.delete(
+                                room.id
+                            );
+
+                            await db.sync_queue
+                                .where("record_id")
+                                .equals(room.id)
+                                .delete();
+                        }
+
+
+                        // ─────────────────────
+                        // XÓA EXPENSES CŨ
+                        // ─────────────────────
+
+                        if (db.expenses) {
+
+                            const oldExpenses =
+                                await db.expenses
+                                    .filter(
+                                        expense =>
+                                            expense.home_id ===
+                                            oldHomeId
+                                    )
+                                    .toArray();
+
+
+                            for (
+                                const expense
+                                of oldExpenses
+                            ) {
+
+                                await db.expenses.delete(
+                                    expense.id
+                                );
+
+                                await db.sync_queue
+                                    .where("record_id")
+                                    .equals(expense.id)
+                                    .delete();
+                            }
+                        }
+
+
+                        // ─────────────────────
+                        // XÓA HOME CŨ
+                        // ─────────────────────
+
+                        await db.homes.delete(
+                            oldHomeId
+                        );
+
+
+                        await db.sync_queue
+                            .where("record_id")
+                            .equals(oldHomeId)
+                            .delete();
+                    }
+
+
+                    // ═════════════════════════
+                    // INSERT HOME MỚI
+                    // ═════════════════════════
+
+                    await db.homes.put({
+
+                        ...normalizedHome,
+
+                        id: homeKey,
+
+                        userID: user.id,
+
+                        retired: false,
+                    });
+
+
+                    homeIdMap.set(
+                        homeKey,
+                        homeKey
+                    );
+
+
+                    importedHomes++;
+
+                    console.log(
+                        "🏠 IMPORT HOME:",
+                        homeKey,
+                        normalizedHome.name
+                    );
+                }
+
+
+                // ═══════════════════════════════
+                // 2. ROOMS
+                // ═══════════════════════════════
+
+                for (
+                    const room
+                    of payload.rooms || []
+                ) {
+
+                    const roomKey =
+                        getRecordValue(
+                            room,
+                            [
+                                "id",
+                                "room_id",
+                                "roomID",
+                            ]
+                        );
+
+
+                    const roomHomeKey =
+                        getRecordValue(
+                            room,
+                            [
+                                "home_id",
+                                "homeID",
+                            ]
+                        );
+
+
+                    if (
+                        !roomKey ||
+                        !roomHomeKey
+                    ) {
+
+                        console.warn(
+                            "⚠️ Room thiếu ID/home_id:",
+                            room
+                        );
+
+                        continue;
+                    }
+
+
+                    const homeId =
+                        homeIdMap.get(
+                            roomHomeKey
+                        );
+
+
+                    if (!homeId) {
+
+                        console.warn(
+                            "⚠️ Không tìm thấy Home cho Room:",
+                            roomKey,
+                            roomHomeKey
+                        );
+
+                        continue;
+                    }
+
+
+                    const normalizedRoom =
+                        sanitizeRecord(
+                            room,
+                            {
+                                home_id: homeId,
+                                retired: false,
+                            }
+                        );
+
+
+                    await db.rooms.put({
+
+                        ...normalizedRoom,
+
+                        id: roomKey,
+
+                        home_id: homeId,
+
+                        retired: false,
+                    });
+
+
+                    roomIdMap.set(
+                        roomKey,
+                        roomKey
+                    );
+
+
+                    importedRooms++;
+
+
+                    console.log(
+                        "🚪 IMPORT ROOM:",
+                        roomKey,
+                        "home:",
+                        homeId
+                    );
+                }
+
+
+                // ═══════════════════════════════
+                // 3. INVOICES
+                // ═══════════════════════════════
+
+                for (
+                    const invoice
+                    of payload.invoices || []
+                ) {
+
+                    const invoiceKey =
+                        getRecordValue(
+                            invoice,
+                            [
+                                "id",
+                                "invoice_id",
+                                "invoiceID",
+                            ]
+                        );
+
+
+                    const invoiceRoomKey =
+                        getRecordValue(
+                            invoice,
+                            [
+                                "room_id",
+                                "roomID",
+                            ]
+                        );
+
+
+                    if (
+                        !invoiceKey ||
+                        !invoiceRoomKey
+                    ) {
+
+                        console.warn(
+                            "⚠️ Invoice thiếu ID/room_id:",
+                            invoice
+                        );
+
+                        continue;
+                    }
+
+
+                    const roomId =
+                        roomIdMap.get(
+                            invoiceRoomKey
+                        );
+
+
+                    if (!roomId) {
+
+                        console.warn(
+                            "⚠️ KHÔNG TÌM THẤY ROOM CHO INVOICE:",
+                            {
+                                invoiceId:
+                                    invoiceKey,
+
+                                invoiceRoomKey:
+                                    invoiceRoomKey,
+                            }
+                        );
+
+                        continue;
+                    }
+
+
+                    const normalizedInvoice =
+                        sanitizeRecord(
+                            invoice,
+                            {
+                                room_id: roomId,
+                            }
+                        );
+
+
+                    await db.invoices.put({
+
+                        ...normalizedInvoice,
+
+                        id: invoiceKey,
+
+                        room_id: roomId,
+                    });
+
+
+                    importedInvoices++;
+
+
+                    console.log(
+                        "🧾 IMPORT INVOICE:",
+                        invoiceKey,
+                        "room:",
+                        roomId
+                    );
+                }
+
+
+                // ═══════════════════════════════
+                // 4. EXPENSES
+                // ═══════════════════════════════
+
+                if (!db.expenses) {
+
+                    console.error(
+                        "❌ db.expenses chưa được khai báo trong db.js"
+                    );
+
+                } else {
+
+                    for (
+                        const expense
+                        of payload.expenses || []
+                    ) {
+
+                        const expenseKey =
+                            getRecordValue(
+                                expense,
+                                [
+                                    "id",
+                                    "expense_id",
+                                    "expenseID",
+                                ]
+                            );
+
+
+                        const expenseHomeKey =
+                            getRecordValue(
+                                expense,
+                                [
+                                    "home_id",
+                                    "homeID",
+                                ]
+                            );
+
+
+                        if (
+                            !expenseKey ||
+                            !expenseHomeKey
+                        ) {
+
+                            console.warn(
+                                "⚠️ Expense thiếu ID/home_id:",
+                                expense
+                            );
+
+                            continue;
+                        }
+
+
+                        const homeId =
+                            homeIdMap.get(
+                                expenseHomeKey
+                            );
+
+
+                        if (!homeId) {
+
+                            console.warn(
+                                "⚠️ KHÔNG TÌM THẤY HOME CHO EXPENSE:",
+                                {
+                                    expenseId:
+                                        expenseKey,
+
+                                    homeId:
+                                        expenseHomeKey,
+                                }
+                            );
+
+                            continue;
+                        }
+
+
+                        const normalizedExpense =
+                            sanitizeRecord(
+                                expense,
+                                {
+                                    home_id: homeId,
+                                }
+                            );
+
+
+                        await db.expenses.put({
+
+                            ...normalizedExpense,
+
+                            id: expenseKey,
+
+                            home_id: homeId,
+                        });
+
+
+                        importedExpenses++;
+
+
+                        console.log(
+                            "💰 IMPORT EXPENSE:",
+                            expenseKey,
+                            "home:",
+                            homeId
+                        );
+                    }
+                }
+
+            }
+        );
+
+
+        // ═══════════════════════════════════════
+        // KIỂM TRA KẾT QUẢ
+        // ═══════════════════════════════════════
+
+        console.log(
+            "════════════════════════════════"
+        );
+
+        console.log(
+            "✅ IMPORT HOÀN TẤT"
+        );
+
+        console.log({
+            homes: importedHomes,
+            rooms: importedRooms,
+            invoices: importedInvoices,
+            expenses: importedExpenses,
+        });
+
+        console.log(
+            "════════════════════════════════"
+        );
+
+
+        setToast(
+            `Đã nhập: ${importedHomes} nhà, ${importedRooms} phòng, ${importedInvoices} hóa đơn, ${importedExpenses} khoản chi.`
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ IMPORT LOCAL ERROR:",
+            error
+        );
+
+        setToast(
+            error.message ||
+            "Không thể nhập dữ liệu."
+        );
+
+    } finally {
+
+        setIsImporting(false);
+
+        event.target.value = "";
+    }
+};
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

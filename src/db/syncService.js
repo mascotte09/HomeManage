@@ -5,21 +5,23 @@ import { supabase } from "../supabase";
 // SYNC SERVICE
 // IndexedDB ⇄ Supabase
 //
-// PUSH:
-// Local thay đổi → sync_queue → Supabase
+// LOCAL → SUPABASE
+//     INSERT / UPDATE
+//     DELETE → Supabase retired = true
 //
-// PULL:
-// Supabase → Local
+// SUPABASE → LOCAL
+//     Chỉ lấy retired = false
 //
-// DELETE:
-// Local xóa hẳn
-// → queue DELETE
-// → Supabase UPDATE retired = true
+// DELETE LOCAL
+//     Xóa thật khỏi IndexedDB
+//     → tạo sync_queue DELETE
+//     → Supabase retired = true
 //
-// Không DELETE thật trên Supabase.
-// Không tạo duplicate.
-// Không pull record retired=true.
-// Không pull đè record đang chờ PUSH.
+// Hỗ trợ:
+//     homes
+//     rooms
+//     invoices
+//     expenses
 // ═══════════════════════════════════════════════
 
 export const syncService = {
@@ -27,8 +29,11 @@ export const syncService = {
     isSyncing: false,
 
     interval: null,
+
     dailyTimeout: null,
+
     dailyInterval: null,
+
     onlineHandler: null,
 
 
@@ -40,68 +45,134 @@ export const syncService = {
 
         if (this.isSyncing) {
 
-            console.log("⏳ Sync đang chạy...");
+            console.log(
+                "⏳ Sync đang chạy..."
+            );
 
             return;
         }
+
 
         if (!navigator.onLine) {
 
-            console.log("📴 Offline - bỏ qua sync");
+            console.log(
+                "📴 Offline - bỏ qua sync"
+            );
 
             return;
         }
 
+
         this.isSyncing = true;
+
 
         try {
 
-            console.log("════════════════════════════");
-            console.log("🔄 BẮT ĐẦU ĐỒNG BỘ");
-            console.log("════════════════════════════");
+            console.log(
+                "════════════════════════════"
+            );
+
+            console.log(
+                "🔄 BẮT ĐẦU ĐỒNG BỘ"
+            );
+
+            console.log(
+                "════════════════════════════"
+            );
 
 
             // ═══════════════════════════════════════
-            // 1. PUSH
+            // PUSH
             // ═══════════════════════════════════════
 
-            console.log("📤 PUSH HOMES");
+            console.log(
+                "📤 PUSH HOMES"
+            );
 
-            await this.syncTable("homes");
+            await this.syncTable(
+                "homes"
+            );
 
 
-            console.log("📤 PUSH ROOMS");
+            console.log(
+                "📤 PUSH ROOMS"
+            );
 
-            await this.syncTable("rooms");
+            await this.syncTable(
+                "rooms"
+            );
 
 
-            console.log("📤 PUSH INVOICES");
+            console.log(
+                "📤 PUSH INVOICES"
+            );
 
-            await this.syncTable("invoices");
+            await this.syncTable(
+                "invoices"
+            );
+
+
+            console.log(
+                "📤 PUSH EXPENSES"
+            );
+
+            await this.syncTable(
+                "expenses"
+            );
 
 
             // ═══════════════════════════════════════
-            // 2. PULL
+            // PULL
             // ═══════════════════════════════════════
 
-            console.log("📥 PULL HOMES");
+            console.log(
+                "📥 PULL HOMES"
+            );
 
-            await this.pullTable("homes");
-
-
-            console.log("📥 PULL ROOMS");
-
-            await this.pullTable("rooms");
-
-
-            console.log("📥 PULL INVOICES");
-
-            await this.pullTable("invoices");
+            await this.pullTable(
+                "homes"
+            );
 
 
-            console.log("════════════════════════════");
-            console.log("✅ ĐỒNG BỘ HOÀN TẤT");
-            console.log("════════════════════════════");
+            console.log(
+                "📥 PULL ROOMS"
+            );
+
+            await this.pullTable(
+                "rooms"
+            );
+
+
+            console.log(
+                "📥 PULL INVOICES"
+            );
+
+            await this.pullTable(
+                "invoices"
+            );
+
+
+            console.log(
+                "📥 PULL EXPENSES"
+            );
+
+            await this.pullTable(
+                "expenses"
+            );
+
+
+            console.log(
+                "════════════════════════════"
+            );
+
+            console.log(
+                "✅ ĐỒNG BỘ HOÀN TẤT"
+            );
+
+            console.log(
+                "════════════════════════════"
+            );
+
 
         } catch (error) {
 
@@ -110,9 +181,11 @@ export const syncService = {
                 error
             );
 
+
         } finally {
 
             this.isSyncing = false;
+
         }
     },
 
@@ -121,22 +194,50 @@ export const syncService = {
     // GET LOCAL RECORD
     // ═════════════════════════════════════════════
 
-    async getLocalRecord(table, id) {
+    async getLocalRecord(
+        table,
+        id
+    ) {
 
-        if (table === "homes") {
+        if (
+            table === "homes"
+        ) {
 
-            return await db.homes.get(id);
+            return await db.homes.get(
+                id
+            );
         }
 
-        if (table === "rooms") {
 
-            return await db.rooms.get(id);
+        if (
+            table === "rooms"
+        ) {
+
+            return await db.rooms.get(
+                id
+            );
         }
 
-        if (table === "invoices") {
 
-            return await db.invoices.get(id);
+        if (
+            table === "invoices"
+        ) {
+
+            return await db.invoices.get(
+                id
+            );
         }
+
+
+        if (
+            table === "expenses"
+        ) {
+
+            return await db.expenses.get(
+                id
+            );
+        }
+
 
         return null;
     },
@@ -146,7 +247,9 @@ export const syncService = {
     // PUSH LOCAL → SUPABASE
     // ═════════════════════════════════════════════
 
-    async syncTable(tableName) {
+    async syncTable(
+        tableName
+    ) {
 
         const queue =
             await db.sync_queue
@@ -155,7 +258,9 @@ export const syncService = {
                 .sortBy("created_at");
 
 
-        if (!queue.length) {
+        if (
+            !queue.length
+        ) {
 
             console.log(
                 `✓ ${tableName}: không có queue`
@@ -170,22 +275,24 @@ export const syncService = {
         );
 
 
-        for (const item of queue) {
+        for (
+            const item
+            of queue
+        ) {
 
             try {
 
                 // ═══════════════════════════════
                 // DELETE
                 //
-                // QUAN TRỌNG:
-                // DELETE phải xử lý TRƯỚC khi
-                // lấy record local.
-                //
-                // Vì record đã bị xóa khỏi
-                // IndexedDB.
+                // Record đã bị xóa khỏi Local
+                // nên phải xử lý DELETE trước
+                // khi getLocalRecord().
                 // ═══════════════════════════════
 
-                if (item.action === "DELETE") {
+                if (
+                    item.action === "DELETE"
+                ) {
 
                     console.log(
                         `🗑️ DELETE ${tableName} ${item.record_id} → retired=true`
@@ -200,8 +307,8 @@ export const syncService = {
                         );
 
 
-                        // Chỉ xóa queue khi
-                        // Supabase thành công
+                        // Chỉ xóa queue
+                        // sau khi Supabase thành công
 
                         await db.sync_queue.delete(
                             item.id
@@ -212,6 +319,7 @@ export const syncService = {
                             `✅ FIN DELETE ${tableName} ${item.record_id}`
                         );
 
+
                     } catch (error) {
 
                         console.error(
@@ -219,13 +327,10 @@ export const syncService = {
                             error
                         );
 
-                        /*
-                         * KHÔNG xóa queue.
-                         *
-                         * Lần sync sau sẽ thử lại.
-                         */
-
+                        // Giữ queue
+                        // để lần sau retry
                     }
+
 
                     continue;
                 }
@@ -233,9 +338,6 @@ export const syncService = {
 
                 // ═══════════════════════════════
                 // INSERT / UPDATE
-                //
-                // Các action này bắt buộc
-                // phải còn record local.
                 // ═══════════════════════════════
 
                 const record =
@@ -245,22 +347,26 @@ export const syncService = {
                     );
 
 
+                // Record không còn Local
+
                 if (!record) {
 
                     console.log(
                         `⚠️ ${tableName} ${item.record_id} không còn local`
                     );
 
+
                     await db.sync_queue.delete(
                         item.id
                     );
+
 
                     continue;
                 }
 
 
                 // ═══════════════════════════════
-                // RECORD RETIRED
+                // RETIRED
                 // ═══════════════════════════════
 
                 if (
@@ -271,9 +377,11 @@ export const syncService = {
                         `⏭️ Bỏ qua ${tableName} ${record.id} vì retired`
                     );
 
+
                     await db.sync_queue.delete(
                         item.id
                     );
+
 
                     continue;
                 }
@@ -319,9 +427,11 @@ export const syncService = {
                         `⚠️ Action không hợp lệ: ${item.action}`
                     );
 
+
                     await db.sync_queue.delete(
                         item.id
                     );
+
 
                     continue;
                 }
@@ -348,8 +458,9 @@ export const syncService = {
                     error
                 );
 
+
                 /*
-                 * KHÔNG xóa queue.
+                 * Không xóa queue.
                  *
                  * Lần sync sau sẽ thử lại.
                  */
@@ -360,7 +471,12 @@ export const syncService = {
 
     // ═════════════════════════════════════════════
     // RETIRE REMOTE
-    // Supabase: retired = true
+    //
+    // Supabase:
+    // retired = true
+    // updated_at = now
+    //
+    // Không DELETE thật.
     // ═════════════════════════════════════════════
 
     async retireRemoteRecord(
@@ -375,10 +491,14 @@ export const syncService = {
             .from(table)
             .update({
                 retired: true,
+
                 updated_at:
                     new Date().toISOString()
             })
-            .eq("id", id)
+            .eq(
+                "id",
+                id
+            )
             .select("id");
 
 
@@ -389,13 +509,18 @@ export const syncService = {
 
 
         /*
-         * Không tìm thấy record trên Supabase
+         * Không tìm thấy record.
          *
-         * Có thể record đã retired trước đó.
-         * Không cần báo lỗi.
+         * Có thể record đã retired
+         * hoặc đã được xử lý trước đó.
+         *
+         * Không cần retry.
          */
 
-        if (!data || data.length === 0) {
+        if (
+            !data ||
+            data.length === 0
+        ) {
 
             console.log(
                 `ℹ️ ${table} ${id} không còn active trên Supabase`
@@ -429,7 +554,9 @@ export const syncService = {
             table === "rooms"
         ) {
 
-            if (!record.home_id) {
+            if (
+                !record.home_id
+            ) {
 
                 throw new Error(
                     `Room ${record.id} không có home_id`
@@ -442,7 +569,9 @@ export const syncService = {
                 error
             } = await supabase
                 .from("homes")
-                .select("id, retired")
+                .select(
+                    "id, retired"
+                )
                 .eq(
                     "id",
                     record.home_id
@@ -476,7 +605,9 @@ export const syncService = {
             table === "invoices"
         ) {
 
-            if (!record.room_id) {
+            if (
+                !record.room_id
+            ) {
 
                 throw new Error(
                     `Invoice ${record.id} không có room_id`
@@ -489,7 +620,9 @@ export const syncService = {
                 error
             } = await supabase
                 .from("rooms")
-                .select("id, retired")
+                .select(
+                    "id, retired"
+                )
                 .eq(
                     "id",
                     record.room_id
@@ -516,18 +649,77 @@ export const syncService = {
 
 
         // ═══════════════════════════════════════
-        // INSERT
+        // EXPENSE PHẢI CÓ HOME
+        // ═══════════════════════════════════════
+
+        if (
+            table === "expenses"
+        ) {
+
+            if (
+                !record.home_id
+            ) {
+
+                throw new Error(
+                    `Expense ${record.id} không có home_id`
+                );
+            }
+
+
+            const {
+                data: home,
+                error
+            } = await supabase
+                .from("homes")
+                .select(
+                    "id, retired"
+                )
+                .eq(
+                    "id",
+                    record.home_id
+                )
+                .maybeSingle();
+
+
+            if (error) {
+
+                throw error;
+            }
+
+
+            if (
+                !home ||
+                home.retired === true
+            ) {
+
+                throw new Error(
+                    `Home ${record.home_id} chưa tồn tại hoặc đã retired`
+                );
+            }
+        }
+
+
+        // ═══════════════════════════════════════
+        // CLEAN RECORD
         // ═══════════════════════════════════════
 
         const cleanRecord =
-            this.cleanRecord(record);
+            this.cleanRecord(
+                record
+            );
 
+
+        // ═══════════════════════════════════════
+        // INSERT
+        // ═══════════════════════════════════════
 
         const {
             error
         } = await supabase
             .from(table)
-            .insert(cleanRecord);
+            .insert(
+                cleanRecord
+            );
 
 
         if (!error) {
@@ -571,7 +763,9 @@ export const syncService = {
     ) {
 
         const cleanRecord =
-            this.cleanRecord(record);
+            this.cleanRecord(
+                record
+            );
 
 
         const {
@@ -579,12 +773,16 @@ export const syncService = {
             error
         } = await supabase
             .from(table)
-            .update(cleanRecord)
+            .update(
+                cleanRecord
+            )
             .eq(
                 "id",
                 record.id
             )
-            .select("id")
+            .select(
+                "id"
+            )
             .maybeSingle();
 
 
@@ -626,7 +824,9 @@ export const syncService = {
     // CLEAN RECORD
     // ═════════════════════════════════════════════
 
-    cleanRecord(record) {
+    cleanRecord(
+        record
+    ) {
 
         const data = {
             ...record
@@ -634,14 +834,17 @@ export const syncService = {
 
 
         /*
-         * retired được xử lý riêng.
+         * retired xử lý riêng.
+         *
+         * Không gửi retired trong
+         * INSERT / UPDATE thông thường.
          */
 
         delete data.retired;
 
 
         /*
-         * Không gửi undefined
+         * Không gửi undefined.
          */
 
         Object.keys(data).forEach(
@@ -665,32 +868,27 @@ export const syncService = {
     // PULL SUPABASE → LOCAL
     // ═════════════════════════════════════════════
 
-    async pullTable(tableName) {
-
-        let query =
-            supabase
-                .from(tableName)
-                .select("*");
-
+    async pullTable(
+        tableName
+    ) {
 
         /*
-         * CHỈ LẤY RECORD ĐANG ACTIVE
+         * CHỈ LẤY RECORD ACTIVE
          *
          * retired = true
-         * sẽ không được pull về local.
+         * không được pull.
          */
-
-        query =
-            query.eq(
-                "retired",
-                false
-            );
-
 
         const {
             data,
             error
-        } = await query;
+        } = await supabase
+            .from(tableName)
+            .select("*")
+            .eq(
+                "retired",
+                false
+            );
 
 
         if (error) {
@@ -731,7 +929,8 @@ export const syncService = {
         const pendingIds =
             new Set(
                 queue.map(
-                    item => item.record_id
+                    item =>
+                        item.record_id
                 )
             );
 
@@ -746,7 +945,7 @@ export const syncService = {
         ) {
 
             // ─────────────────────────────────
-            // RECORD ĐANG CHỜ PUSH
+            // LOCAL ĐANG CHỜ PUSH
             // ─────────────────────────────────
 
             if (
@@ -764,7 +963,7 @@ export const syncService = {
 
 
             // ─────────────────────────────────
-            // LOCAL
+            // LẤY LOCAL
             // ─────────────────────────────────
 
             const localRecord =
@@ -849,10 +1048,19 @@ export const syncService = {
     ) {
 
         /*
-         * Không dùng repository
-         * vì repository có thể tạo sync_queue.
+         * Không dùng repository.
+         *
+         * Vì repository có thể tạo
+         * sync_queue.
+         *
+         * Dữ liệu từ Supabase
+         * không cần PUSH ngược lại.
          */
 
+
+        // ═══════════════════════════════════════
+        // HOMES
+        // ═══════════════════════════════════════
 
         if (
             tableName === "homes"
@@ -860,12 +1068,18 @@ export const syncService = {
 
             await db.homes.put({
                 ...record,
+
                 retired: false
             });
+
 
             return;
         }
 
+
+        // ═══════════════════════════════════════
+        // ROOMS
+        // ═══════════════════════════════════════
 
         if (
             tableName === "rooms"
@@ -873,12 +1087,18 @@ export const syncService = {
 
             await db.rooms.put({
                 ...record,
+
                 retired: false
             });
+
 
             return;
         }
 
+
+        // ═══════════════════════════════════════
+        // INVOICES
+        // ═══════════════════════════════════════
 
         if (
             tableName === "invoices"
@@ -886,8 +1106,29 @@ export const syncService = {
 
             await db.invoices.put({
                 ...record,
+
                 retired: false
             });
+
+
+            return;
+        }
+
+
+        // ═══════════════════════════════════════
+        // EXPENSES
+        // ═══════════════════════════════════════
+
+        if (
+            tableName === "expenses"
+        ) {
+
+            await db.expenses.put({
+                ...record,
+
+                retired: false
+            });
+
 
             return;
         }
@@ -900,7 +1141,9 @@ export const syncService = {
 
     start() {
 
-        // Tránh start nhiều lần
+        /*
+         * Tránh start nhiều lần.
+         */
 
         this.stop();
 
@@ -918,7 +1161,7 @@ export const syncService = {
 
 
         // ═══════════════════════════════════════
-        // ONLINE
+        // ONLINE EVENT
         // ═══════════════════════════════════════
 
         this.onlineHandler =
@@ -927,6 +1170,7 @@ export const syncService = {
                 console.log(
                     "🌐 Online trở lại"
                 );
+
 
                 this.syncAll();
             };
@@ -939,7 +1183,7 @@ export const syncService = {
 
 
         // ═══════════════════════════════════════
-        // 30 GIÂY
+        // MỖI 30 GIÂY
         // ═══════════════════════════════════════
 
         this.interval =
@@ -967,8 +1211,10 @@ export const syncService = {
             const now =
                 new Date();
 
+
             const next =
                 new Date(now);
+
 
             next.setHours(
                 13,
