@@ -29,32 +29,7 @@ export default function Settings({ user, onBack }) {
         return undefined
     }
 
-    const findExistingRecord = async (table, fieldName, fieldValue, additionalFilters = {}) => {
-        if (!table || !fieldName || fieldValue === undefined || fieldValue === null || fieldValue === '') {
-            return null
-        }
-
-        let query = supabase
-            .from(table)
-            .select('id')
-            .eq(fieldName, fieldValue)
-            .limit(1)
-
-        for (const [filterField, filterValue] of Object.entries(additionalFilters)) {
-            if (filterValue !== undefined && filterValue !== null && filterValue !== '') {
-                query = query.eq(filterField, filterValue)
-            }
-        }
-
-        const { data, error } = await query
-
-        if (error) {
-            throw error
-        }
-
-        return data?.[0] ?? null
-    }
-
+    
     const handleExportUserData = async () => {
         if (!user?.id) {
             setToast('Không tìm thấy thông tin người dùng đang đăng nhập.')
