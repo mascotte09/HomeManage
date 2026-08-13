@@ -2,6 +2,7 @@ import Signup from "./components/Signup.jsx";
 import Login from "./components/StateLogin.jsx";
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
+import { syncService } from "./db/syncService";
 import RoomPage from './components/Room/RoomPage.jsx'
 import BrokerRoomPage from './components/BrokerRoom/BrokerRoomPage.jsx';
 
@@ -46,6 +47,15 @@ function App() {
         } else {
             setCurrentUser(null);
         }
+    }, []);
+    useEffect(() => {
+
+        syncService.start();
+
+        return () => {
+            syncService.stop();
+        };
+
     }, []);
 
     const handleLogout = async () => {

@@ -11,6 +11,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
+    "dexie": "^4.4.4",
     "emailjs-com": "^3.2.0",
     "html2canvas": "^1.4.1",
     "react": "^19.2.6",
@@ -28,7 +29,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "migrate:legacy-to-auth": "node scripts/migrate_legacy_to_auth.js"
   },
   "eslintConfig": {
     "extends": [
