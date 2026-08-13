@@ -339,52 +339,45 @@ export const invoiceRepository = {
   // RETIRE
   // =======================================================
 
-  async retire(id) {
-    if (!id) {
-      throw new Error(
-        "invoice id không hợp lệ"
-      );
-    }
+ async retire(id) {
+  if (!id) {
+    throw new Error("invoice id không hợp lệ");
+  }
 
-    const existing =
-      await db.invoices.get(id);
+  const existing = await db.invoices.get(id);
 
-    if (!existing) {
-      throw new Error(
-        `Không tìm thấy invoice ${id}`
-      );
-    }
-
-    const now = nowISO();
-
-    await db.transaction(
-      "rw",
-      db.invoices,
-      db.sync_queue,
-      async () => {
-
-        await db.invoices.update(
-          id,
-          {
-            retired: true,
-
-            updated_at: now,
-          }
-        );
-
-        await db.sync_queue.add({
-          table: "invoices",
-
-          record_id: id,
-
-          action: "UPDATE",
-
-          created_at: now,
-        });
-
-      }
+  if (!existing) {
+    throw new Error(
+      `Không tìm thấy invoice ${id}`
     );
-  },
+  }
+
+  const now = nowISO();
+
+  await db.transaction(
+    "rw",
+    db.invoices,
+    db.sync_queue,
+    async () => {
+
+      // 1. Xóa hẳn invoice khỏi IndexedDB
+      await db.invoices.delete(id);
+
+      // 2. Tạo queue để báo Supabase retired = true
+      await db.sync_queue.add({
+        table: "invoices",
+        record_id: id,
+        action: "DELETE",
+        created_at: now,
+      });
+
+    }
+  );
+
+  console.log(
+    `🗑️ Invoice ${id} đã xóa local, chờ sync Supabase`
+  );
+},
 
 
   // =======================================================
