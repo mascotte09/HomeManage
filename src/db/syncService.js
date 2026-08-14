@@ -3,30 +3,32 @@ import { supabase } from "../supabase";
 
 // ═══════════════════════════════════════════════
 // SYNC SERVICE
-// IndexedDB ⇄ Supabase
+// IndexedDB → Supabase
 //
 // LOCAL → SUPABASE
 //     INSERT / UPDATE
-//     DELETE → Supabase retired = true
+//     DELETE → retired = true
 //
-// SUPABASE → LOCAL
-//     Chỉ lấy retired = false
+// QUAN TRỌNG:
+//     ❌ KHÔNG PULL SUPABASE → LOCAL
+//     Local IndexedDB là nguồn dữ liệu chính.
 //
-// DELETE LOCAL
-//     Xóa thật khỏi IndexedDB
-//     → tạo sync_queue DELETE
-//     → Supabase retired = true
-//
-// Hỗ trợ:
-//     homes
-//     rooms
-//     invoices
-//     expenses
+// Import Local:
+//     - Không tạo sync_queue
+//     - Có thể pause sync trong lúc import
+//     - Sau import chỉ những thay đổi tiếp theo
+//       mới được PUSH lên Supabase.
 // ═══════════════════════════════════════════════
 
 export const syncService = {
 
+    // ═══════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════
+
     isSyncing: false,
+
+    isPaused: false,
 
     interval: null,
 
@@ -37,11 +39,59 @@ export const syncService = {
     onlineHandler: null,
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
+    // PAUSE
+    // ═══════════════════════════════════════════
+
+    pause() {
+
+        console.log(
+            "⏸️ SYNC TẠM DỪNG"
+        );
+
+        this.isPaused = true;
+    },
+
+
+    // ═══════════════════════════════════════════
+    // RESUME
+    // ═══════════════════════════════════════════
+
+    resume() {
+
+        console.log(
+            "▶️ SYNC TIẾP TỤC"
+        );
+
+        this.isPaused = false;
+    },
+
+
+    // ═══════════════════════════════════════════
     // SYNC ALL
-    // ═════════════════════════════════════════════
+    //
+    // CHỈ PUSH LOCAL → SUPABASE
+    // ═══════════════════════════════════════════
 
     async syncAll() {
+
+        // ───────────────────────────────────────
+        // PAUSE
+        // ───────────────────────────────────────
+
+        if (this.isPaused) {
+
+            console.log(
+                "⏸️ Sync đang PAUSE - bỏ qua"
+            );
+
+            return;
+        }
+
+
+        // ───────────────────────────────────────
+        // ĐANG SYNC
+        // ───────────────────────────────────────
 
         if (this.isSyncing) {
 
@@ -52,6 +102,10 @@ export const syncService = {
             return;
         }
 
+
+        // ───────────────────────────────────────
+        // OFFLINE
+        // ───────────────────────────────────────
 
         if (!navigator.onLine) {
 
@@ -69,108 +123,68 @@ export const syncService = {
         try {
 
             console.log(
-                "════════════════════════════"
+                "════════════════════════════════"
             );
 
             console.log(
-                "🔄 BẮT ĐẦU ĐỒNG BỘ"
+                "📤 PUSH LOCAL → SUPABASE"
             );
 
             console.log(
-                "════════════════════════════"
+                "════════════════════════════════"
             );
 
 
-            // ═══════════════════════════════════════
-            // PUSH
-            // ═══════════════════════════════════════
-
-            console.log(
-                "📤 PUSH HOMES"
-            );
+            // ═══════════════════════════════════
+            // HOMES
+            // ═══════════════════════════════════
 
             await this.syncTable(
                 "homes"
             );
 
 
-            console.log(
-                "📤 PUSH ROOMS"
-            );
+            // ═══════════════════════════════════
+            // ROOMS
+            // ═══════════════════════════════════
 
             await this.syncTable(
                 "rooms"
             );
 
 
-            console.log(
-                "📤 PUSH INVOICES"
-            );
+            // ═══════════════════════════════════
+            // INVOICES
+            // ═══════════════════════════════════
 
             await this.syncTable(
                 "invoices"
             );
 
 
-            console.log(
-                "📤 PUSH EXPENSES"
-            );
+            // ═══════════════════════════════════
+            // EXPENSES
+            // ═══════════════════════════════════
 
             await this.syncTable(
                 "expenses"
             );
 
 
-            // ═══════════════════════════════════════
-            // PULL
-            // ═══════════════════════════════════════
-
             console.log(
-                "📥 PULL HOMES"
-            );
-
-            await this.pullTable(
-                "homes"
-            );
-
-
-            console.log(
-                "📥 PULL ROOMS"
-            );
-
-            await this.pullTable(
-                "rooms"
-            );
-
-
-            console.log(
-                "📥 PULL INVOICES"
-            );
-
-            await this.pullTable(
-                "invoices"
-            );
-
-
-            console.log(
-                "📥 PULL EXPENSES"
-            );
-
-            await this.pullTable(
-                "expenses"
-            );
-
-
-            console.log(
-                "════════════════════════════"
+                "════════════════════════════════"
             );
 
             console.log(
-                "✅ ĐỒNG BỘ HOÀN TẤT"
+                "✅ PUSH HOÀN TẤT"
             );
 
             console.log(
-                "════════════════════════════"
+                "🚫 KHÔNG PULL SUPABASE → LOCAL"
+            );
+
+            console.log(
+                "════════════════════════════════"
             );
 
 
@@ -181,18 +195,16 @@ export const syncService = {
                 error
             );
 
-
         } finally {
 
             this.isSyncing = false;
-
         }
     },
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // GET LOCAL RECORD
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
 
     async getLocalRecord(
         table,
@@ -203,9 +215,7 @@ export const syncService = {
             table === "homes"
         ) {
 
-            return await db.homes.get(
-                id
-            );
+            return await db.homes.get(id);
         }
 
 
@@ -213,9 +223,7 @@ export const syncService = {
             table === "rooms"
         ) {
 
-            return await db.rooms.get(
-                id
-            );
+            return await db.rooms.get(id);
         }
 
 
@@ -223,9 +231,7 @@ export const syncService = {
             table === "invoices"
         ) {
 
-            return await db.invoices.get(
-                id
-            );
+            return await db.invoices.get(id);
         }
 
 
@@ -233,9 +239,7 @@ export const syncService = {
             table === "expenses"
         ) {
 
-            return await db.expenses.get(
-                id
-            );
+            return await db.expenses.get(id);
         }
 
 
@@ -243,13 +247,23 @@ export const syncService = {
     },
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // PUSH LOCAL → SUPABASE
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
 
     async syncTable(
         tableName
     ) {
+
+        if (this.isPaused) {
+
+            console.log(
+                `⏸️ ${tableName}: sync đang pause`
+            );
+
+            return;
+        }
+
 
         const queue =
             await db.sync_queue
@@ -258,9 +272,7 @@ export const syncService = {
                 .sortBy("created_at");
 
 
-        if (
-            !queue.length
-        ) {
+        if (!queue.length) {
 
             console.log(
                 `✓ ${tableName}: không có queue`
@@ -280,14 +292,21 @@ export const syncService = {
             of queue
         ) {
 
+            // Nếu Import bắt đầu trong lúc sync
+            if (this.isPaused) {
+
+                console.log(
+                    `⏸️ Dừng PUSH ${tableName}`
+                );
+
+                return;
+            }
+
+
             try {
 
                 // ═══════════════════════════════
                 // DELETE
-                //
-                // Record đã bị xóa khỏi Local
-                // nên phải xử lý DELETE trước
-                // khi getLocalRecord().
                 // ═══════════════════════════════
 
                 if (
@@ -295,41 +314,20 @@ export const syncService = {
                 ) {
 
                     console.log(
-                        `🗑️ DELETE ${tableName} ${item.record_id} → retired=true`
+                        `🗑️ DELETE ${tableName}:`,
+                        item.record_id
                     );
 
 
-                    try {
-
-                        await this.retireRemoteRecord(
-                            item.table,
-                            item.record_id
-                        );
+                    await this.retireRemoteRecord(
+                        item.table,
+                        item.record_id
+                    );
 
 
-                        // Chỉ xóa queue
-                        // sau khi Supabase thành công
-
-                        await db.sync_queue.delete(
-                            item.id
-                        );
-
-
-                        console.log(
-                            `✅ FIN DELETE ${tableName} ${item.record_id}`
-                        );
-
-
-                    } catch (error) {
-
-                        console.error(
-                            `❌ DELETE ${tableName} ${item.record_id} thất bại:`,
-                            error
-                        );
-
-                        // Giữ queue
-                        // để lần sau retry
-                    }
+                    await db.sync_queue.delete(
+                        item.id
+                    );
 
 
                     continue;
@@ -351,8 +349,8 @@ export const syncService = {
 
                 if (!record) {
 
-                    console.log(
-                        `⚠️ ${tableName} ${item.record_id} không còn local`
+                    console.warn(
+                        `⚠️ ${tableName} ${item.record_id} không còn Local`
                     );
 
 
@@ -373,15 +371,9 @@ export const syncService = {
                     record.retired === true
                 ) {
 
-                    console.log(
-                        `⏭️ Bỏ qua ${tableName} ${record.id} vì retired`
-                    );
-
-
                     await db.sync_queue.delete(
                         item.id
                     );
-
 
                     continue;
                 }
@@ -424,7 +416,8 @@ export const syncService = {
                 else {
 
                     console.warn(
-                        `⚠️ Action không hợp lệ: ${item.action}`
+                        "⚠️ Action không hợp lệ:",
+                        item.action
                     );
 
 
@@ -447,7 +440,8 @@ export const syncService = {
 
 
                 console.log(
-                    `✓ Queue hoàn thành: ${item.action} ${tableName} ${item.record_id}`
+                    `✅ PUSH ${item.action} ${tableName}:`,
+                    item.record_id
                 );
 
 
@@ -458,26 +452,18 @@ export const syncService = {
                     error
                 );
 
-
-                /*
-                 * Không xóa queue.
-                 *
-                 * Lần sync sau sẽ thử lại.
-                 */
+                await db.sync_queue.delete(item.id);
             }
         }
     },
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // RETIRE REMOTE
     //
-    // Supabase:
-    // retired = true
-    // updated_at = now
-    //
-    // Không DELETE thật.
-    // ═════════════════════════════════════════════
+    // Không DELETE thật trên Supabase.
+    // Chỉ retired = true.
+    // ═══════════════════════════════════════════
 
     async retireRemoteRecord(
         table,
@@ -490,10 +476,12 @@ export const syncService = {
         } = await supabase
             .from(table)
             .update({
+
                 retired: true,
 
                 updated_at:
                     new Date().toISOString()
+
             })
             .eq(
                 "id",
@@ -507,15 +495,6 @@ export const syncService = {
             throw error;
         }
 
-
-        /*
-         * Không tìm thấy record.
-         *
-         * Có thể record đã retired
-         * hoặc đã được xử lý trước đó.
-         *
-         * Không cần retry.
-         */
 
         if (
             !data ||
@@ -537,18 +516,18 @@ export const syncService = {
     },
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // INSERT
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
 
     async syncInsert(
         table,
         record
     ) {
 
-        // ═══════════════════════════════════════
-        // ROOM PHẢI CÓ HOME
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════
+        // ROOM → HOME
+        // ═══════════════════════════════
 
         if (
             table === "rooms"
@@ -597,9 +576,9 @@ export const syncService = {
         }
 
 
-        // ═══════════════════════════════════════
-        // INVOICE PHẢI CÓ ROOM
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════
+        // INVOICE → ROOM
+        // ═══════════════════════════════
 
         if (
             table === "invoices"
@@ -648,9 +627,9 @@ export const syncService = {
         }
 
 
-        // ═══════════════════════════════════════
-        // EXPENSE PHẢI CÓ HOME
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════
+        // EXPENSE → HOME
+        // ═══════════════════════════════
 
         if (
             table === "expenses"
@@ -699,9 +678,9 @@ export const syncService = {
         }
 
 
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════
         // CLEAN RECORD
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════
 
         const cleanRecord =
             this.cleanRecord(
@@ -709,9 +688,9 @@ export const syncService = {
             );
 
 
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════
         // INSERT
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════
 
         const {
             error
@@ -733,10 +712,7 @@ export const syncService = {
         }
 
 
-        // ═══════════════════════════════════════
-        // DUPLICATE
-        // ═══════════════════════════════════════
-
+        // Duplicate
         if (
             error.code === "23505"
         ) {
@@ -753,9 +729,9 @@ export const syncService = {
     },
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // UPDATE
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
 
     async syncUpdate(
         table,
@@ -780,9 +756,7 @@ export const syncService = {
                 "id",
                 record.id
             )
-            .select(
-                "id"
-            )
+            .select("id")
             .maybeSingle();
 
 
@@ -792,14 +766,12 @@ export const syncService = {
         }
 
 
-        // ═══════════════════════════════════════
-        // CHƯA CÓ TRÊN SUPABASE
-        // ═══════════════════════════════════════
+        // Không tồn tại → INSERT
 
         if (!data) {
 
             console.log(
-                `⚠️ UPDATE ${table} ${record.id} không có trên Supabase → INSERT`
+                `⚠️ ${table} ${record.id} chưa có → INSERT`
             );
 
 
@@ -807,7 +779,6 @@ export const syncService = {
                 table,
                 record
             );
-
 
             return;
         }
@@ -820,9 +791,9 @@ export const syncService = {
     },
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // CLEAN RECORD
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
 
     cleanRecord(
         record
@@ -833,19 +804,12 @@ export const syncService = {
         };
 
 
-        /*
-         * retired xử lý riêng.
-         *
-         * Không gửi retired trong
-         * INSERT / UPDATE thông thường.
-         */
+        // retired xử lý riêng
 
         delete data.retired;
 
 
-        /*
-         * Không gửi undefined.
-         */
+        // Không gửi undefined
 
         Object.keys(data).forEach(
             key => {
@@ -864,286 +828,13 @@ export const syncService = {
     },
 
 
-    // ═════════════════════════════════════════════
-    // PULL SUPABASE → LOCAL
-    // ═════════════════════════════════════════════
-
-    async pullTable(
-        tableName
-    ) {
-
-        /*
-         * CHỈ LẤY RECORD ACTIVE
-         *
-         * retired = true
-         * không được pull.
-         */
-
-        const {
-            data,
-            error
-        } = await supabase
-            .from(tableName)
-            .select("*")
-            .eq(
-                "retired",
-                false
-            );
-
-
-        if (error) {
-
-            throw error;
-        }
-
-
-        if (
-            !data ||
-            !data.length
-        ) {
-
-            console.log(
-                `✓ ${tableName}: không có record active`
-            );
-
-            return;
-        }
-
-
-        console.log(
-            `📥 ${tableName}: ${data.length} record active`
-        );
-
-
-        // ═══════════════════════════════════════
-        // QUEUE ĐANG CHỜ PUSH
-        // ═══════════════════════════════════════
-
-        const queue =
-            await db.sync_queue
-                .where("table")
-                .equals(tableName)
-                .toArray();
-
-
-        const pendingIds =
-            new Set(
-                queue.map(
-                    item =>
-                        item.record_id
-                )
-            );
-
-
-        // ═══════════════════════════════════════
-        // PULL TỪNG RECORD
-        // ═══════════════════════════════════════
-
-        for (
-            const remoteRecord
-            of data
-        ) {
-
-            // ─────────────────────────────────
-            // LOCAL ĐANG CHỜ PUSH
-            // ─────────────────────────────────
-
-            if (
-                pendingIds.has(
-                    remoteRecord.id
-                )
-            ) {
-
-                console.log(
-                    `⏭️ Bỏ qua ${tableName} ${remoteRecord.id} đang chờ PUSH`
-                );
-
-                continue;
-            }
-
-
-            // ─────────────────────────────────
-            // LẤY LOCAL
-            // ─────────────────────────────────
-
-            const localRecord =
-                await this.getLocalRecord(
-                    tableName,
-                    remoteRecord.id
-                );
-
-
-            // ═══════════════════════════════════
-            // LOCAL CHƯA CÓ
-            // ═══════════════════════════════════
-
-            if (!localRecord) {
-
-                await this.putLocal(
-                    tableName,
-                    remoteRecord
-                );
-
-
-                console.log(
-                    `⬇️ PULL ${tableName}:`,
-                    remoteRecord.id
-                );
-
-
-                continue;
-            }
-
-
-            // ═══════════════════════════════════
-            // SO SÁNH updated_at
-            // ═══════════════════════════════════
-
-            const remoteTime =
-                remoteRecord.updated_at
-                    ? new Date(
-                        remoteRecord.updated_at
-                    ).getTime()
-                    : 0;
-
-
-            const localTime =
-                localRecord.updated_at
-                    ? new Date(
-                        localRecord.updated_at
-                    ).getTime()
-                    : 0;
-
-
-            // ═══════════════════════════════════
-            // SUPABASE MỚI HƠN
-            // ═══════════════════════════════════
-
-            if (
-                remoteTime > localTime
-            ) {
-
-                await this.putLocal(
-                    tableName,
-                    remoteRecord
-                );
-
-
-                console.log(
-                    `🔄 SUPABASE → LOCAL ${tableName}:`,
-                    remoteRecord.id
-                );
-            }
-        }
-    },
-
-
-    // ═════════════════════════════════════════════
-    // PUT SUPABASE → LOCAL
-    // ═════════════════════════════════════════════
-
-    async putLocal(
-        tableName,
-        record
-    ) {
-
-        /*
-         * Không dùng repository.
-         *
-         * Vì repository có thể tạo
-         * sync_queue.
-         *
-         * Dữ liệu từ Supabase
-         * không cần PUSH ngược lại.
-         */
-
-
-        // ═══════════════════════════════════════
-        // HOMES
-        // ═══════════════════════════════════════
-
-        if (
-            tableName === "homes"
-        ) {
-
-            await db.homes.put({
-                ...record,
-
-                retired: false
-            });
-
-
-            return;
-        }
-
-
-        // ═══════════════════════════════════════
-        // ROOMS
-        // ═══════════════════════════════════════
-
-        if (
-            tableName === "rooms"
-        ) {
-
-            await db.rooms.put({
-                ...record,
-
-                retired: false
-            });
-
-
-            return;
-        }
-
-
-        // ═══════════════════════════════════════
-        // INVOICES
-        // ═══════════════════════════════════════
-
-        if (
-            tableName === "invoices"
-        ) {
-
-            await db.invoices.put({
-                ...record,
-
-                retired: false
-            });
-
-
-            return;
-        }
-
-
-        // ═══════════════════════════════════════
-        // EXPENSES
-        // ═══════════════════════════════════════
-
-        if (
-            tableName === "expenses"
-        ) {
-
-            await db.expenses.put({
-                ...record,
-
-                retired: false
-            });
-
-
-            return;
-        }
-    },
-
-
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // START AUTO SYNC
-    // ═════════════════════════════════════════════
+    //
+    // CHỈ PUSH
+    // ═══════════════════════════════════════════
 
     start() {
-
-        /*
-         * Tránh start nhiều lần.
-         */
 
         this.stop();
 
@@ -1153,7 +844,8 @@ export const syncService = {
         // ═══════════════════════════════════════
 
         if (
-            navigator.onLine
+            navigator.onLine &&
+            !this.isPaused
         ) {
 
             this.syncAll();
@@ -1166,6 +858,18 @@ export const syncService = {
 
         this.onlineHandler =
             () => {
+
+                if (
+                    this.isPaused
+                ) {
+
+                    console.log(
+                        "⏸️ Online nhưng sync đang pause"
+                    );
+
+                    return;
+                }
+
 
                 console.log(
                     "🌐 Online trở lại"
@@ -1191,7 +895,8 @@ export const syncService = {
                 () => {
 
                     if (
-                        navigator.onLine
+                        navigator.onLine &&
+                        !this.isPaused
                     ) {
 
                         this.syncAll();
@@ -1243,7 +948,8 @@ export const syncService = {
                     () => {
 
                         if (
-                            navigator.onLine
+                            navigator.onLine &&
+                            !this.isPaused
                         ) {
 
                             this.syncAll();
@@ -1255,7 +961,8 @@ export const syncService = {
                                 () => {
 
                                     if (
-                                        navigator.onLine
+                                        navigator.onLine &&
+                                        !this.isPaused
                                     ) {
 
                                         this.syncAll();
@@ -1283,9 +990,9 @@ export const syncService = {
     },
 
 
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
     // STOP
-    // ═════════════════════════════════════════════
+    // ═══════════════════════════════════════════
 
     stop() {
 

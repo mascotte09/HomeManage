@@ -4,6 +4,7 @@ import { supabase } from '../supabase.js'
 import FooterHouse from './House/FooterHouse.jsx'
 import { MdBarChart } from 'react-icons/md'
 import { db } from "../db/db.js";
+import { syncService } from "./../db/syncService";
 export default function Settings({ user, onBack }) {
     const [showChangePassword, setShowChangePassword] = useState(false)
     const [toast, setToast] = useState('')
@@ -29,7 +30,6 @@ export default function Settings({ user, onBack }) {
         return undefined
     }
 
-    
     const handleExportUserData = async () => {
         if (!user?.id) {
             setToast('Không tìm thấy thông tin người dùng đang đăng nhập.')
@@ -37,318 +37,441 @@ export default function Settings({ user, onBack }) {
         }
 
         setIsExporting(true)
+
         try {
-            const { data: homes, error: homesError } = await supabase
-                .from('homes')
-                .select('*')
-                .eq('userID', user.id)
+            // ═══════════════════════════════════════
+            // LẤY DỮ LIỆU TỪ LOCAL - INDEXEDDB
+            // KHÔNG ĐỌC SUPABASE
+            // ═══════════════════════════════════════
 
-            if (homesError) throw homesError
+            const homes = await db.homes
+                .filter(home =>
+                    home.userID === user.id &&
+                    home.retired !== true
+                )
+                .toArray()
 
-            const homeIds = (homes || []).map((home) => home.id).filter(Boolean)
+            const homeIds = homes
+                .map(home => home.id)
+                .filter(Boolean)
+
+            // ───────────────────────────────────────
+            // ROOMS
+            // ───────────────────────────────────────
+
             let rooms = []
+
+            if (homeIds.length > 0) {
+                rooms = await db.rooms
+                    .filter(room =>
+                        homeIds.includes(room.home_id) &&
+                        room.retired !== true
+                    )
+                    .toArray()
+            }
+
+            // ───────────────────────────────────────
+            // INVOICES
+            // ───────────────────────────────────────
+
+            const roomIds = rooms
+                .map(room => room.id)
+                .filter(Boolean)
+
             let invoices = []
+
+            if (roomIds.length > 0) {
+                invoices = await db.invoices
+                    .filter(invoice =>
+                        roomIds.includes(invoice.room_id) &&
+                        invoice.retired !== true
+                    )
+                    .toArray()
+            }
+
+            // ───────────────────────────────────────
+            // EXPENSES
+            // ───────────────────────────────────────
+
             let expenses = []
 
             if (homeIds.length > 0) {
-                const { data: roomsData, error: roomsError } = await supabase
-                    .from('rooms')
-                    .select('*')
-                    .in('home_id', homeIds)
-
-                if (roomsError) throw roomsError
-                rooms = roomsData || []
-
-                const roomIds = rooms.map((room) => room.id).filter(Boolean)
-                if (roomIds.length > 0) {
-                    const { data: invoiceData, error: invoiceError } = await supabase
-                        .from('invoices')
-                        .select('*')
-                        .in('room_id', roomIds)
-
-                    if (invoiceError) throw invoiceError
-                    invoices = invoiceData || []
-                }
-
-                const { data: expenseData, error: expenseError } = await supabase
-                    .from('expenses')
-                    .select('*')
-                    .in('home_id', homeIds)
-
-                if (expenseError) throw expenseError
-                expenses = expenseData || []
+                expenses = await db.expenses
+                    .filter(expense =>
+                        homeIds.includes(expense.home_id) &&
+                        expense.retired !== true
+                    )
+                    .toArray()
             }
+
+            // ═══════════════════════════════════════
+            // TẠO FILE BACKUP
+            // ═══════════════════════════════════════
 
             const payload = {
                 exportedAt: new Date().toISOString(),
+
+                // Thông tin tài khoản
                 userId: user.id,
                 username: user.username,
+
+                // Dữ liệu LOCAL
                 homes,
                 rooms,
                 invoices,
                 expenses,
             }
 
-            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-            const url = window.URL.createObjectURL(blob)
-            const link = document.createElement('a')
-            link.href = url
-            link.download = `user-data-${user.username || user.id}.json`
-            link.click()
-            window.URL.revokeObjectURL(url)
-            setToast('Đã xuất dữ liệu thành công.')
-        } catch (error) {
-            console.error(error)
-            setToast(error.message || 'Không thể xuất dữ liệu.')
-        } finally {
-            setIsExporting(false)
-        }
-    }
+            console.log('📦 EXPORT LOCAL:', {
+                homes: homes.length,
+                rooms: rooms.length,
+                invoices: invoices.length,
+                expenses: expenses.length,
+            })
 
-   const handleImportUserData = async (event) => {
-
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    if (!user?.id) {
-        setToast(
-            "Không tìm thấy thông tin người dùng đang đăng nhập."
-        );
-        return;
-    }
-
-    setIsImporting(true);
-
-    try {
-
-        // ═══════════════════════════════════════
-        // ĐỌC FILE
-        // ═══════════════════════════════════════
-
-        const text = await file.text();
-
-        const payload = JSON.parse(text);
-
-        if (
-            !payload ||
-            !Array.isArray(payload.homes)
-        ) {
-            throw new Error(
-                "File không đúng định dạng dữ liệu."
-            );
-        }
-
-        console.log(
-            "📦 IMPORT DATA:",
-            {
-                homes: payload.homes?.length || 0,
-                rooms: payload.rooms?.length || 0,
-                invoices: payload.invoices?.length || 0,
-                expenses: payload.expenses?.length || 0,
-            }
-        );
-
-
-        // ═══════════════════════════════════════
-        // KIỂM TRA DATABASE LOCAL
-        // ═══════════════════════════════════════
-
-        console.log(
-            "📚 Dexie tables:",
-            db.tables.map(
-                table => table.name
+            const blob = new Blob(
+                [
+                    JSON.stringify(
+                        payload,
+                        null,
+                        2
+                    )
+                ],
+                {
+                    type: 'application/json'
+                }
             )
-        );
+
+            const url =
+                window.URL.createObjectURL(blob)
+
+            const link =
+                document.createElement('a')
+
+            link.href = url
+
+            link.download =
+                `user-data-${user.username || user.id}.json`
+
+            document.body.appendChild(link)
+
+            link.click()
+
+            document.body.removeChild(link)
+
+            window.URL.revokeObjectURL(url)
+
+            setToast(
+                `Đã sao lưu Local: ${homes.length} nhà, ${rooms.length} phòng, ${invoices.length} hóa đơn, ${expenses.length} khoản chi.`
+            )
+
+        } catch (error) {
+
+            console.error(
+                '❌ EXPORT LOCAL ERROR:',
+                error
+            )
+
+            setToast(
+                error.message ||
+                'Không thể sao lưu dữ liệu.'
+            )
+
+        } finally {
+
+            setIsExporting(false)
+
+        }
+    }
+
+    const handleImportUserData = async (event) => {
+
+        const file = event.target.files?.[0];
+
+        if (!file) return;
+
+        if (!user?.id) {
+            setToast(
+                "Không tìm thấy thông tin người dùng đang đăng nhập."
+            );
+            return;
+        }
+
+        setIsImporting(true);
+
+        // =====================================================
+        // KHÓA AUTO SYNC
+        // =====================================================
+
+        syncService.pause();
+
+        try {
+
+            // =====================================================
+            // 1. ĐỌC FILE
+            // =====================================================
+
+            const text = await file.text();
+
+            const payload = JSON.parse(text);
+
+            if (
+                !payload ||
+                !Array.isArray(payload.homes)
+            ) {
+
+                throw new Error(
+                    "File không đúng định dạng dữ liệu."
+                );
+            }
 
 
-        // ═══════════════════════════════════════
-        // MAP ID
-        // ═══════════════════════════════════════
-
-        const homeIdMap = new Map();
-
-        const roomIdMap = new Map();
-
-
-        let importedHomes = 0;
-        let importedRooms = 0;
-        let importedInvoices = 0;
-        let importedExpenses = 0;
+            console.log(
+                "📦 IMPORT LOCAL:",
+                {
+                    homes: payload.homes?.length || 0,
+                    rooms: payload.rooms?.length || 0,
+                    invoices: payload.invoices?.length || 0,
+                    expenses: payload.expenses?.length || 0,
+                }
+            );
 
 
-        // ═══════════════════════════════════════
-        // IMPORT THEO TRANSACTION
-        // ═══════════════════════════════════════
+            // =====================================================
+            // 2. KIỂM TRA DATABASE
+            // =====================================================
 
-        await db.transaction(
-            "rw",
-            db.homes,
-            db.rooms,
-            db.invoices,
-            db.expenses,
-            db.sync_queue,            
-            async () => {
+            console.log(
+                "📚 Dexie tables:",
+                db.tables.map(
+                    table => table.name
+                )
+            );
 
 
-                // ═══════════════════════════════
-                // 1. HOMES
-                // ═══════════════════════════════
+            if (!db.homes) {
+                throw new Error(
+                    "Dexie chưa có bảng homes."
+                );
+            }
 
-                for (
-                    const home
-                    of payload.homes
-                ) {
+            if (!db.rooms) {
+                throw new Error(
+                    "Dexie chưa có bảng rooms."
+                );
+            }
 
-                    const homeKey =
-                        getRecordValue(
-                            home,
-                            [
-                                "id",
-                                "home_id",
-                                "homeID",
-                            ]
-                        );
+            if (!db.invoices) {
+                throw new Error(
+                    "Dexie chưa có bảng invoices."
+                );
+            }
 
-                    if (!homeKey) {
-                        console.warn(
-                            "⚠️ Home không có ID:",
-                            home
-                        );
-                        continue;
-                    }
+            if (!db.expenses) {
+                throw new Error(
+                    "Dexie chưa có bảng expenses."
+                );
+            }
 
 
-                    const normalizedHome =
-                        sanitizeRecord(
-                            home,
-                            {
-                                userID: user.id,
-                                retired: false,
-                            }
-                        );
+            // =====================================================
+            // 3. MAP ID
+            // =====================================================
+
+            const homeIdMap = new Map();
+
+            const roomIdMap = new Map();
 
 
-                    // ─────────────────────────
-                    // TÌM NHÀ ĐÃ CÓ LOCAL
-                    // Dựa theo name + userID
-                    // ─────────────────────────
-
-                    const existingHomes =
-                        await db.homes
-                            .filter(
-                                h =>
-                                    h.userID ===
-                                        user.id &&
-                                    h.name ===
-                                        normalizedHome.name &&
-                                    h.retired !== true
-                            )
-                            .toArray();
+            let importedHomes = 0;
+            let importedRooms = 0;
+            let importedInvoices = 0;
+            let importedExpenses = 0;
 
 
-                    // ═════════════════════════
-                    // NHÀ ĐÃ CÓ
-                    // XÓA TOÀN BỘ DỮ LIỆU CŨ
-                    // ═════════════════════════
+            // =====================================================
+            // 4. IMPORT LOCAL
+            //
+            // KHÔNG:
+            // - supabase
+            // - sync_queue
+            // - repository
+            // - syncService.syncAll()
+            //
+            // CHỈ:
+            // - db.homes
+            // - db.rooms
+            // - db.invoices
+            // - db.expenses
+            // =====================================================
+
+            await db.transaction(
+                "rw",
+                db.homes,
+                db.rooms,
+                db.invoices,
+                db.expenses,
+                async () => {
+
+
+                    // =================================================
+                    // 4.1 HOMES
+                    // =================================================
 
                     for (
-                        const existingHome
-                        of existingHomes
+                        const home
+                        of payload.homes
                     ) {
 
-                        const oldHomeId =
-                            existingHome.id;
+                        const homeKey =
+                            getRecordValue(
+                                home,
+                                [
+                                    "id",
+                                    "home_id",
+                                    "homeID",
+                                ]
+                            );
 
 
-                        console.log(
-                            "🔄 Thay thế nhà:",
-                            oldHomeId,
-                            existingHome.name
-                        );
+                        if (!homeKey) {
+
+                            console.warn(
+                                "⚠️ Home không có ID:",
+                                home
+                            );
+
+                            continue;
+                        }
 
 
-                        // ─────────────────────
-                        // Lấy ROOM cũ
-                        // ─────────────────────
+                        const normalizedHome =
+                            sanitizeRecord(
+                                home,
+                                {
+                                    userID: user.id,
+                                    retired: false,
+                                }
+                            );
 
-                        const oldRooms =
-                            await db.rooms
+
+                        // =============================================
+                        // TÌM HOME CŨ
+                        // =============================================
+
+                        const existingHomes =
+                            await db.homes
                                 .filter(
-                                    r =>
-                                        r.home_id ===
-                                        oldHomeId
+                                    h =>
+                                        h.userID === user.id &&
+                                        h.name ===
+                                        normalizedHome.name &&
+                                        h.retired !== true
                                 )
                                 .toArray();
 
 
-                        const oldRoomIds =
-                            oldRooms.map(
-                                r => r.id
+                        // =============================================
+                        // XÓA HOME CŨ + DỮ LIỆU CON
+                        // =============================================
+
+                        for (
+                            const existingHome
+                            of existingHomes
+                        ) {
+
+                            const oldHomeId =
+                                existingHome.id;
+
+
+                            console.log(
+                                "🔄 THAY THẾ HOME:",
+                                {
+                                    id: oldHomeId,
+                                    name: existingHome.name,
+                                }
                             );
 
 
-                        // ─────────────────────
-                        // XÓA INVOICES CŨ
-                        // ─────────────────────
+                            // =========================================
+                            // ROOMS CŨ
+                            // =========================================
 
-                        if (
-                            oldRoomIds.length
-                        ) {
-
-                            const oldInvoices =
-                                await db.invoices
+                            const oldRooms =
+                                await db.rooms
                                     .filter(
-                                        invoice =>
-                                            oldRoomIds.includes(
-                                                invoice.room_id
-                                            )
+                                        room =>
+                                            room.home_id ===
+                                            oldHomeId
                                     )
                                     .toArray();
 
 
-                            for (
-                                const invoice
-                                of oldInvoices
-                            ) {
-
-                                await db.invoices.delete(
-                                    invoice.id
+                            const oldRoomIds =
+                                oldRooms.map(
+                                    room => room.id
                                 );
 
-                                await db.sync_queue
-                                    .where("record_id")
-                                    .equals(invoice.id)
-                                    .delete();
+
+                            // =========================================
+                            // INVOICES CŨ
+                            // =========================================
+
+                            if (
+                                oldRoomIds.length > 0
+                            ) {
+
+                                const oldInvoices =
+                                    await db.invoices
+                                        .filter(
+                                            invoice =>
+                                                oldRoomIds.includes(
+                                                    invoice.room_id
+                                                )
+                                        )
+                                        .toArray();
+
+
+                                for (
+                                    const invoice
+                                    of oldInvoices
+                                ) {
+
+                                    await db.invoices.delete(
+                                        invoice.id
+                                    );
+                                }
+
+
+                                console.log(
+                                    `🧾 Xóa ${oldInvoices.length} invoice cũ`
+                                );
                             }
-                        }
 
 
-                        // ─────────────────────
-                        // XÓA ROOMS CŨ
-                        // ─────────────────────
+                            // =========================================
+                            // ROOMS CŨ
+                            // =========================================
 
-                        for (
-                            const room
-                            of oldRooms
-                        ) {
+                            for (
+                                const room
+                                of oldRooms
+                            ) {
 
-                            await db.rooms.delete(
-                                room.id
+                                await db.rooms.delete(
+                                    room.id
+                                );
+                            }
+
+
+                            console.log(
+                                `🚪 Xóa ${oldRooms.length} room cũ`
                             );
 
-                            await db.sync_queue
-                                .where("record_id")
-                                .equals(room.id)
-                                .delete();
-                        }
 
-
-                        // ─────────────────────
-                        // XÓA EXPENSES CŨ
-                        // ─────────────────────
-
-                        if (db.expenses) {
+                            // =========================================
+                            // EXPENSES CŨ
+                            // =========================================
 
                             const oldExpenses =
                                 await db.expenses
@@ -368,274 +491,271 @@ export default function Settings({ user, onBack }) {
                                 await db.expenses.delete(
                                     expense.id
                                 );
-
-                                await db.sync_queue
-                                    .where("record_id")
-                                    .equals(expense.id)
-                                    .delete();
                             }
+
+
+                            console.log(
+                                `💰 Xóa ${oldExpenses.length} expense cũ`
+                            );
+
+
+                            // =========================================
+                            // HOME CŨ
+                            // =========================================
+
+                            await db.homes.delete(
+                                oldHomeId
+                            );
+
+
+                            console.log(
+                                "🏠 Xóa home cũ:",
+                                oldHomeId
+                            );
                         }
 
 
-                        // ─────────────────────
-                        // XÓA HOME CŨ
-                        // ─────────────────────
+                        // =============================================
+                        // INSERT HOME MỚI
+                        // =============================================
 
-                        await db.homes.delete(
-                            oldHomeId
+                        await db.homes.put({
+
+                            ...normalizedHome,
+
+                            id: homeKey,
+
+                            userID: user.id,
+
+                            retired: false,
+                        });
+
+
+                        homeIdMap.set(
+                            homeKey,
+                            homeKey
                         );
 
 
-                        await db.sync_queue
-                            .where("record_id")
-                            .equals(oldHomeId)
-                            .delete();
+                        importedHomes++;
+
+
+                        console.log(
+                            "🏠 IMPORT HOME:",
+                            homeKey,
+                            normalizedHome.name
+                        );
                     }
 
 
-                    // ═════════════════════════
-                    // INSERT HOME MỚI
-                    // ═════════════════════════
+                    // =================================================
+                    // 4.2 ROOMS
+                    // =================================================
 
-                    await db.homes.put({
-
-                        ...normalizedHome,
-
-                        id: homeKey,
-
-                        userID: user.id,
-
-                        retired: false,
-                    });
-
-
-                    homeIdMap.set(
-                        homeKey,
-                        homeKey
-                    );
-
-
-                    importedHomes++;
-
-                    console.log(
-                        "🏠 IMPORT HOME:",
-                        homeKey,
-                        normalizedHome.name
-                    );
-                }
-
-
-                // ═══════════════════════════════
-                // 2. ROOMS
-                // ═══════════════════════════════
-
-                for (
-                    const room
-                    of payload.rooms || []
-                ) {
-
-                    const roomKey =
-                        getRecordValue(
-                            room,
-                            [
-                                "id",
-                                "room_id",
-                                "roomID",
-                            ]
-                        );
-
-
-                    const roomHomeKey =
-                        getRecordValue(
-                            room,
-                            [
-                                "home_id",
-                                "homeID",
-                            ]
-                        );
-
-
-                    if (
-                        !roomKey ||
-                        !roomHomeKey
+                    for (
+                        const room
+                        of payload.rooms || []
                     ) {
 
-                        console.warn(
-                            "⚠️ Room thiếu ID/home_id:",
-                            room
-                        );
-
-                        continue;
-                    }
-
-
-                    const homeId =
-                        homeIdMap.get(
-                            roomHomeKey
-                        );
+                        const roomKey =
+                            getRecordValue(
+                                room,
+                                [
+                                    "id",
+                                    "room_id",
+                                    "roomID",
+                                ]
+                            );
 
 
-                    if (!homeId) {
+                        const roomHomeKey =
+                            getRecordValue(
+                                room,
+                                [
+                                    "home_id",
+                                    "homeID",
+                                ]
+                            );
 
-                        console.warn(
-                            "⚠️ Không tìm thấy Home cho Room:",
+
+                        if (
+                            !roomKey ||
+                            !roomHomeKey
+                        ) {
+
+                            console.warn(
+                                "⚠️ Room thiếu ID/home_id:",
+                                room
+                            );
+
+                            continue;
+                        }
+
+
+                        const homeId =
+                            homeIdMap.get(
+                                roomHomeKey
+                            );
+
+
+                        if (!homeId) {
+
+                            console.warn(
+                                "⚠️ Không tìm thấy Home cho Room:",
+                                {
+                                    roomId: roomKey,
+                                    homeId: roomHomeKey,
+                                }
+                            );
+
+                            continue;
+                        }
+
+
+                        const normalizedRoom =
+                            sanitizeRecord(
+                                room,
+                                {
+                                    home_id: homeId,
+                                    retired: false,
+                                }
+                            );
+
+
+                        await db.rooms.put({
+
+                            ...normalizedRoom,
+
+                            id: roomKey,
+
+                            home_id: homeId,
+
+                            retired: false,
+                        });
+
+
+                        roomIdMap.set(
                             roomKey,
-                            roomHomeKey
+                            roomKey
                         );
 
-                        continue;
+
+                        importedRooms++;
+
+
+                        console.log(
+                            "🚪 IMPORT ROOM:",
+                            roomKey,
+                            "home:",
+                            homeId
+                        );
                     }
 
 
-                    const normalizedRoom =
-                        sanitizeRecord(
-                            room,
-                            {
-                                home_id: homeId,
-                                retired: false,
-                            }
-                        );
+                    // =================================================
+                    // 4.3 INVOICES
+                    // =================================================
 
-
-                    await db.rooms.put({
-
-                        ...normalizedRoom,
-
-                        id: roomKey,
-
-                        home_id: homeId,
-
-                        retired: false,
-                    });
-
-
-                    roomIdMap.set(
-                        roomKey,
-                        roomKey
-                    );
-
-
-                    importedRooms++;
-
-
-                    console.log(
-                        "🚪 IMPORT ROOM:",
-                        roomKey,
-                        "home:",
-                        homeId
-                    );
-                }
-
-
-                // ═══════════════════════════════
-                // 3. INVOICES
-                // ═══════════════════════════════
-
-                for (
-                    const invoice
-                    of payload.invoices || []
-                ) {
-
-                    const invoiceKey =
-                        getRecordValue(
-                            invoice,
-                            [
-                                "id",
-                                "invoice_id",
-                                "invoiceID",
-                            ]
-                        );
-
-
-                    const invoiceRoomKey =
-                        getRecordValue(
-                            invoice,
-                            [
-                                "room_id",
-                                "roomID",
-                            ]
-                        );
-
-
-                    if (
-                        !invoiceKey ||
-                        !invoiceRoomKey
+                    for (
+                        const invoice
+                        of payload.invoices || []
                     ) {
 
-                        console.warn(
-                            "⚠️ Invoice thiếu ID/room_id:",
-                            invoice
-                        );
+                        const invoiceKey =
+                            getRecordValue(
+                                invoice,
+                                [
+                                    "id",
+                                    "invoice_id",
+                                    "invoiceID",
+                                ]
+                            );
 
-                        continue;
+
+                        const invoiceRoomKey =
+                            getRecordValue(
+                                invoice,
+                                [
+                                    "room_id",
+                                    "roomID",
+                                ]
+                            );
+
+
+                        if (
+                            !invoiceKey ||
+                            !invoiceRoomKey
+                        ) {
+
+                            console.warn(
+                                "⚠️ Invoice thiếu ID/room_id:",
+                                invoice
+                            );
+
+                            continue;
+                        }
+
+
+                        const roomId =
+                            roomIdMap.get(
+                                invoiceRoomKey
+                            );
+
+
+                        if (!roomId) {
+
+                            console.warn(
+                                "⚠️ Không tìm thấy Room cho Invoice:",
+                                {
+                                    invoiceId:
+                                        invoiceKey,
+
+                                    roomId:
+                                        invoiceRoomKey,
+                                }
+                            );
+
+                            continue;
+                        }
+
+
+                        const normalizedInvoice =
+                            sanitizeRecord(
+                                invoice,
+                                {
+                                    room_id: roomId,
+                                    retired: false,
+                                }
+                            );
+
+
+                        await db.invoices.put({
+
+                            ...normalizedInvoice,
+
+                            id: invoiceKey,
+
+                            room_id: roomId,
+
+                            retired: false,
+                        });
+
+
+                        importedInvoices++;
+
+
+                        console.log(
+                            "🧾 IMPORT INVOICE:",
+                            invoiceKey,
+                            "room:",
+                            roomId
+                        );
                     }
 
 
-                    const roomId =
-                        roomIdMap.get(
-                            invoiceRoomKey
-                        );
-
-
-                    if (!roomId) {
-
-                        console.warn(
-                            "⚠️ KHÔNG TÌM THẤY ROOM CHO INVOICE:",
-                            {
-                                invoiceId:
-                                    invoiceKey,
-
-                                invoiceRoomKey:
-                                    invoiceRoomKey,
-                            }
-                        );
-
-                        continue;
-                    }
-
-
-                    const normalizedInvoice =
-                        sanitizeRecord(
-                            invoice,
-                            {
-                                room_id: roomId,
-                            }
-                        );
-
-
-                    await db.invoices.put({
-
-                        ...normalizedInvoice,
-
-                        id: invoiceKey,
-
-                        room_id: roomId,
-                    });
-
-
-                    importedInvoices++;
-
-
-                    console.log(
-                        "🧾 IMPORT INVOICE:",
-                        invoiceKey,
-                        "room:",
-                        roomId
-                    );
-                }
-
-
-                // ═══════════════════════════════
-                // 4. EXPENSES
-                // ═══════════════════════════════
-
-                if (!db.expenses) {
-
-                    console.error(
-                        "❌ db.expenses chưa được khai báo trong db.js"
-                    );
-
-                } else {
+                    // =================================================
+                    // 4.4 EXPENSES
+                    // =================================================
 
                     for (
                         const expense
@@ -686,7 +806,7 @@ export default function Settings({ user, onBack }) {
                         if (!homeId) {
 
                             console.warn(
-                                "⚠️ KHÔNG TÌM THẤY HOME CHO EXPENSE:",
+                                "⚠️ Không tìm thấy Home cho Expense:",
                                 {
                                     expenseId:
                                         expenseKey,
@@ -705,6 +825,7 @@ export default function Settings({ user, onBack }) {
                                 expense,
                                 {
                                     home_id: homeId,
+                                    retired: false,
                                 }
                             );
 
@@ -716,6 +837,8 @@ export default function Settings({ user, onBack }) {
                             id: expenseKey,
 
                             home_id: homeId,
+
+                            retired: false,
                         });
 
 
@@ -729,60 +852,101 @@ export default function Settings({ user, onBack }) {
                             homeId
                         );
                     }
+
                 }
-
-            }
-        );
+            );
 
 
-        // ═══════════════════════════════════════
-        // KIỂM TRA KẾT QUẢ
-        // ═══════════════════════════════════════
+            // =====================================================
+            // 5. KIỂM TRA LOCAL SAU IMPORT
+            // =====================================================
 
-        console.log(
-            "════════════════════════════════"
-        );
+            const localHomes =
+                await db.homes.count();
 
-        console.log(
-            "✅ IMPORT HOÀN TẤT"
-        );
+            const localRooms =
+                await db.rooms.count();
 
-        console.log({
-            homes: importedHomes,
-            rooms: importedRooms,
-            invoices: importedInvoices,
-            expenses: importedExpenses,
-        });
+            const localInvoices =
+                await db.invoices.count();
 
-        console.log(
-            "════════════════════════════════"
-        );
+            const localExpenses =
+                await db.expenses.count();
 
 
-        setToast(
-            `Đã nhập: ${importedHomes} nhà, ${importedRooms} phòng, ${importedInvoices} hóa đơn, ${importedExpenses} khoản chi.`
-        );
+            console.log(
+                "════════════════════════════════"
+            );
+
+            console.log(
+                "✅ IMPORT LOCAL HOÀN TẤT"
+            );
+
+            console.log({
+                imported: {
+                    homes: importedHomes,
+                    rooms: importedRooms,
+                    invoices: importedInvoices,
+                    expenses: importedExpenses,
+                },
+
+                local: {
+                    homes: localHomes,
+                    rooms: localRooms,
+                    invoices: localInvoices,
+                    expenses: localExpenses,
+                }
+            });
+
+            console.log(
+                "🚫 KHÔNG PUSH SUPABASE"
+            );
+
+            console.log(
+                "🚫 KHÔNG PULL SUPABASE"
+            );
+
+            console.log(
+                "🚫 KHÔNG TẠO SYNC QUEUE"
+            );
+
+            console.log(
+                "════════════════════════════════"
+            );
 
 
-    } catch (error) {
+            setToast(
+                `Đã khôi phục Local: ${importedHomes} nhà, ${importedRooms} phòng, ${importedInvoices} hóa đơn, ${importedExpenses} khoản chi.`
+            );
 
-        console.error(
-            "❌ IMPORT LOCAL ERROR:",
-            error
-        );
 
-        setToast(
-            error.message ||
-            "Không thể nhập dữ liệu."
-        );
+        } catch (error) {
 
-    } finally {
+            console.error(
+                "❌ IMPORT LOCAL ERROR:",
+                error
+            );
 
-        setIsImporting(false);
 
-        event.target.value = "";
-    }
-};
+            setToast(
+                error.message ||
+                "Không thể khôi phục dữ liệu."
+            );
+
+
+        } finally {
+
+            // =====================================================
+            // MỞ KHÓA AUTO SYNC
+            // =====================================================
+
+            syncService.resume();
+
+            setIsImporting(false);
+
+            event.target.value = "";
+        }
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
