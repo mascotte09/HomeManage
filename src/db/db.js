@@ -2,7 +2,7 @@ import Dexie from "dexie";
 
 export const db = new Dexie("QuanTroDB");
 
-db.version(3).stores({
+db.version(4).stores({
     // =========================
     // HOMES
     // =========================
@@ -26,6 +26,12 @@ db.version(3).stores({
     // =========================
     expenses:
         "id, home_id, expense_date, created_at, updated_at, retired",
+
+    // =========================
+    // PHOTOS
+    // =========================
+    photos:
+        "id, room_id, home_id, created_at, retired",
 
     // =========================
     // SYNC QUEUE
