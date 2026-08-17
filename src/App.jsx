@@ -37,6 +37,15 @@ function App() {
     const [currentUser, setCurrentUser] = useState(undefined);
 
     useEffect(() => {
+         // Chưa biết user → chưa chạy
+        if (currentUser === undefined) {
+            return;
+        }
+
+        // Không phải admin → không chạy Statistics Sync
+        if (!currentUser?.is_admin) {
+            return;
+        }
         statisticsSyncService.start();
 
         return () => {
