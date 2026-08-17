@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { MdArrowBack, MdPerson, MdLock, MdChevronRight, MdClose, MdDownload, MdUpload } from 'react-icons/md'
 import { supabase } from '../supabase.js'
 import FooterHouse from './House/FooterHouse.jsx'
 import { MdBarChart } from 'react-icons/md'
 import { db } from "../db/db.js";
 import { syncService } from "./../db/syncService";
+import StatisticsDialog from './Setting/Statistics.jsx'
 export default function Settings({ user, onBack }) {
     const [showChangePassword, setShowChangePassword] = useState(false)
     const [toast, setToast] = useState('')
@@ -12,23 +13,6 @@ export default function Settings({ user, onBack }) {
     const [isExporting, setIsExporting] = useState(false)
     const [isImporting, setIsImporting] = useState(false)
     const importInputRef = useRef(null)
-
-    // const sanitizeRecord = (record, overrides = {}) => {
-    //     if (!record) return record
-    //     const { id, created_at, updated_at, deleted_at, ...rest } = record
-    //     return { ...rest, ...overrides }
-    // }
-
-    // const getRecordValue = (record, fieldNames) => {
-    //     if (!record) return undefined
-    //     for (const fieldName of fieldNames) {
-    //         const value = record[fieldName]
-    //         if (value !== undefined && value !== null && value !== '') {
-    //             return value
-    //         }
-    //     }
-    //     return undefined
-    // }
 
     const handleExportUserData = async () => {
         if (!user?.id) {
@@ -928,163 +912,4 @@ function ChangePasswordDialog({ user, onClose, onSuccess }) {
             </div>
         </div>
     )
-}
-function StatisticsDialog({ onClose }) {
-
-    const [loading, setLoading] = useState(true)
-    const [rows, setRows] = useState([])
-    // const [invoiceByMonth, setInvoiceByMonth] = useState([]);
-    const cellStyle = {
-        textAlign: "center",
-        padding: "10px",
-        border: "1px solid #e7e5e4"
-    };
-
-    const headerStyle = {
-        ...cellStyle,
-        background: "#f5f5f4",
-        fontWeight: 600
-    };
-    useEffect(() => {
-        load()
-    }, [])
-
-    async function load() {
-
-        const result = []
-
-        for (let i = 2; i >= 0; i--) {
-            const day = new Date()
-            day.setDate(day.getDate() - i)
-
-            const start = new Date(day)
-            start.setHours(0, 0, 0, 0)
-
-            const end = new Date(day)
-            end.setHours(23, 59, 59, 999)
-            const { data } = await supabase.rpc("get_dashboard_stats", {
-                start_date: start.toISOString(),
-                end_date: end.toISOString(),
-            });
-
-            const { users_count, homes_count, rooms_count, invoices_count } = data[0];
-            result.push({
-                date: start.toLocaleDateString("vi-VN"),
-                users: users_count || 0,
-                homes: homes_count || 0,
-                rooms: rooms_count || 0,
-                invoices: invoices_count || 0
-            })
-        }
-
-        setRows(result)
-        setLoading(false)
-    }
-
-    return (
-
-        <div
-            onClick={onClose}
-            style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,.45)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                zIndex: 100
-            }}
-        >
-
-            <div
-                onClick={e => e.stopPropagation()}
-                style={{
-                    width: "95%",
-                    maxWidth: 700,
-                    background: "#fff",
-                    borderRadius: 16,
-                    padding: 20
-                }}
-            >
-
-                <h2 style={{ marginBottom: 20 }}>
-                    Thống kê 5 ngày gần nhất
-                </h2>
-
-                {loading ? (
-
-                    <p>Đang tải...</p>
-
-                ) : (
-
-                    <table
-                        style={{
-                            width: "100%",
-                            borderCollapse: "collapse"
-                        }}
-                    >
-
-                        <thead>
-
-                            <tr>
-                                <th style={headerStyle}>Ngày</th>
-                                <th style={headerStyle}>Usr</th>
-                                <th style={headerStyle}>Ho</th>
-                                <th style={headerStyle}>Ro</th>
-                                <th style={headerStyle}>Inv</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            {rows.map(r => (
-
-                                <tr key={r.date}>
-
-                                    <td style={cellStyle}>{r.date}</td>
-                                    <td style={cellStyle}>{r.users}</td>
-                                    <td style={cellStyle}>{r.homes}</td>
-                                    <td style={cellStyle}>{r.rooms}</td>
-                                    <td style={cellStyle}>{r.invoices}</td>
-                                </tr>
-
-                            ))}
-
-                        </tbody>
-
-                    </table>
-
-                )}
-                {/* <h2 style={{ marginTop: 30, marginBottom: 15 }}>
-                    Số hóa đơn theo tháng
-                </h2>
-
-                <table
-                    style={{
-                        width: "100%",
-                        borderCollapse: "collapse"
-                    }}
-                >
-                    <thead>
-                        <tr>
-                            <th style={headerStyle}>Tháng</th>
-                            <th style={headerStyle}>Số hóa đơn</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {invoiceByMonth.map(item => (
-                            <tr key={item.month}>
-                                <td style={cellStyle}>{item.month}</td>
-                                <td style={cellStyle}>{item.count}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table> */}
-            </div>
-        </div>
-
-    )
-
 }

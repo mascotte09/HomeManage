@@ -33,6 +33,9 @@ db.version(4).stores({
     photos:
         "id, room_id, home_id, created_at, retired",
 
+    statistics:
+        "id, date, updated_at",
+
     // =========================
     // SYNC QUEUE
     // =========================

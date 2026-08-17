@@ -5,7 +5,7 @@ import { supabase } from "./supabase";
 import { syncService } from "./db/syncService";
 import RoomPage from './components/Room/RoomPage.jsx'
 import BrokerRoomPage from './components/BrokerRoom/BrokerRoomPage.jsx';
-
+import { statisticsSyncService } from "./db/statisticsSyncService";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import HeaderHouse from "./components/House/HeaderHouse";
@@ -35,6 +35,15 @@ import { useNavigate } from "react-router-dom";
 function App() {
     const [showSignup, setShowSignup] = useState(false);
     const [currentUser, setCurrentUser] = useState(undefined);
+
+    useEffect(() => {
+        statisticsSyncService.start();
+
+        return () => {
+            statisticsSyncService.stop();
+        };
+
+    }, []);
 
     useEffect(() => {
         const savedUser = localStorage.getItem("currentUser");
