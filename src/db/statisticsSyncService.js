@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { supabase } from "../supabase";
 
-const SYNC_INTERVAL = 1000; // 5 giây
+const SYNC_INTERVAL = 100000; // 100 giây
 const DAYS = 5;
 
 export const statisticsSyncService = {
