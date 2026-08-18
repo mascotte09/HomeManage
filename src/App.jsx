@@ -7,7 +7,7 @@ import RoomPage from './components/Room/RoomPage.jsx'
 import BrokerRoomPage from './components/BrokerRoom/BrokerRoomPage.jsx';
 import { statisticsSyncService } from "./db/statisticsSyncService";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import { registerPush } from "./services/pushNotification"; 
 import HeaderHouse from "./components/House/HeaderHouse";
 import HeaderBrokerHouse from "./components/BrokerHouse/HeaderBrokerHouse.jsx";
 import FooterHouse from "./components/House/FooterHouse";
@@ -46,13 +46,13 @@ function App() {
         if (!currentUser?.is_admin) {
             return;
         }
+        registerPush();
         statisticsSyncService.start();
 
         return () => {
             statisticsSyncService.stop();
         };
-
-    }, []);
+    }, [currentUser]);
 
     useEffect(() => {
         const savedUser = localStorage.getItem("currentUser");

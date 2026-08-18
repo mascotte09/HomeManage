@@ -1,88 +1,178 @@
 import { db } from "./db";
 import { supabase } from "../supabase";
 
-const SYNC_INTERVAL = 100000; // 100 giây
+const SYNC_INTERVAL = 1000; // 100 giây
 const DAYS = 5;
 
+// =====================================================
+// NOTIFICATION
+// =====================================================
+
+function showStatisticsNotification(remote) {
+
+    if (
+        typeof window === "undefined" ||
+        !("Notification" in window)
+    ) {
+        return;
+    }
+
+    // Chỉ thông báo nếu user đã cấp quyền
+    if (
+        Notification.permission !== "granted"
+    ) {
+        return;
+    }
+
+    try {
+
+        new Notification(
+            "📊 Thống kê đã thay đổi",
+            {
+                body:
+                    `${remote.date}\n` +
+                    `User: ${remote.users} | ` +
+                    `Home: ${remote.homes} | ` +
+                    `Room: ${remote.rooms} | ` +
+                    `Invoice: ${remote.invoices}`,
+
+                icon: "/logo192.png",
+            }
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Không thể gửi notification:",
+            error
+        );
+    }
+}
+
+
+// =====================================================
+// SERVICE
+// =====================================================
+
 export const statisticsSyncService = {
+
     interval: null,
+
     isSyncing: false,
+
 
     // =====================================================
     // LẤY 5 NGÀY GẦN NHẤT
-    //
-    // Mỗi ngày chỉ lấy số lượng phát sinh của chính ngày đó
     // =====================================================
 
     async fetchStatistics() {
+
         const result = [];
 
-        for (let i = DAYS - 1; i >= 0; i--) {
+        for (
+            let i = DAYS - 1;
+            i >= 0;
+            i--
+        ) {
+
             const day = new Date();
 
-            day.setDate(day.getDate() - i);
+            day.setDate(
+                day.getDate() - i
+            );
 
-            // Dùng local date để tạo ID
-            const year = day.getFullYear();
-            const month = String(day.getMonth() + 1).padStart(2, "0");
-            const date = String(day.getDate()).padStart(2, "0");
 
-            const dateId = `${year}-${month}-${date}`;
+            // ---------------------------------------------
+            // YYYY-MM-DD
+            // ---------------------------------------------
 
-            // RPC chỉ nhận ngày
+            const year =
+                day.getFullYear();
+
+            const month =
+                String(
+                    day.getMonth() + 1
+                ).padStart(2, "0");
+
+            const date =
+                String(
+                    day.getDate()
+                ).padStart(2, "0");
+
+            const dateId =
+                `${year}-${month}-${date}`;
+
+
+            // ---------------------------------------------
+            // GỌI RPC
+            // ---------------------------------------------
+
             const {
                 data,
                 error
             } = await supabase.rpc(
                 "get_dashboard_stats_by_date",
                 {
-                    target_date: dateId
+                    target_date: dateId,
                 }
             );
 
+
             if (error) {
+
                 throw error;
             }
 
-            const stats = data?.[0] || {};
+
+            const stats =
+                data?.[0] || {};
+
 
             result.push({
+
                 id: dateId,
 
-                date: day.toLocaleDateString(
-                    "vi-VN"
-                ),
+                date:
+                    day.toLocaleDateString(
+                        "vi-VN"
+                    ),
 
-                users: Number(
-                    stats.users_count || 0
-                ),
+                users:
+                    Number(
+                        stats.users_count || 0
+                    ),
 
-                homes: Number(
-                    stats.homes_count || 0
-                ),
+                homes:
+                    Number(
+                        stats.homes_count || 0
+                    ),
 
-                rooms: Number(
-                    stats.rooms_count || 0
-                ),
+                rooms:
+                    Number(
+                        stats.rooms_count || 0
+                    ),
 
-                invoices: Number(
-                    stats.invoices_count || 0
-                ),
+                invoices:
+                    Number(
+                        stats.invoices_count || 0
+                    ),
 
                 updated_at:
-                    new Date().toISOString()
+                    new Date().toISOString(),
             });
         }
+
 
         return result;
     },
 
 
     // =====================================================
-    // LẤY LOCAL
+    // ĐỌC LOCAL
     // =====================================================
 
     async getLocalStatistics() {
+
         return await db.statistics
             .orderBy("id")
             .toArray();
@@ -90,25 +180,64 @@ export const statisticsSyncService = {
 
 
     // =====================================================
-    // SO SÁNH 1 NGÀY
-    //
-    // Chỉ dùng để kiểm tra ngày cuối cùng
+    // TÌM NGÀY HÔM NAY
     // =====================================================
 
-    isDayDifferent(local, remote) {
-        if (!local || !remote) {
-            return true;
+    getTodayId() {
+
+        const today =
+            new Date();
+
+        const year =
+            today.getFullYear();
+
+        const month =
+            String(
+                today.getMonth() + 1
+            ).padStart(2, "0");
+
+        const date =
+            String(
+                today.getDate()
+            ).padStart(2, "0");
+
+        return `${year}-${month}-${date}`;
+    },
+
+
+    // =====================================================
+    // SO SÁNH
+    // =====================================================
+
+    isDayDifferent(
+        local,
+        remote
+    ) {
+
+        if (
+            !local ||
+            !remote
+        ) {
+            return false;
         }
 
+
         return (
+
             Number(local.users) !==
-                Number(remote.users) ||
+                Number(remote.users)
+
+            ||
 
             Number(local.homes) !==
-                Number(remote.homes) ||
+                Number(remote.homes)
+
+            ||
 
             Number(local.rooms) !==
-                Number(remote.rooms) ||
+                Number(remote.rooms)
+
+            ||
 
             Number(local.invoices) !==
                 Number(remote.invoices)
@@ -117,57 +246,13 @@ export const statisticsSyncService = {
 
 
     // =====================================================
-    // NOTIFICATION
+    // LƯU LOCAL
     // =====================================================
 
-    async notify(remote) {
-        if (!("Notification" in window)) {
-            return;
-        }
+    async saveLocalStatistics(
+        rows
+    ) {
 
-        try {
-            if (
-                Notification.permission ===
-                "default"
-            ) {
-                await Notification.requestPermission();
-            }
-
-            if (
-                Notification.permission !==
-                "granted"
-            ) {
-                return;
-            }
-
-            new Notification(
-                "📊 Thống kê đã thay đổi",
-                {
-                    body:
-                        `${remote.date}: ` +
-                        `User ${remote.users} | ` +
-                        `Home ${remote.homes} | ` +
-                        `Room ${remote.rooms} | ` +
-                        `Invoice ${remote.invoices}`,
-
-                    icon: "/logo192.png"
-                }
-            );
-
-        } catch (error) {
-            console.warn(
-                "Không thể gửi notification:",
-                error
-            );
-        }
-    },
-
-
-    // =====================================================
-    // LƯU 5 NGÀY VÀO LOCAL
-    // =====================================================
-
-    async saveLocalStatistics(rows) {
         await db.transaction(
             "rw",
             db.statistics,
@@ -189,13 +274,25 @@ export const statisticsSyncService = {
 
     async sync() {
 
-        // Không cho chạy đồng thời
-        if (this.isSyncing) {
+        // ---------------------------------------------
+        // Không chạy đồng thời
+        // ---------------------------------------------
+
+        if (
+            this.isSyncing
+        ) {
             return;
         }
 
+
+        // ---------------------------------------------
         // Offline
-        if (!navigator.onLine) {
+        // ---------------------------------------------
+
+        if (
+            !navigator.onLine
+        ) {
+
             console.log(
                 "📴 Offline → bỏ qua Statistics Sync"
             );
@@ -203,7 +300,9 @@ export const statisticsSyncService = {
             return;
         }
 
+
         this.isSyncing = true;
+
 
         try {
 
@@ -211,8 +310,9 @@ export const statisticsSyncService = {
                 "📊 Kiểm tra Statistics..."
             );
 
+
             // =================================================
-            // 1. LẤY LOCAL
+            // 1. LOCAL
             // =================================================
 
             const localRows =
@@ -220,7 +320,7 @@ export const statisticsSyncService = {
 
 
             // =================================================
-            // 2. LẤY SUPABASE
+            // 2. SUPABASE
             // =================================================
 
             const remoteRows =
@@ -228,57 +328,109 @@ export const statisticsSyncService = {
 
 
             // =================================================
-            // 3. NGÀY CUỐI CÙNG
-            //
-            // remoteRows:
-            //
-            // [0] 4 ngày trước
-            // [1] 3 ngày trước
-            // [2] 2 ngày trước
-            // [3] hôm qua
-            // [4] hôm nay
+            // 3. LẤY HÔM NAY
             // =================================================
 
+            const todayId =
+                this.getTodayId();
+
+
             const remoteToday =
-                remoteRows[
-                    remoteRows.length - 1
-                ];
+                remoteRows.find(
+                    row =>
+                        row.id ===
+                        todayId
+                );
+
+
+            if (
+                !remoteToday
+            ) {
+
+                console.warn(
+                    "⚠️ Không tìm thấy statistics hôm nay"
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // 4. TÌM HÔM NAY TRONG LOCAL
+            // =================================================
 
             const localToday =
                 localRows.find(
                     row =>
                         row.id ===
-                        remoteToday.id
+                        todayId
                 );
 
 
             // =================================================
-            // 4. KIỂM TRA HÔM NAY CÓ THAY ĐỔI KHÔNG
+            // 5. LẦN ĐẦU CHƯA CÓ LOCAL
             // =================================================
 
-            const todayChanged =
+            if (
+                !localToday
+            ) {
+
+                console.log(
+                    "🆕 Chưa có statistics hôm nay → lưu local"
+                );
+
+                await this.saveLocalStatistics(
+                    remoteRows
+                );
+
+                // Không notification lần đầu
+                return;
+            }
+
+
+            // =================================================
+            // 6. KIỂM TRA THAY ĐỔI
+            // =================================================
+
+            const changed =
                 this.isDayDifferent(
                     localToday,
                     remoteToday
                 );
 
 
-            if (todayChanged) {
-
-                console.log(
-                    "🔔 Statistics hôm nay thay đổi"
-                );
-
-            } else {
+            if (
+                !changed
+            ) {
 
                 console.log(
                     "✓ Statistics hôm nay không thay đổi"
                 );
+
+                return;
             }
 
 
             // =================================================
-            // 5. LƯU 5 NGÀY MỚI VÀO LOCAL
+            // 7. CÓ THAY ĐỔI
+            // =================================================
+
+            console.log(
+                "🔔 Statistics hôm nay đã thay đổi"
+            );
+
+
+            // =================================================
+            // 8. NOTIFICATION
+            // =================================================
+
+            showStatisticsNotification(
+                remoteToday
+            );
+
+
+            // =================================================
+            // 9. CẬP NHẬT LOCAL
             // =================================================
 
             await this.saveLocalStatistics(
@@ -286,21 +438,10 @@ export const statisticsSyncService = {
             );
 
 
-            // =================================================
-            // 6. CHỈ NOTIFICATION NẾU HÔM NAY THAY ĐỔI
-            // =================================================
-
-            if (todayChanged) {
-
-                await this.notify(
-                    remoteToday
-                );
-            }
-
-
             console.log(
-                "✅ Statistics Sync hoàn tất"
+                "✅ Statistics đã cập nhật Local"
             );
+
 
         } catch (error) {
 
@@ -324,19 +465,23 @@ export const statisticsSyncService = {
 
         this.stop();
 
+
         console.log(
             "▶️ Statistics Sync Service started"
         );
 
-        // Kiểm tra ngay khi mở app
+
+        // Kiểm tra ngay
         this.sync();
 
 
-        // Sau đó kiểm tra mỗi 5 giây
+        // Sau đó mỗi 100 giây
         this.interval =
             setInterval(
                 () => {
+
                     this.sync();
+
                 },
                 SYNC_INTERVAL
             );
@@ -349,7 +494,9 @@ export const statisticsSyncService = {
 
     stop() {
 
-        if (this.interval) {
+        if (
+            this.interval
+        ) {
 
             clearInterval(
                 this.interval
@@ -358,8 +505,9 @@ export const statisticsSyncService = {
             this.interval = null;
         }
 
+
         console.log(
             "⏹️ Statistics Sync Service stopped"
         );
-    }
+    },
 };
