@@ -1,49 +1,86 @@
 import { db } from "./db";
 import { supabase } from "../supabase";
 
-const SYNC_INTERVAL = 1000; // 100 giây
+const SYNC_INTERVAL = 1000;
 const DAYS = 5;
+
 
 // =====================================================
 // NOTIFICATION
 // =====================================================
 
-function showStatisticsNotification(remote) {
+async function showStatisticsNotification(remote) {
 
-    if (
-        typeof window === "undefined" ||
-        !("Notification" in window)
-    ) {
-        return;
-    }
+    const title =
+        "📊 Thống kê đã thay đổi";
 
-    // Chỉ thông báo nếu user đã cấp quyền
-    if (
-        Notification.permission !== "granted"
-    ) {
-        return;
-    }
+    const body =
+        `${remote.date}\n` +
+        `User: ${remote.users} | ` +
+        `Home: ${remote.homes} | ` +
+        `Room: ${remote.rooms} | ` +
+        `Invoice: ${remote.invoices}`;
+
 
     try {
 
-        new Notification(
-            "📊 Thống kê đã thay đổi",
-            {
-                body:
-                    `${remote.date}\n` +
-                    `User: ${remote.users} | ` +
-                    `Home: ${remote.homes} | ` +
-                    `Room: ${remote.rooms} | ` +
-                    `Invoice: ${remote.invoices}`,
+        // ==========================================
+        // ƯU TIÊN SERVICE WORKER
+        // ==========================================
 
-                icon: "/logo192.png",
+        if ("serviceWorker" in navigator) {
+
+            const registration =
+                await navigator.serviceWorker.ready;
+
+            if (registration) {
+
+                await registration.showNotification(
+                    title,
+                    {
+                        body,
+                        icon: "/logo192.png",
+                        badge: "/logo192.png",
+                        tag: "statistics-update",
+                        renotify: true,
+                    }
+                );
+
+                console.log(
+                    "🔔 Notification gửi qua Service Worker"
+                );
+
+                return;
             }
-        );
+        }
+
+
+        // ==========================================
+        // FALLBACK
+        // ==========================================
+
+        if (
+            "Notification" in window &&
+            Notification.permission === "granted"
+        ) {
+
+            new Notification(
+                title,
+                {
+                    body,
+                    icon: "/logo192.png",
+                }
+            );
+
+            console.log(
+                "🔔 Notification gửi trực tiếp"
+            );
+        }
 
     } catch (error) {
 
-        console.warn(
-            "Không thể gửi notification:",
+        console.error(
+            "❌ Không thể gửi notification:",
             error
         );
     }
@@ -82,10 +119,6 @@ export const statisticsSyncService = {
             );
 
 
-            // ---------------------------------------------
-            // YYYY-MM-DD
-            // ---------------------------------------------
-
             const year =
                 day.getFullYear();
 
@@ -103,10 +136,6 @@ export const statisticsSyncService = {
                 `${year}-${month}-${date}`;
 
 
-            // ---------------------------------------------
-            // GỌI RPC
-            // ---------------------------------------------
-
             const {
                 data,
                 error
@@ -119,7 +148,6 @@ export const statisticsSyncService = {
 
 
             if (error) {
-
                 throw error;
             }
 
@@ -168,7 +196,7 @@ export const statisticsSyncService = {
 
 
     // =====================================================
-    // ĐỌC LOCAL
+    // LOCAL
     // =====================================================
 
     async getLocalStatistics() {
@@ -180,7 +208,7 @@ export const statisticsSyncService = {
 
 
     // =====================================================
-    // TÌM NGÀY HÔM NAY
+    // TODAY
     // =====================================================
 
     getTodayId() {
@@ -214,16 +242,12 @@ export const statisticsSyncService = {
         remote
     ) {
 
-        if (
-            !local ||
-            !remote
-        ) {
+        if (!local || !remote) {
             return false;
         }
 
 
         return (
-
             Number(local.users) !==
                 Number(remote.users)
 
@@ -246,12 +270,10 @@ export const statisticsSyncService = {
 
 
     // =====================================================
-    // LƯU LOCAL
+    // SAVE LOCAL
     // =====================================================
 
-    async saveLocalStatistics(
-        rows
-    ) {
+    async saveLocalStatistics(rows) {
 
         await db.transaction(
             "rw",
@@ -274,24 +296,12 @@ export const statisticsSyncService = {
 
     async sync() {
 
-        // ---------------------------------------------
-        // Không chạy đồng thời
-        // ---------------------------------------------
-
-        if (
-            this.isSyncing
-        ) {
+        if (this.isSyncing) {
             return;
         }
 
 
-        // ---------------------------------------------
-        // Offline
-        // ---------------------------------------------
-
-        if (
-            !navigator.onLine
-        ) {
+        if (!navigator.onLine) {
 
             console.log(
                 "📴 Offline → bỏ qua Statistics Sync"
@@ -311,25 +321,25 @@ export const statisticsSyncService = {
             );
 
 
-            // =================================================
-            // 1. LOCAL
-            // =================================================
+            // ==========================================
+            // LOCAL
+            // ==========================================
 
             const localRows =
                 await this.getLocalStatistics();
 
 
-            // =================================================
-            // 2. SUPABASE
-            // =================================================
+            // ==========================================
+            // SUPABASE
+            // ==========================================
 
             const remoteRows =
                 await this.fetchStatistics();
 
 
-            // =================================================
-            // 3. LẤY HÔM NAY
-            // =================================================
+            // ==========================================
+            // TODAY
+            // ==========================================
 
             const todayId =
                 this.getTodayId();
@@ -338,14 +348,11 @@ export const statisticsSyncService = {
             const remoteToday =
                 remoteRows.find(
                     row =>
-                        row.id ===
-                        todayId
+                        row.id === todayId
                 );
 
 
-            if (
-                !remoteToday
-            ) {
+            if (!remoteToday) {
 
                 console.warn(
                     "⚠️ Không tìm thấy statistics hôm nay"
@@ -355,42 +362,34 @@ export const statisticsSyncService = {
             }
 
 
-            // =================================================
-            // 4. TÌM HÔM NAY TRONG LOCAL
-            // =================================================
-
             const localToday =
                 localRows.find(
                     row =>
-                        row.id ===
-                        todayId
+                        row.id === todayId
                 );
 
 
-            // =================================================
-            // 5. LẦN ĐẦU CHƯA CÓ LOCAL
-            // =================================================
+            // ==========================================
+            // LẦN ĐẦU
+            // ==========================================
 
-            if (
-                !localToday
-            ) {
+            if (!localToday) {
 
                 console.log(
-                    "🆕 Chưa có statistics hôm nay → lưu local"
+                    "🆕 Chưa có statistics hôm nay"
                 );
 
                 await this.saveLocalStatistics(
                     remoteRows
                 );
 
-                // Không notification lần đầu
                 return;
             }
 
 
-            // =================================================
-            // 6. KIỂM TRA THAY ĐỔI
-            // =================================================
+            // ==========================================
+            // SO SÁNH
+            // ==========================================
 
             const changed =
                 this.isDayDifferent(
@@ -399,9 +398,7 @@ export const statisticsSyncService = {
                 );
 
 
-            if (
-                !changed
-            ) {
+            if (!changed) {
 
                 console.log(
                     "✓ Statistics hôm nay không thay đổi"
@@ -411,27 +408,27 @@ export const statisticsSyncService = {
             }
 
 
-            // =================================================
-            // 7. CÓ THAY ĐỔI
-            // =================================================
+            // ==========================================
+            // THAY ĐỔI
+            // ==========================================
 
             console.log(
                 "🔔 Statistics hôm nay đã thay đổi"
             );
 
 
-            // =================================================
-            // 8. NOTIFICATION
-            // =================================================
+            // ==========================================
+            // NOTIFICATION
+            // ==========================================
 
-            showStatisticsNotification(
+            await showStatisticsNotification(
                 remoteToday
             );
 
 
-            // =================================================
-            // 9. CẬP NHẬT LOCAL
-            // =================================================
+            // ==========================================
+            // SAVE LOCAL
+            // ==========================================
 
             await this.saveLocalStatistics(
                 remoteRows
@@ -471,17 +468,13 @@ export const statisticsSyncService = {
         );
 
 
-        // Kiểm tra ngay
         this.sync();
 
 
-        // Sau đó mỗi 100 giây
         this.interval =
             setInterval(
                 () => {
-
                     this.sync();
-
                 },
                 SYNC_INTERVAL
             );
@@ -494,9 +487,7 @@ export const statisticsSyncService = {
 
     stop() {
 
-        if (
-            this.interval
-        ) {
+        if (this.interval) {
 
             clearInterval(
                 this.interval
