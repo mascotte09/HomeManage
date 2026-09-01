@@ -27,7 +27,7 @@ export default function InvoiceSummary({
         totalOldDebt -
         totalExtraPaid;
     const qrContent = encodeURIComponent(
-        `${room?.room_renter || ""} Phong ${room?.room_name || ""} ${home?.home_name || ""}`
+        `${room?.room_renter || ""} Phong ${room?.room_name || ""} ${home?.name || ""}`
     );
     const hasBankInfo =
         home?.bank_id && home?.bank_account;
