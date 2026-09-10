@@ -155,88 +155,144 @@ export default function HousePage({ user_id }) {
     if (!user_id) return [];
 
     console.log("Local DB chưa có dữ liệu.");
-    console.log("Đang lấy dữ liệu từ Supabase...");
+    console.log("Đang lấy dữ liệu home graph từ Supabase...");
 
-    const { data, error } = await supabase
+    const { data: homesData, error: homesError } = await supabase
       .from("homes")
-      .select(`
-        *,
-        rooms(*)
-      `)
+      .select("*")
       .eq("userID", user_id)
       .eq("retired", false)
       .order("name");
 
-    if (error) {
-      console.error(
-        "Lỗi lấy homes từ Supabase:",
-        error
-      );
-
-      throw error;
+    if (homesError) {
+      console.error("Lỗi lấy homes từ Supabase:", homesError);
+      throw homesError;
     }
 
-    const homes = data || [];
-console.log(
-      `Đã load ${homes.length} nhà từ Supabase`
-    );
+    const homes = homesData || [];
+
     if (homes.length === 0) {
       return [];
     }
 
-    // ─────────────────────────────────────────
-    // Lưu homes + rooms vào IndexedDB
-    // ─────────────────────────────────────────
+    const homeIds = homes
+      .map((home) => home.id)
+      .filter(Boolean);
+
+    let rooms = [];
+    let invoices = [];
+    let photos = [];
+    let expenses = [];
+
+    const { data: roomsData, error: roomsError } = await supabase
+      .from("rooms")
+      .select("*")
+      .in("home_id", homeIds)
+      .eq("retired", false);
+
+    if (roomsError) {
+      console.error("Lỗi lấy rooms từ Supabase:", roomsError);
+      throw roomsError;
+    }
+
+    rooms = roomsData || [];
+
+    const roomIds = rooms
+      .map((room) => room.id)
+      .filter(Boolean);
+
+    if (roomIds.length > 0) {
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from("invoices")
+        .select("*")
+        .in("room_id", roomIds)
+        .eq("retired", false);
+
+      if (invoiceError) {
+        console.error("Lỗi lấy invoices từ Supabase:", invoiceError);
+        throw invoiceError;
+      }
+
+      invoices = invoiceData || [];
+    }
+
+    if (homeIds.length > 0) {
+      const { data: expenseData, error: expenseError } = await supabase
+        .from("expenses")
+        .select("*")
+        .in("home_id", homeIds)
+        .eq("retired", false);
+
+      if (expenseError) {
+        console.error("Lỗi lấy expenses từ Supabase:", expenseError);
+        throw expenseError;
+      }
+
+      expenses = expenseData || [];
+    }
+
+    if (homeIds.length > 0 || roomIds.length > 0) {
+      const photoQuery = supabase
+        .from("photos")
+        .select("*")
+        .eq("retired", false);
+
+      const photoMatcher = [];
+
+      if (homeIds.length > 0) {
+        photoMatcher.push(`home_id.in.(${homeIds.join(",")})`);
+      }
+
+      if (roomIds.length > 0) {
+        photoMatcher.push(`room_id.in.(${roomIds.join(",")})`);
+      }
+
+      if (photoMatcher.length > 0) {
+        const { data: photoData, error: photoError } = await photoQuery.or(photoMatcher.join(","));
+
+        if (photoError) {
+          console.error("Lỗi lấy photos từ Supabase:", photoError);
+          throw photoError;
+        }
+
+        photos = photoData || [];
+      }
+    }
+
+    console.log(`Đã load ${homes.length} nhà, ${rooms.length} phòng, ${invoices.length} hóa đơn, ${expenses.length} chi phí, ${photos.length} ảnh từ Supabase`);
 
     await db.transaction(
       "rw",
       db.homes,
       db.rooms,
+      db.invoices,
+      db.expenses,
+      db.photos,
       async () => {
 
         for (const home of homes) {
+          await db.homes.put(home);
+        }
 
-          const {
-            rooms = [],
-            ...homeData
-          } = home;
+        for (const room of rooms) {
+          await db.rooms.put(room);
+        }
 
-          // Không ghi đè nếu local đã có
-          // dữ liệu cùng ID
-          const existingHome =
-            await db.homes.where("id")
-              .equals(homeData.id)
-              .filter(home => home.retired !== true)
-              .first();
+        for (const invoice of invoices) {
+          await db.invoices.put(invoice);
+        }
 
-          if (!existingHome) {
-            await db.homes.put(homeData);
-          }
-          // Rooms
-          if (rooms.length > 0) {
+        for (const expense of expenses) {
+          await db.expenses.put(expense);
+        }
 
-            for (const room of rooms) {
-
-              const existingRoom =
-                await db.rooms.where("id")
-                  .equals(room.id)
-                  .filter(room => room.retired !== true)
-                  .first();
-              if (!existingRoom) {
-
-                await db.rooms.put(room);
-
-              }
-
-            }
-          }
+        for (const photo of photos) {
+          await db.photos.put(photo);
         }
       }
     );
 
-    console.log(
-      `Đã import ${homes.length} nhà từ Supabase`
-    );
+    console.log(`Đã import home graph: ${homes.length} nhà, ${rooms.length} phòng, ${invoices.length} hóa đơn, ${expenses.length} chi phí, ${photos.length} ảnh`);
 
     return homes;
   }, [user_id]);
@@ -260,11 +316,11 @@ console.log(
         localHomes.length
       );
 
-      // 2. Local không có → lấy từ Supabase
+      // 2. Chỉ import full graph khi local rỗng
       if (localHomes.length === 0) {
 
         console.log(
-          "📭 Local không có nhà → lấy từ Supabase"
+          "📭 Local không có nhà → import full graph từ Supabase"
         );
 
         await importFromSupabase();
@@ -274,6 +330,10 @@ console.log(
           await homeRepository.getByUserId(
             user_id
           );
+      } else {
+        console.log(
+          "✅ Local đã có dữ liệu → không import lại full graph"
+        );
       }
 
       // 4. Hiển thị
