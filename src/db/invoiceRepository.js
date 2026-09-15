@@ -360,10 +360,11 @@ export const invoiceRepository = {
     db.sync_queue,
     async () => {
 
-      // 1. Xóa hẳn invoice khỏi IndexedDB
-      await db.invoices.delete(id);
+      await db.invoices.update(id, {
+        retired: true,
+        updated_at: now,
+      });
 
-      // 2. Tạo queue để báo Supabase retired = true
       await db.sync_queue.add({
         table: "invoices",
         record_id: id,

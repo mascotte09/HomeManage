@@ -95,28 +95,33 @@ export const homeRepository = {
 
   async retire(id) {
 
-  const now = new Date().toISOString();
+    const now = new Date().toISOString();
 
-  await db.transaction(
-    "rw",
-    db.homes,
-    db.sync_queue,
-    async () => {
+    await db.transaction(
+      "rw",
+      db.homes,
+      db.sync_queue,
+      async () => {
 
-      // 1. Tạo queue trước
-      await db.sync_queue.add({
-        table: "homes",
-        record_id: id,
-        action: "DELETE",
-        created_at: now
-      });
+        const existing = await db.homes.get(id);
 
-      // 2. Xóa hẳn khỏi Local
-      await db.homes.delete(id);
+        if (!existing) {
+          return;
+        }
 
-    }
-  );
+        await db.homes.update(id, {
+          retired: true,
+          updated_at: now,
+        });
 
-}
+        await db.sync_queue.add({
+          table: "homes",
+          record_id: id,
+          action: "DELETE",
+          created_at: now,
+        });
+      }
+    );
+  }
 
 };

@@ -201,9 +201,10 @@ export const expensesRepository = {
             db.sync_queue,
             async () => {
 
-                // XÓA HẲN LOCAL
-                await db.expenses.delete(id);
-
+                await db.expenses.update(id, {
+                    retired: true,
+                    updated_at: now,
+                });
 
                 // Queue để Supabase:
                 // retired = true
