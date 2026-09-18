@@ -144,7 +144,7 @@ export default function HousePage({ user_id }) {
 
   const [houseToDelete, setHouseToDelete] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // ───────────────────────────────────────────
   // Load from Supabase and save to Local DB
@@ -304,8 +304,6 @@ export default function HousePage({ user_id }) {
   const fetchUserHomes = useCallback(async () => {
     if (!user_id) return;
 
-    setLoading(true);
-
     try {
       // 1. Luôn đọc Local trước
       let localHomes =
@@ -322,6 +320,7 @@ export default function HousePage({ user_id }) {
         console.log(
           "📭 Local không có nhà → import full graph từ Supabase"
         );
+        setLoading(true);
 
         await importFromSupabase();
 
@@ -508,7 +507,7 @@ export default function HousePage({ user_id }) {
           {loading ? (
 
             <p className="text-sm text-stone-500">
-              Đang tải...
+              Đang tải từ máy chủ...
             </p>
 
           ) : houses.length === 0 ? (
