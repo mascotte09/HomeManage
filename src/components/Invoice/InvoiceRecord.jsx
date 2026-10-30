@@ -305,16 +305,61 @@ export default function InvoiceRecord({
   // CAPTURE + SHARE
   // =========================================================
   async function captureAndShare() {
-    if (!summaryRef.current) return;
-
-    await new Promise((resolve) =>
-      setTimeout(resolve, 500)
-    );
+    if (!summaryRef.current) {
+      throw new Error("Không tìm thấy nội dung hóa đơn để chụp.");
+    }
 
     await document.fonts.ready;
 
-    const canvas =
-      await html2canvas(summaryRef.current, {
+    const images = Array.from(
+      summaryRef.current.querySelectorAll("img")
+    );
+
+    const captureImages = images.filter(
+      (image) => image.dataset.captureSrc
+    );
+    const originalImageSources = captureImages.map((image) =>
+      image.getAttribute("src")
+    );
+    const captureObjectUrls = [];
+
+    let canvas;
+    try {
+      await Promise.all(
+        captureImages.map(async (image) => {
+          let response;
+          try {
+            response = await fetch(image.dataset.captureSrc);
+          } catch (error) {
+            throw new Error(
+              `Không thể kết nối để tải QR chia sẻ: ${error.message}`
+            );
+          }
+
+          if (!response.ok) {
+            throw new Error(
+              `Không tải được QR chia sẻ (HTTP ${response.status}).`
+            );
+          }
+
+          const imageBlob = await response.blob();
+          if (!imageBlob.type.startsWith("image/")) {
+            throw new Error("Máy chủ không trả về ảnh QR hợp lệ.");
+          }
+
+          const objectUrl = URL.createObjectURL(imageBlob);
+          captureObjectUrls.push(objectUrl);
+          image.src = objectUrl;
+
+          try {
+            await image.decode();
+          } catch {
+            throw new Error("Không thể giải mã hình QR chia sẻ.");
+          }
+        })
+      );
+
+      canvas = await html2canvas(summaryRef.current, {
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#ffffff",
@@ -322,62 +367,80 @@ export default function InvoiceRecord({
         scrollX: 0,
         scrollY: -window.scrollY,
         windowWidth:
-          document.documentElement
-            .scrollWidth,
+          document.documentElement.scrollWidth,
         windowHeight:
-          document.documentElement
-            .scrollHeight,
+          document.documentElement.scrollHeight,
       });
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-
-      const file = new File(
-        [blob],
-        `invoice-room-${room?.room_name}.png`,
-        {
-          type: "image/png",
+    } finally {
+      captureImages.forEach((image, index) => {
+        if (originalImageSources[index] !== null) {
+          image.src = originalImageSources[index];
+        } else {
+          image.removeAttribute("src");
         }
+      });
+      captureObjectUrls.forEach((objectUrl) =>
+        URL.revokeObjectURL(objectUrl)
       );
+    }
 
-      if (
-        navigator.canShare?.({
-          files: [file],
-        })
-      ) {
-        try {
-          await navigator.share({
-            files: [file],
-
-            title: "Invoice",
-
-            text: `Gởi ${
-              room?.room_renter || ""
-            } hóa đơn tháng ${
-              formData.invoice_create_date?.substring(
-                0,
-                7
-              )
-            }`,
-          });
-        } catch (error) {
-          console.log(error);
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(new Error("Không thể tạo ảnh hóa đơn."));
         }
-      } else {
-        const link =
-          document.createElement("a");
-
-        link.href =
-          URL.createObjectURL(blob);
-
-        link.download =
-          `invoice-room-${room?.room_name}.png`;
-
-        link.click();
-
-        URL.revokeObjectURL(link.href);
-      }
+      }, "image/png");
     });
+
+    const file = new File(
+      [blob],
+      `invoice-room-${room?.room_name}.png`,
+      {
+        type: "image/png",
+      }
+    );
+
+    if (
+      navigator.canShare?.({
+        files: [file],
+      })
+    ) {
+      try {
+        await navigator.share({
+          files: [file],
+
+          title: "Invoice",
+
+          text: `Gởi ${
+            room?.room_renter || ""
+          } hóa đơn tháng ${
+            formData.invoice_create_date?.substring(
+              0,
+              7
+            )
+          }`,
+        });
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          throw error;
+        }
+      }
+    } else {
+      const link =
+        document.createElement("a");
+
+      link.href =
+        URL.createObjectURL(blob);
+
+      link.download =
+        `invoice-room-${room?.room_name}.png`;
+
+      link.click();
+
+      URL.revokeObjectURL(link.href);
+    }
   }
 
   // =========================================================
@@ -884,11 +947,21 @@ export default function InvoiceRecord({
                     requestAnimationFrame(r)
                   );
 
-                  await captureAndShare();
-
-                  setShowSummaryModal(false);
-
-                  onAdd?.();
+                  try {
+                    await captureAndShare();
+                    setShowSummaryModal(false);
+                    onAdd?.();
+                  } catch (error) {
+                    console.error(
+                      "Không thể chia sẻ hóa đơn:",
+                      error
+                    );
+                    setValidationMessage(
+                      error.message ||
+                        "Không thể tạo ảnh hóa đơn."
+                    );
+                    setShowValidationModal(true);
+                  }
                 }}
                 className="
                   flex flex-col

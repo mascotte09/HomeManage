@@ -26,14 +26,26 @@ export default function InvoiceSummary({
         total +
         totalOldDebt -
         totalExtraPaid;
-    const qrContent = encodeURIComponent(
-        `${room?.room_renter || ""} Phong ${room?.room_name || ""} Nha ${home?.name || ""}`
-    );
+    const qrContent =
+        `${room?.room_renter || ""} Phong ${room?.room_name || ""} Nha ${home?.name || ""}`;
     const hasBankInfo =
         home?.bank_id && home?.bank_account;
 
+    const qrParams = new URLSearchParams({
+        bankId: home?.bank_id || "",
+        account: home?.bank_account || "",
+        amount: String(Math.round(grandTotal)),
+        addInfo: qrContent,
+    });
+    const vietQrParams = new URLSearchParams({
+        amount: String(Math.round(grandTotal)),
+        addInfo: qrContent,
+    });
     const qrUrl = hasBankInfo
-        ? `https://img.vietqr.io/image/${home.bank_id}-${home.bank_account}-compact2.png?amount=${grandTotal}&addInfo=${qrContent}`
+        ? `https://img.vietqr.io/image/${home.bank_id}-${home.bank_account}-compact2.png?${vietQrParams.toString()}`
+        : null;
+    const captureQrUrl = hasBankInfo
+        ? `/api/vietqr?${qrParams.toString()}`
         : null;
 
     return (
@@ -246,6 +258,7 @@ export default function InvoiceSummary({
                     <div className="mt-4 flex flex-col items-center">
                         <img
                             src={qrUrl}
+                            data-capture-src={captureQrUrl}
                             alt="VietQR thanh toán"
                             className="w-40 h-40 border border-stone-200 rounded-xl shadow-sm"
                         />
