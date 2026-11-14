@@ -94,12 +94,12 @@ export default function InvoiceSummary({
 
                             <div className="text-base text-stone-400 mt-0.5">
                                 {formData.current_electricity_number || 0}
-                                {" → "}
+                                {"→"}
                                 {formData.new_electricity_number || 0}
-                                {" · "}
+                                {" : "}
                                 {Number(formData.new_electricity_number) -
                                     Number(formData.current_electricity_number)}
-                                {" kWh × "}
+                                {" kW × "}
                                 {elecPrice.toLocaleString("vi-VN")}
                             </div>
                         </div>
@@ -120,9 +120,9 @@ export default function InvoiceSummary({
                             ) : (
                                 <div className="text-base text-stone-400 mt-0.5">
                                     {formData.current_water_number || 0}
-                                    {" → "}
+                                    {"→"}
                                     {formData.new_water_number || 0}
-                                    {" · "}
+                                    {" : "}
                                     {Number(formData.new_water_number || 0) -
                                         Number(formData.current_water_number || 0)}
                                     {" m³ × "}
