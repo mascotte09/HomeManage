@@ -92,7 +92,7 @@ export default function InvoiceSummary({
                         <div>
                             <div>2. Tiền điện</div>
 
-                            <div className="text-sm text-stone-400 mt-0.5">
+                            <div className="text-base text-stone-400 mt-0.5">
                                 {formData.current_electricity_number || 0}
                                 {" → "}
                                 {formData.new_electricity_number || 0}
@@ -113,12 +113,12 @@ export default function InvoiceSummary({
                         <div>
                             <div>3. Tiền nước</div>
                             {home?.is_water_per_person ? (
-                                <div className="text-sm text-stone-400 mt-0.5">
+                                <div className="text-base text-stone-400 mt-0.5">
                                     {room?.num_person || 0} người ×{" "}
                                     {waterPrice.toLocaleString("vi-VN")}
                                 </div>
                             ) : (
-                                <div className="text-sm text-stone-400 mt-0.5">
+                                <div className="text-base text-stone-400 mt-0.5">
                                     {formData.current_water_number || 0}
                                     {" → "}
                                     {formData.new_water_number || 0}
