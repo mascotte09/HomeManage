@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { MdArrowBack, MdPerson, MdLock, MdChevronRight, MdClose, MdDownload, MdUpload } from 'react-icons/md'
+import { MdArrowBack, MdPerson, MdLock, MdChevronRight, MdClose, MdDownload, MdUpload, MdSync } from 'react-icons/md'
 import { supabase } from '../supabase.js'
 import FooterHouse from './House/FooterHouse.jsx'
 import { MdBarChart } from 'react-icons/md'
@@ -12,7 +12,40 @@ export default function Settings({ user, onBack }) {
     const [showStatistics, setShowStatistics] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
     const [isImporting, setIsImporting] = useState(false)
+    const [isSyncing, setIsSyncing] = useState(false)
     const importInputRef = useRef(null)
+
+    const handleSync = async () => {
+        if (!user?.id) {
+            setToast('Không tìm thấy người dùng đang đăng nhập.')
+            return
+        }
+
+        if (!navigator.onLine) {
+            setToast('Không có kết nối mạng. Vui lòng thử lại khi online.')
+            return
+        }
+
+        if (syncService.isPaused || syncService.isSyncing) {
+            setToast('Đồng bộ đang tạm dừng hoặc đang chạy. Vui lòng thử lại sau.')
+            return
+        }
+
+        setIsSyncing(true)
+        setToast('Đang đồng bộ dữ liệu...')
+
+        try {
+            const synced = await syncService.pullAll(user.id)
+            setToast(
+                `Đồng bộ thành công: ${synced.homes} nhà, ${synced.rooms} phòng, ${synced.invoices} hóa đơn, ${synced.expenses} khoản chi, ${synced.photos} hình ảnh.`
+            )
+        } catch (error) {
+            console.error('❌ MANUAL SYNC ERROR:', error)
+            setToast(error?.message || 'Không thể đồng bộ dữ liệu.')
+        } finally {
+            setIsSyncing(false)
+        }
+    }
 
     const handleExportUserData = async () => {
         if (!user?.id) {
@@ -560,6 +593,45 @@ export default function Settings({ user, onBack }) {
                             </div>
                             <span style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#44403c' }}>
                                 {isImporting ? 'Đang khôi phục...' : 'Khôi phục dữ liệu'}
+                            </span>
+                            <MdChevronRight size={20} color="#a8a29e" />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleSync}
+                            disabled={isSyncing || isImporting}
+                            style={{
+                                width: '100%',
+                                padding: '16px 20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '14px',
+                                background: 'white',
+                                border: 'none',
+                                borderTop: '1px solid #e7e5e4',
+                                cursor: isSyncing || isImporting ? 'default' : 'pointer',
+                                textAlign: 'left',
+                                opacity: isSyncing || isImporting ? 0.7 : 1,
+                            }}
+                            className="hover:bg-stone-50 transition"
+                        >
+                            <div
+                                style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#f5f5f4',
+                                    color: '#78716c',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <MdSync size={18} />
+                            </div>
+                            <span style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#44403c' }}>
+                                {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ'}
                             </span>
                             <MdChevronRight size={20} color="#a8a29e" />
                         </button>

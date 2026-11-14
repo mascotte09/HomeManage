@@ -1,12 +1,58 @@
 import { db } from "./db";
 import { supabase } from "../supabase";
 
+const SYNC_PAGE_SIZE = 1000;
+const SYNC_ID_BATCH_SIZE = 100;
+
+async function fetchAllRows(queryFactory) {
+    const rows = [];
+    let offset = 0;
+
+    while (true) {
+        const { data, error } = await queryFactory()
+            .order("id", { ascending: true })
+            .range(offset, offset + SYNC_PAGE_SIZE - 1);
+
+        if (error) {
+            throw error;
+        }
+
+        const page = data || [];
+        rows.push(...page);
+
+        if (page.length < SYNC_PAGE_SIZE) {
+            return rows;
+        }
+
+        offset += SYNC_PAGE_SIZE;
+    }
+}
+
+async function fetchRowsByIds(tableName, columnName, ids) {
+    const rows = [];
+
+    for (let index = 0; index < ids.length; index += SYNC_ID_BATCH_SIZE) {
+        const idBatch = ids.slice(index, index + SYNC_ID_BATCH_SIZE);
+        const batchRows = await fetchAllRows(() =>
+            supabase
+                .from(tableName)
+                .select("*")
+                .in(columnName, idBatch)
+        );
+        rows.push(...batchRows);
+    }
+
+    return rows;
+}
+
 // ═══════════════════════════════════════════════
 // SYNC SERVICE
 //
-// IndexedDB → Supabase
+// Automatic sync:
+//     IndexedDB → Supabase
 //
-// LOCAL là nguồn dữ liệu chính.
+// Manual sync from Settings:
+//     Supabase → IndexedDB (overwrite account data)
 //
 // INSERT / UPDATE
 //     → PUSH lên Supabase
@@ -18,8 +64,6 @@ import { supabase } from "../supabase";
 //     - File ảnh thật nằm trên Supabase Storage
 //     - Metadata nằm trong IndexedDB
 //     - Sync metadata → Supabase table photos
-//
-// ❌ KHÔNG PULL SUPABASE → LOCAL
 //
 // Import:
 //     - pause()
@@ -56,6 +100,178 @@ export const syncService = {
         console.log("⏸️ SYNC TẠM DỪNG");
 
         this.isPaused = true;
+    },
+
+    // ═══════════════════════════════════════════
+    // MANUAL PULL
+    //
+    // Supabase → IndexedDB, replacing this user's
+    // homes, rooms, invoices, expenses, and photos.
+    // ═══════════════════════════════════════════
+
+    async pullAll(userId) {
+        if (!userId) {
+            throw new Error("Không tìm thấy người dùng đang đăng nhập.");
+        }
+
+        if (!navigator.onLine) {
+            throw new Error("Không có kết nối mạng. Vui lòng thử lại khi online.");
+        }
+
+        if (this.isPaused || this.isSyncing) {
+            throw new Error("Đồng bộ đang tạm dừng hoặc đang chạy. Vui lòng thử lại sau.");
+        }
+
+        this.isSyncing = true;
+
+        try {
+            const remoteHomes = await fetchAllRows(() =>
+                supabase
+                    .from("homes")
+                    .select("*")
+                    .eq("userID", userId)
+            );
+            const homeIds = [
+                ...new Set(remoteHomes.map((home) => home.id).filter(Boolean)),
+            ];
+            const remoteRooms = await fetchRowsByIds("rooms", "home_id", homeIds);
+            const roomIds = [
+                ...new Set(remoteRooms.map((room) => room.id).filter(Boolean)),
+            ];
+            const [remoteInvoices, remoteExpenses, roomPhotos, homePhotos] = await Promise.all([
+                fetchRowsByIds("invoices", "room_id", roomIds),
+                fetchRowsByIds("expenses", "home_id", homeIds),
+                fetchRowsByIds("photos", "room_id", roomIds),
+                fetchRowsByIds("photos", "home_id", homeIds),
+            ]);
+            const remotePhotos = [
+                ...new Map(
+                    [...roomPhotos, ...homePhotos]
+                        .filter((photo) => photo.id)
+                        .map((photo) => [photo.id, photo])
+                ).values(),
+            ];
+
+            const localHomes = await db.homes
+                .where("userID")
+                .equals(userId)
+                .toArray();
+            const allHomeIds = [
+                ...new Set([
+                    ...localHomes.map((home) => home.id),
+                    ...homeIds,
+                ].filter(Boolean)),
+            ];
+            const localRooms = allHomeIds.length
+                ? await db.rooms.where("home_id").anyOf(allHomeIds).toArray()
+                : [];
+            const allRoomIds = [
+                ...new Set([
+                    ...localRooms.map((room) => room.id),
+                    ...roomIds,
+                ].filter(Boolean)),
+            ];
+            const localInvoices = allRoomIds.length
+                ? await db.invoices.where("room_id").anyOf(allRoomIds).toArray()
+                : [];
+            const localExpenses = allHomeIds.length
+                ? await db.expenses.where("home_id").anyOf(allHomeIds).toArray()
+                : [];
+            const localPhotosByHome = allHomeIds.length
+                ? await db.photos.where("home_id").anyOf(allHomeIds).toArray()
+                : [];
+            const localPhotosByRoom = allRoomIds.length
+                ? await db.photos.where("room_id").anyOf(allRoomIds).toArray()
+                : [];
+            const localPhotos = [
+                ...new Map(
+                    [...localPhotosByHome, ...localPhotosByRoom]
+                        .filter((photo) => photo.id)
+                        .map((photo) => [photo.id, photo])
+                ).values(),
+            ];
+
+            const scopedIds = {
+                homes: new Set([
+                    ...allHomeIds,
+                    ...remoteHomes.map((home) => home.id),
+                ]),
+                rooms: new Set([
+                    ...allRoomIds,
+                    ...remoteRooms.map((room) => room.id),
+                ]),
+                invoices: new Set([
+                    ...localInvoices.map((invoice) => invoice.id),
+                    ...remoteInvoices.map((invoice) => invoice.id),
+                ]),
+                expenses: new Set([
+                    ...localExpenses.map((expense) => expense.id),
+                    ...remoteExpenses.map((expense) => expense.id),
+                ]),
+                photos: new Set([
+                    ...localPhotos.map((photo) => photo.id),
+                    ...remotePhotos.map((photo) => photo.id),
+                ]),
+            };
+            const syncTables = [
+                ["homes", db.homes, scopedIds.homes, remoteHomes],
+                ["rooms", db.rooms, scopedIds.rooms, remoteRooms],
+                ["invoices", db.invoices, scopedIds.invoices, remoteInvoices],
+                ["expenses", db.expenses, scopedIds.expenses, remoteExpenses],
+                ["photos", db.photos, scopedIds.photos, remotePhotos],
+            ];
+
+            await db.transaction(
+                "rw",
+                db.homes,
+                db.rooms,
+                db.invoices,
+                db.expenses,
+                db.photos,
+                db.sync_queue,
+                async () => {
+                    for (const [tableName, table, ids, remoteRows] of syncTables) {
+                        for (const id of ids) {
+                            await table.delete(id);
+                        }
+
+                        if (remoteRows.length) {
+                            await table.bulkPut(remoteRows);
+                        }
+
+                        const queuedRows = await db.sync_queue
+                            .where("table")
+                            .equals(tableName)
+                            .toArray();
+                        const queuedIds = queuedRows
+                            .filter((item) => ids.has(item.record_id))
+                            .map((item) => item.id);
+
+                        if (queuedIds.length) {
+                            await db.sync_queue.bulkDelete(queuedIds);
+                        }
+                    }
+                }
+            );
+
+            console.log("✅ PULL SUPABASE → LOCAL", {
+                homes: remoteHomes.length,
+                rooms: remoteRooms.length,
+                invoices: remoteInvoices.length,
+                expenses: remoteExpenses.length,
+                photos: remotePhotos.length,
+            });
+
+            return {
+                homes: remoteHomes.length,
+                rooms: remoteRooms.length,
+                invoices: remoteInvoices.length,
+                expenses: remoteExpenses.length,
+                photos: remotePhotos.length,
+            };
+        } finally {
+            this.isSyncing = false;
+        }
     },
 
 
@@ -173,13 +389,8 @@ export const syncService = {
             );
 
             console.log(
-                "🚫 KHÔNG PULL SUPABASE → LOCAL"
-            );
-
-            console.log(
                 "════════════════════════════════"
             );
-
 
         } catch (error) {
 
