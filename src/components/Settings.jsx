@@ -13,9 +13,12 @@ export default function Settings({ user, onBack }) {
     const [isExporting, setIsExporting] = useState(false)
     const [isImporting, setIsImporting] = useState(false)
     const [isSyncing, setIsSyncing] = useState(false)
+    const [showSyncConfirmation, setShowSyncConfirmation] = useState(false)
     const importInputRef = useRef(null)
 
     const handleSync = async () => {
+        setShowSyncConfirmation(false)
+
         if (!user?.id) {
             setToast('Không tìm thấy người dùng đang đăng nhập.')
             return
@@ -599,7 +602,7 @@ export default function Settings({ user, onBack }) {
 
                         <button
                             type="button"
-                            onClick={handleSync}
+                            onClick={() => setShowSyncConfirmation(true)}
                             disabled={isSyncing || isImporting}
                             style={{
                                 width: '100%',
@@ -711,6 +714,55 @@ export default function Settings({ user, onBack }) {
             </div>
 
             <FooterHouse />
+
+            {showSyncConfirmation && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+                    role="presentation"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setShowSyncConfirmation(false)
+                        }
+                    }}
+                >
+                    <div
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="sync-confirmation-title"
+                        aria-describedby="sync-confirmation-message"
+                        className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl"
+                    >
+                        <h2
+                            id="sync-confirmation-title"
+                            className="mb-3 text-lg font-bold text-stone-900"
+                        >
+                            Xác nhận
+                        </h2>
+                        <p
+                            id="sync-confirmation-message"
+                            className="mb-6 text-stone-600"
+                        >
+                            Bạn có chắc đồng bộ chưa? Dữ liệu trên máy sẽ bị ghi đè
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowSyncConfirmation(false)}
+                                className="rounded-lg bg-stone-200 px-4 py-2 font-medium text-stone-700 transition hover:bg-stone-300"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSync}
+                                className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700"
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {showChangePassword && (
                 <ChangePasswordDialog
