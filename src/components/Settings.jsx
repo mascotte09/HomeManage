@@ -206,216 +206,216 @@ export default function Settings({ user, onBack }) {
 
     const handleImportUserData = async (event) => {
 
-    const file = event.target.files?.[0];
+        const file = event.target.files?.[0];
 
-    if (!file) {
-        setToast("Vui lòng chọn file JSON.");
-        return;
-    }
-
-    if (!user?.id) {
-        setToast("Không tìm thấy người dùng đang đăng nhập.");
-        return;
-    }
-
-    setIsImporting(true);
-
-    syncService.pause();
-
-    try {
-
-        console.log("📥 BẮT ĐẦU IMPORT");
-
-        // =========================================
-        // ĐỌC FILE JSON
-        // =========================================
-
-        const text = await file.text();
-
-        const payload = JSON.parse(text);
-
-        // =========================================
-        // LẤY DATA
-        // =========================================
-
-        const homes = Array.isArray(payload.homes)
-            ? payload.homes
-            : [];
-
-        const rooms = Array.isArray(payload.rooms)
-            ? payload.rooms
-            : [];
-
-        const invoices = Array.isArray(payload.invoices)
-            ? payload.invoices
-            : [];
-
-        const expenses = Array.isArray(payload.expenses)
-            ? payload.expenses
-            : [];
-
-        console.log("🏠 Homes:", homes.length);
-        console.log("🚪 Rooms:", rooms.length);
-        console.log("🧾 Invoices:", invoices.length);
-        console.log("💰 Expenses:", expenses.length);
-
-        // =========================================
-        // IMPORT LOCAL
-        // =========================================
-
-        await db.transaction(
-            "rw",
-            db.homes,
-            db.rooms,
-            db.invoices,
-            db.expenses,
-            db.sync_queue,
-
-            async () => {
-
-                // =====================================
-                // HOMES
-                // =====================================
-
-                for (const home of homes) {
-
-                    if (!home.id) continue;
-
-                    await db.homes.put({
-                        ...home,
-                        retired: false,
-                    });
-
-                    await db.sync_queue.add({
-                        table: "homes",
-                        record_id: home.id,
-                        action: "INSERT",
-                        created_at: Date.now(),
-                    });
-                }
-
-                // =====================================
-                // ROOMS
-                // =====================================
-
-                for (const room of rooms) {
-
-                    if (!room.id) continue;
-
-                    await db.rooms.put({
-                        ...room,
-                        retired: false,
-                    });
-
-                    await db.sync_queue.add({
-                        table: "rooms",
-                        record_id: room.id,
-                        action: "INSERT",
-                        created_at: Date.now(),
-                    });
-                }
-
-                // =====================================
-                // INVOICES
-                // =====================================
-
-                for (const invoice of invoices) {
-
-                    if (!invoice.id) continue;
-
-                    await db.invoices.put({
-                        ...invoice,
-                        retired: false,
-                    });
-
-                    await db.sync_queue.add({
-                        table: "invoices",
-                        record_id: invoice.id,
-                        action: "INSERT",
-                        created_at: Date.now(),
-                    });
-                }
-
-                // =====================================
-                // EXPENSES
-                // =====================================
-
-                for (const expense of expenses) {
-
-                    if (!expense.id) continue;
-
-                    await db.expenses.put({
-                        ...expense,
-                        retired: false,
-                    });
-
-                    await db.sync_queue.add({
-                        table: "expenses",
-                        record_id: expense.id,
-                        action: "INSERT",
-                        created_at: Date.now(),
-                    });
-                }
-            }
-        );
-
-        // =========================================
-        // IMPORT LOCAL HOÀN TẤT
-        // =========================================
-
-        console.log("✅ IMPORT LOCAL HOÀN TẤT");
-
-        // =========================================
-        // PUSH LOCAL → SUPABASE
-        // =========================================
-
-        syncService.resume();
-
-        if (navigator.onLine) {
-
-            console.log(
-                "📤 PUSH dữ liệu import lên Supabase..."
-            );
-
-            await syncService.syncAll();
-
-            console.log(
-                "✅ PUSH HOÀN TẤT"
-            );
-
-        } else {
-
-            console.log(
-                "📴 Offline - chỉ lưu Local"
-            );
+        if (!file) {
+            setToast("Vui lòng chọn file JSON.");
+            return;
         }
 
-        setToast(
-            `Import thành công: ${homes.length} nhà, ${rooms.length} phòng, ${invoices.length} hóa đơn, ${expenses.length} chi phí.`
-        );
+        if (!user?.id) {
+            setToast("Không tìm thấy người dùng đang đăng nhập.");
+            return;
+        }
 
-        // reset input để lần sau có thể chọn lại cùng file
-        event.target.value = "";
+        setIsImporting(true);
 
-    } catch (error) {
+        syncService.pause();
 
-        console.error(
-            "❌ IMPORT ERROR:",
-            error
-        );
+        try {
 
-        setToast(
-            error?.message ||
-            "Không thể import dữ liệu."
-        );
+            console.log("📥 BẮT ĐẦU IMPORT");
 
-    } finally {
+            // =========================================
+            // ĐỌC FILE JSON
+            // =========================================
 
-        syncService.resume();
+            const text = await file.text();
 
-        setIsImporting(false);
-    }
-};
+            const payload = JSON.parse(text);
+
+            // =========================================
+            // LẤY DATA
+            // =========================================
+
+            const homes = Array.isArray(payload.homes)
+                ? payload.homes
+                : [];
+
+            const rooms = Array.isArray(payload.rooms)
+                ? payload.rooms
+                : [];
+
+            const invoices = Array.isArray(payload.invoices)
+                ? payload.invoices
+                : [];
+
+            const expenses = Array.isArray(payload.expenses)
+                ? payload.expenses
+                : [];
+
+            console.log("🏠 Homes:", homes.length);
+            console.log("🚪 Rooms:", rooms.length);
+            console.log("🧾 Invoices:", invoices.length);
+            console.log("💰 Expenses:", expenses.length);
+
+            // =========================================
+            // IMPORT LOCAL
+            // =========================================
+
+            await db.transaction(
+                "rw",
+                db.homes,
+                db.rooms,
+                db.invoices,
+                db.expenses,
+                db.sync_queue,
+
+                async () => {
+
+                    // =====================================
+                    // HOMES
+                    // =====================================
+
+                    for (const home of homes) {
+
+                        if (!home.id) continue;
+
+                        await db.homes.put({
+                            ...home,
+                            retired: false,
+                        });
+
+                        await db.sync_queue.add({
+                            table: "homes",
+                            record_id: home.id,
+                            action: "INSERT",
+                            created_at: Date.now(),
+                        });
+                    }
+
+                    // =====================================
+                    // ROOMS
+                    // =====================================
+
+                    for (const room of rooms) {
+
+                        if (!room.id) continue;
+
+                        await db.rooms.put({
+                            ...room,
+                            retired: false,
+                        });
+
+                        await db.sync_queue.add({
+                            table: "rooms",
+                            record_id: room.id,
+                            action: "INSERT",
+                            created_at: Date.now(),
+                        });
+                    }
+
+                    // =====================================
+                    // INVOICES
+                    // =====================================
+
+                    for (const invoice of invoices) {
+
+                        if (!invoice.id) continue;
+
+                        await db.invoices.put({
+                            ...invoice,
+                            retired: false,
+                        });
+
+                        await db.sync_queue.add({
+                            table: "invoices",
+                            record_id: invoice.id,
+                            action: "INSERT",
+                            created_at: Date.now(),
+                        });
+                    }
+
+                    // =====================================
+                    // EXPENSES
+                    // =====================================
+
+                    for (const expense of expenses) {
+
+                        if (!expense.id) continue;
+
+                        await db.expenses.put({
+                            ...expense,
+                            retired: false,
+                        });
+
+                        await db.sync_queue.add({
+                            table: "expenses",
+                            record_id: expense.id,
+                            action: "INSERT",
+                            created_at: Date.now(),
+                        });
+                    }
+                }
+            );
+
+            // =========================================
+            // IMPORT LOCAL HOÀN TẤT
+            // =========================================
+
+            console.log("✅ IMPORT LOCAL HOÀN TẤT");
+
+            // =========================================
+            // PUSH LOCAL → SUPABASE
+            // =========================================
+
+            syncService.resume();
+
+            if (navigator.onLine) {
+
+                console.log(
+                    "📤 PUSH dữ liệu import lên Supabase..."
+                );
+
+                await syncService.syncAll();
+
+                console.log(
+                    "✅ PUSH HOÀN TẤT"
+                );
+
+            } else {
+
+                console.log(
+                    "📴 Offline - chỉ lưu Local"
+                );
+            }
+
+            setToast(
+                `Import thành công: ${homes.length} nhà, ${rooms.length} phòng, ${invoices.length} hóa đơn, ${expenses.length} chi phí.`
+            );
+
+            // reset input để lần sau có thể chọn lại cùng file
+            event.target.value = "";
+
+        } catch (error) {
+
+            console.error(
+                "❌ IMPORT ERROR:",
+                error
+            );
+
+            setToast(
+                error?.message ||
+                "Không thể import dữ liệu."
+            );
+
+        } finally {
+
+            syncService.resume();
+
+            setIsImporting(false);
+        }
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -599,46 +599,46 @@ export default function Settings({ user, onBack }) {
                             </span>
                             <MdChevronRight size={20} color="#a8a29e" />
                         </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setShowSyncConfirmation(true)}
-                            disabled={isSyncing || isImporting}
-                            style={{
-                                width: '100%',
-                                padding: '16px 20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '14px',
-                                background: 'white',
-                                border: 'none',
-                                borderTop: '1px solid #e7e5e4',
-                                cursor: isSyncing || isImporting ? 'default' : 'pointer',
-                                textAlign: 'left',
-                                opacity: isSyncing || isImporting ? 0.7 : 1,
-                            }}
-                            className="hover:bg-stone-50 transition"
-                        >
-                            <div
+                        {user?.is_admin && (
+                            <button
+                                type="button"
+                                onClick={() => setShowSyncConfirmation(true)}
+                                disabled={isSyncing || isImporting}
                                 style={{
-                                    width: '36px',
-                                    height: '36px',
-                                    borderRadius: '50%',
-                                    backgroundColor: '#f5f5f4',
-                                    color: '#78716c',
+                                    width: '100%',
+                                    padding: '16px 20px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
+                                    gap: '14px',
+                                    background: 'white',
+                                    border: 'none',
+                                    borderTop: '1px solid #e7e5e4',
+                                    cursor: isSyncing || isImporting ? 'default' : 'pointer',
+                                    textAlign: 'left',
+                                    opacity: isSyncing || isImporting ? 0.7 : 1,
                                 }}
+                                className="hover:bg-stone-50 transition"
                             >
-                                <MdSync size={18} />
-                            </div>
-                            <span style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#44403c' }}>
-                                {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ'}
-                            </span>
-                            <MdChevronRight size={20} color="#a8a29e" />
-                        </button>
-
+                                <div
+                                    style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '50%',
+                                        backgroundColor: '#f5f5f4',
+                                        color: '#78716c',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <MdSync size={18} />
+                                </div>
+                                <span style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#44403c' }}>
+                                    {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ'}
+                                </span>
+                                <MdChevronRight size={20} color="#a8a29e" />
+                            </button>
+                        )}
                         <input
                             ref={importInputRef}
                             type="file"
@@ -798,103 +798,103 @@ function ChangePasswordDialog({ user, onClose, onSuccess }) {
         newPassword !== confirmNewPassword && confirmNewPassword.length > 0
 
     const handleChangePassword = async (e) => {
-    e.preventDefault();
-    setMessage("");
+        e.preventDefault();
+        setMessage("");
 
-    if (!currentPassword || !newPassword || !confirmNewPassword) {
-        setMessage("Vui lòng điền đầy đủ thông tin");
-        return;
-    }
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            setMessage("Vui lòng điền đầy đủ thông tin");
+            return;
+        }
 
-    if (newPassword !== confirmNewPassword) {
-        setMessage("Mật khẩu mới không trùng khớp");
-        return;
-    }
+        if (newPassword !== confirmNewPassword) {
+            setMessage("Mật khẩu mới không trùng khớp");
+            return;
+        }
 
-    if (newPassword.length < 6) {
-        setMessage("Mật khẩu mới phải có ít nhất 6 ký tự");
-        return;
-    }
+        if (newPassword.length < 6) {
+            setMessage("Mật khẩu mới phải có ít nhất 6 ký tự");
+            return;
+        }
 
-    if (!user?.id) {
-        setMessage("Không xác định được tài khoản");
-        return;
-    }
+        if (!user?.id) {
+            setMessage("Không xác định được tài khoản");
+            return;
+        }
 
-    setSaving(true);
+        setSaving(true);
 
-    try {
-        // =====================================================
-        // GỌI RPC ĐỔI PASSWORD
-        //
-        // Không UPDATE trực tiếp bảng users từ React.
-        // PostgreSQL sẽ tự kiểm tra:
-        // 1. user_id có tồn tại không
-        // 2. password hiện tại có đúng không
-        // 3. chỉ được đổi password của chính user_id được truyền vào
-        // =====================================================
+        try {
+            // =====================================================
+            // GỌI RPC ĐỔI PASSWORD
+            //
+            // Không UPDATE trực tiếp bảng users từ React.
+            // PostgreSQL sẽ tự kiểm tra:
+            // 1. user_id có tồn tại không
+            // 2. password hiện tại có đúng không
+            // 3. chỉ được đổi password của chính user_id được truyền vào
+            // =====================================================
 
-        const { data, error } = await supabase.rpc(
-            "change_user_password",
-            {
-                p_user_id: user.id,
-                p_current_password: currentPassword,
-                p_new_password: newPassword,
+            const { data, error } = await supabase.rpc(
+                "change_user_password",
+                {
+                    p_user_id: user.id,
+                    p_current_password: currentPassword,
+                    p_new_password: newPassword,
+                }
+            );
+
+            if (error) {
+                console.error(
+                    "Change password RPC error:",
+                    error
+                );
+
+                setMessage(
+                    error.message ||
+                    "Không thể đổi mật khẩu"
+                );
+
+                return;
             }
-        );
 
-        if (error) {
+            // RPC nên trả true khi đổi thành công
+            if (data !== true) {
+                setMessage(
+                    "Không thể đổi mật khẩu. Mật khẩu hiện tại có thể không đúng."
+                );
+
+                return;
+            }
+
+            // =====================================================
+            // THÀNH CÔNG
+            // =====================================================
+
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmNewPassword("");
+
+            setMessage("Đổi mật khẩu thành công");
+
+            onSuccess?.();
+
+        } catch (error) {
+
             console.error(
-                "Change password RPC error:",
+                "Change password error:",
                 error
             );
 
             setMessage(
-                error.message ||
-                "Không thể đổi mật khẩu"
+                error?.message ||
+                "Có lỗi xảy ra khi đổi mật khẩu"
             );
 
-            return;
+        } finally {
+
+            setSaving(false);
         }
-
-        // RPC nên trả true khi đổi thành công
-        if (data !== true) {
-            setMessage(
-                "Không thể đổi mật khẩu. Mật khẩu hiện tại có thể không đúng."
-            );
-
-            return;
-        }
-
-        // =====================================================
-        // THÀNH CÔNG
-        // =====================================================
-
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmNewPassword("");
-
-        setMessage("Đổi mật khẩu thành công");
-
-        onSuccess?.();
-
-    } catch (error) {
-
-        console.error(
-            "Change password error:",
-            error
-        );
-
-        setMessage(
-            error?.message ||
-            "Có lỗi xảy ra khi đổi mật khẩu"
-        );
-
-    } finally {
-
-        setSaving(false);
-    }
-};
+    };
 
     return (
         <div
