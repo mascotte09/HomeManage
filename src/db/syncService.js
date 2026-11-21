@@ -4,6 +4,24 @@ import { supabase } from "../supabase";
 const SYNC_PAGE_SIZE = 1000;
 const SYNC_ID_BATCH_SIZE = 100;
 
+function getCurrentMonthDateRange() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const formatDate = (date) =>
+        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+
+    return {
+        start: formatDate(new Date(year, month, 1)),
+        end: formatDate(new Date(year, month + 1, 1)),
+    };
+}
+
+function isInDateRange(dateValue, start, end) {
+    const date = String(dateValue || "").slice(0, 10);
+    return date >= start && date < end;
+}
+
 async function fetchAllRows(queryFactory) {
     const rows = [];
     let offset = 0;
@@ -43,6 +61,25 @@ async function fetchRowsByIds(tableName, columnName, ids) {
     }
 
     return rows;
+}
+
+async function fetchCurrentMonthInvoices(roomIds, start, end) {
+    const invoices = [];
+
+    for (let index = 0; index < roomIds.length; index += SYNC_ID_BATCH_SIZE) {
+        const roomIdBatch = roomIds.slice(index, index + SYNC_ID_BATCH_SIZE);
+        const batchInvoices = await fetchAllRows(() =>
+            supabase
+                .from("invoices")
+                .select("*")
+                .in("room_id", roomIdBatch)
+                .gte("invoice_create_date", start)
+                .lt("invoice_create_date", end)
+        );
+        invoices.push(...batchInvoices);
+    }
+
+    return invoices;
 }
 
 // ═══════════════════════════════════════════════
@@ -125,6 +162,7 @@ export const syncService = {
         this.isSyncing = true;
 
         try {
+            const invoiceDateRange = getCurrentMonthDateRange();
             const remoteHomes = await fetchAllRows(() =>
                 supabase
                     .from("homes")
@@ -139,7 +177,11 @@ export const syncService = {
                 ...new Set(remoteRooms.map((room) => room.id).filter(Boolean)),
             ];
             const [remoteInvoices, remoteExpenses, roomPhotos, homePhotos] = await Promise.all([
-                fetchRowsByIds("invoices", "room_id", roomIds),
+                fetchCurrentMonthInvoices(
+                    roomIds,
+                    invoiceDateRange.start,
+                    invoiceDateRange.end
+                ),
                 fetchRowsByIds("expenses", "home_id", homeIds),
                 fetchRowsByIds("photos", "room_id", roomIds),
                 fetchRowsByIds("photos", "home_id", homeIds),
@@ -172,7 +214,14 @@ export const syncService = {
                 ].filter(Boolean)),
             ];
             const localInvoices = allRoomIds.length
-                ? await db.invoices.where("room_id").anyOf(allRoomIds).toArray()
+                ? (await db.invoices.where("room_id").anyOf(allRoomIds).toArray())
+                    .filter((invoice) =>
+                        isInDateRange(
+                            invoice.invoice_create_date,
+                            invoiceDateRange.start,
+                            invoiceDateRange.end
+                        )
+                    )
                 : [];
             const localExpenses = allHomeIds.length
                 ? await db.expenses.where("home_id").anyOf(allHomeIds).toArray()
@@ -269,6 +318,104 @@ export const syncService = {
                 expenses: remoteExpenses.length,
                 photos: remotePhotos.length,
             };
+        } finally {
+            this.isSyncing = false;
+        }
+    },
+
+    async pushAll(userId) {
+        if (!userId) {
+            throw new Error("Không tìm thấy người dùng đang đăng nhập.");
+        }
+
+        if (!navigator.onLine) {
+            throw new Error("Không có kết nối mạng. Vui lòng thử lại khi online.");
+        }
+
+        if (this.isPaused || this.isSyncing) {
+            throw new Error("Đồng bộ đang tạm dừng hoặc đang chạy. Vui lòng thử lại sau.");
+        }
+
+        this.isSyncing = true;
+
+        try {
+            const homes = await db.homes
+                .where("userID")
+                .equals(userId)
+                .toArray();
+            const homeIds = homes.map((home) => home.id).filter(Boolean);
+            const rooms = homeIds.length
+                ? await db.rooms.where("home_id").anyOf(homeIds).toArray()
+                : [];
+            const roomIds = rooms.map((room) => room.id).filter(Boolean);
+            const [invoices, expenses] = await Promise.all([
+                roomIds.length
+                    ? db.invoices.where("room_id").anyOf(roomIds).toArray()
+                    : [],
+                homeIds.length
+                    ? db.expenses.where("home_id").anyOf(homeIds).toArray()
+                    : [],
+            ]);
+
+            const pushed = {
+                homes: 0,
+                rooms: 0,
+                invoices: 0,
+                expenses: 0,
+            };
+
+            const pushRecord = async (tableName, record) => {
+                try {
+                    if (record.retired === true) {
+                        await this.retireRemoteRecord(tableName, record.id);
+                    } else {
+                        await this.syncInsert(tableName, record);
+                    }
+
+                    const queuedRows = await db.sync_queue
+                        .where("table")
+                        .equals(tableName)
+                        .toArray();
+                    const queuedIds = queuedRows
+                        .filter((item) => item.record_id === record.id)
+                        .map((item) => item.id);
+
+                    if (queuedIds.length) {
+                        await db.sync_queue.bulkDelete(queuedIds);
+                    }
+
+                    pushed[tableName] += 1;
+                } catch (error) {
+                    throw new Error(
+                        `Không thể đồng bộ ${tableName} ${record.id}: ${error.message}`
+                    );
+                }
+            };
+
+            const tablesInDependencyOrder = [
+                ["homes", homes],
+                ["rooms", rooms],
+                ["invoices", invoices],
+                ["expenses", expenses],
+            ];
+
+            for (const [tableName, records] of tablesInDependencyOrder) {
+                for (const record of records) {
+                    if (record.retired !== true) {
+                        await pushRecord(tableName, record);
+                    }
+                }
+            }
+
+            for (const [tableName, records] of [...tablesInDependencyOrder].reverse()) {
+                for (const record of records) {
+                    if (record.retired === true) {
+                        await pushRecord(tableName, record);
+                    }
+                }
+            }
+
+            return pushed;
         } finally {
             this.isSyncing = false;
         }

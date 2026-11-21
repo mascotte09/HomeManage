@@ -634,7 +634,7 @@ export default function Settings({ user, onBack }) {
                                     <MdSync size={18} />
                                 </div>
                                 <span style={{ flex: 1, fontSize: '15px', fontWeight: 500, color: '#44403c' }}>
-                                    {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ'}
+                                    {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ hóa đơn tháng hiện tại'}
                                 </span>
                                 <MdChevronRight size={20} color="#a8a29e" />
                             </button>
