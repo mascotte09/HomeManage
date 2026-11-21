@@ -46,17 +46,23 @@ async function fetchAllRows(queryFactory) {
     }
 }
 
-async function fetchRowsByIds(tableName, columnName, ids) {
+async function fetchRowsByIds(tableName, columnName, ids, activeOnly = false) {
     const rows = [];
 
     for (let index = 0; index < ids.length; index += SYNC_ID_BATCH_SIZE) {
         const idBatch = ids.slice(index, index + SYNC_ID_BATCH_SIZE);
-        const batchRows = await fetchAllRows(() =>
-            supabase
+        const batchRows = await fetchAllRows(() => {
+            let query = supabase
                 .from(tableName)
                 .select("*")
-                .in(columnName, idBatch)
-        );
+                .in(columnName, idBatch);
+
+            if (activeOnly) {
+                query = query.eq("retired", false);
+            }
+
+            return query;
+        });
         rows.push(...batchRows);
     }
 
@@ -73,6 +79,7 @@ async function fetchCurrentMonthInvoices(roomIds, start, end) {
                 .from("invoices")
                 .select("*")
                 .in("room_id", roomIdBatch)
+                .eq("retired", false)
                 .gte("invoice_create_date", start)
                 .lt("invoice_create_date", end)
         );
@@ -168,11 +175,17 @@ export const syncService = {
                     .from("homes")
                     .select("*")
                     .eq("userID", userId)
+                    .eq("retired", false)
             );
             const homeIds = [
                 ...new Set(remoteHomes.map((home) => home.id).filter(Boolean)),
             ];
-            const remoteRooms = await fetchRowsByIds("rooms", "home_id", homeIds);
+            const remoteRooms = await fetchRowsByIds(
+                "rooms",
+                "home_id",
+                homeIds,
+                true
+            );
             const roomIds = [
                 ...new Set(remoteRooms.map((room) => room.id).filter(Boolean)),
             ];
@@ -182,7 +195,7 @@ export const syncService = {
                     invoiceDateRange.start,
                     invoiceDateRange.end
                 ),
-                fetchRowsByIds("expenses", "home_id", homeIds),
+                fetchRowsByIds("expenses", "home_id", homeIds, true),
                 fetchRowsByIds("photos", "room_id", roomIds),
                 fetchRowsByIds("photos", "home_id", homeIds),
             ]);
@@ -263,8 +276,20 @@ export const syncService = {
                 ]),
             };
             const syncTables = [
-                ["homes", db.homes, scopedIds.homes, remoteHomes],
-                ["rooms", db.rooms, scopedIds.rooms, remoteRooms],
+                [
+                    "homes",
+                    db.homes,
+                    scopedIds.homes,
+                    remoteHomes,
+                    new Set(localHomes.map((home) => home.id)),
+                ],
+                [
+                    "rooms",
+                    db.rooms,
+                    scopedIds.rooms,
+                    remoteRooms,
+                    new Set(localRooms.map((room) => room.id)),
+                ],
                 ["invoices", db.invoices, scopedIds.invoices, remoteInvoices],
                 ["expenses", db.expenses, scopedIds.expenses, remoteExpenses],
                 ["photos", db.photos, scopedIds.photos, remotePhotos],
@@ -279,7 +304,34 @@ export const syncService = {
                 db.photos,
                 db.sync_queue,
                 async () => {
-                    for (const [tableName, table, ids, remoteRows] of syncTables) {
+                    for (const [tableName, table, ids, remoteRows, existingLocalIds] of syncTables) {
+                        if (existingLocalIds) {
+                            const rowsToInsert = remoteRows.filter(
+                                (row) => !existingLocalIds.has(row.id)
+                            );
+
+                            if (rowsToInsert.length) {
+                                await table.bulkPut(rowsToInsert);
+                            }
+
+                            const insertedIds = new Set(
+                                rowsToInsert.map((row) => row.id)
+                            );
+                            const queuedRows = await db.sync_queue
+                                .where("table")
+                                .equals(tableName)
+                                .toArray();
+                            const queuedIds = queuedRows
+                                .filter((item) => insertedIds.has(item.record_id))
+                                .map((item) => item.id);
+
+                            if (queuedIds.length) {
+                                await db.sync_queue.bulkDelete(queuedIds);
+                            }
+
+                            continue;
+                        }
+
                         for (const id of ids) {
                             await table.delete(id);
                         }

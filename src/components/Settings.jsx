@@ -599,7 +599,7 @@ export default function Settings({ user, onBack }) {
                             </span>
                             <MdChevronRight size={20} color="#a8a29e" />
                         </button>
-                        {user?.is_admin && (
+                        {/* {user?.is_admin && ( */}
                             <button
                                 type="button"
                                 onClick={() => setShowSyncConfirmation(true)}
@@ -638,7 +638,7 @@ export default function Settings({ user, onBack }) {
                                 </span>
                                 <MdChevronRight size={20} color="#a8a29e" />
                             </button>
-                        )}
+                      
                         <input
                             ref={importInputRef}
                             type="file"
